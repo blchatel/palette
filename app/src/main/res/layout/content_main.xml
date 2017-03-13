@@ -1,21 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:showIn="@layout/activity_main"
+    android:orientation="vertical"
     tools:context="ch.epfl.cs413.palettev01.MainActivity">
 
-    <TextView
+    <!-- The image can be accessed with it's id and to modify the content we can transform it into a bitmap and then work on it -->
+    <!-- The image dimension should be computed according to the size of the screen of the display. -->
+    <ImageView
+        android:id="@+id/MAIN_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        tools:layout_editor_absoluteY="8dp"
+        tools:layout_editor_absoluteX="8dp"
+        android:src="@mipmap/bridge"/>
+
+    <!-- This Layout can be accessed with it's id and in the JAVA code we should add the palettes color easily -->
+    <GridView
+        android:id="@+id/MAIN_paletteGrid"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_gravity="center_horizontal">
+        <!--TODO: Create the element ColorBox to print a color in a small box.-->
+        <!--TODO: Each ColorBox should be clickable and should open a dialog color picker when clicked-->
+    </GridView>
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>
