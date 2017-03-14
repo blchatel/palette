@@ -23,7 +23,6 @@
         tools:layout_editor_absoluteY="8dp" />
 
     <!-- This Layout can be accessed with it's id and in the JAVA code we should add the palettes color easily -->
-
     <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -39,7 +38,6 @@
             android:layout_marginBottom="@android:dimen/notification_large_icon_height"
             android:layout_gravity="center_horizontal|center"
             android:animationCache="false"
-            android:background="@color/colorPrimary"
             android:columnWidth="90dp"
             android:horizontalSpacing="10dp"
             android:numColumns="auto_fit"
