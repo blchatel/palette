@@ -7,7 +7,7 @@ img = imread('images/bridge.png');
 nrows = size(img,1);
 ncols = size(img,2);
 
-img = img(1:10:nrows,1:10:ncols, :);
+img = img(1:nrows,1:ncols, :);
 
 nrows = size(img,1);
 ncols = size(img,2);
@@ -122,14 +122,44 @@ C_rate = labDistance(oldPalette(i,:), palette(i,:)) / labDistance(oldPalette(i, 
 [p0, p1] = meshgrid(1:nrows, 1:ncols);
 pairs = [p0(:), p1(:)];
 
-tic
-Cb = findBoundary2(oldPalette(i, :), diff, 0, 5);
-toc
+% tic
+% Cb = findBoundary2(oldPalette(i, :), diff, 0, 5);
+% toc
+% 
+% tic
+% a = lab2rgb(Cb)
+% toc
+% 
+% toc
+% b = rgb2lab(a)
+% tic
 
-tic
-lab2rgb(Cb)
-toc
+G = 12;
+G_2 = G ^ 2;
+[g0, g1, g2] = meshgrid(1:G, 1:G, 1:G);
+grid_img = ([g2(:), g0(:), g1(:)] - 1) / (G - 1);
+[gm0, gm1, gm2] = meshgrid(1:G-2, 1:G-2, 1:G-2);
+gm = gm2(:) * G_2 + gm0(:) * G + gm1(:) + 1;
+grid_lab = rgb2lab(grid_img);
 
+ngm = size(gm, 1);
+for iter = 1:ngm
+    iter
+    index = gm(iter);
+    Lab = grid_lab(index, :);
+    if Lab == oldLAB
+        Lab = newLab;
+    else
+        xb = findBoundary2(Lab, diff, 0, 10);
+        Lab = Lab + (xb - Lab) * C_rate;
+    end
+    rgb = lab2rgb(Lab);
+    rgb = min(1, max(0, rgb));
+    grid_img(index, :) = rgb;
+end
+
+[nei0, nei1, nei2] = meshgrid(0:1, 0:1, 0:1);
+neighbor_color = [nei2(:), nei0(:), nei1(:)];
 
 for iter=1:nrows * ncols
     w = pairs(iter, 1);
@@ -137,21 +167,45 @@ for iter=1:nrows * ncols
     if h == 1
         [w, nrows, ncols]
     end
-    Lab = reshape(lab_img(w, h, :), 1, 3);
-    
-    if Lab == oldLAB
-        Lab = newLab;
-    else
-        xb = findBoundary2(Lab, diff, 0, 10);
-        Lab = Lab + (xb - Lab) * C_rate;
-    end
+    orgb = double(reshape(img(w, h, :), 1, 3)) / 255;
+    rgb = orgb * (G - 1);
+    index = min(floor(rgb), G-2);
+    rate = rgb - index;
+    rate = repmat(rate, 8, 1);
+    rate2 = rate .* (neighbor_color - 0.5) * 2 + 1 - neighbor_color;
+    rate2 = repmat(prod(rate2, 2), 1, 3);
+    index = index(1) * G_2 + index(2) * G + index(3) + 1;
+    indexes = neighbor_color(:, 1) * G_2 + neighbor_color(:, 2) * G + neighbor_color(:, 3) + index;
+    colors = grid_img(indexes, :);
+    rgb = sum(colors .* rate2, 1);
 
-    rgb = lab2rgb(Lab);
-    rgb = min(1, max(0, rgb));
-    
     image(w, h, :) = reshape(rgb, 1, 1, 3);
-        
 end
+
+% stop
+% 
+% 
+% for iter=1:nrows * ncols
+%     w = pairs(iter, 1);
+%     h = pairs(iter, 2);
+%     if h == 1
+%         [w, nrows, ncols]
+%     end
+%     Lab = reshape(lab_img(w, h, :), 1, 3);
+%     
+%     if Lab == oldLAB
+%         Lab = newLab;
+%     else
+%         xb = findBoundary2(Lab, diff, 0, 10);
+%         Lab = Lab + (xb - Lab) * C_rate;
+%     end
+% 
+%     rgb = lab2rgb(Lab);
+%     rgb = min(1, max(0, rgb));
+%     
+%     image(w, h, :) = reshape(rgb, 1, 1, 3);
+%         
+% end
 
 
 
