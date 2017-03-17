@@ -138,7 +138,7 @@ G = 12;
 G_2 = G ^ 2;
 [g0, g1, g2] = meshgrid(1:G, 1:G, 1:G);
 grid_img = ([g2(:), g0(:), g1(:)] - 1) / (G - 1);
-[gm0, gm1, gm2] = meshgrid(1:G-2, 1:G-2, 1:G-2);
+[gm0, gm1, gm2] = meshgrid(0:G-1, 0:G-1, 0:G-1);
 gm = gm2(:) * G_2 + gm0(:) * G + gm1(:) + 1;
 grid_lab = rgb2lab(grid_img);
 
@@ -151,9 +151,9 @@ for iter = 1:ngm
         Lab = newLab;
     else
         xb = findBoundary2(Lab, diff, 0, 10);
-        Lab = Lab + (xb - Lab) * C_rate;
+        newLab = Lab + (xb - Lab) * C_rate;
     end
-    rgb = lab2rgb(Lab);
+    rgb = lab2rgb(newLab);
     rgb = min(1, max(0, rgb));
     grid_img(index, :) = rgb;
 end
