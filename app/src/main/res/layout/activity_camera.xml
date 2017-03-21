@@ -30,12 +30,14 @@
         android:orientation="vertical"
         tools:context="ch.epfl.cs413.palettev01.MainActivity"
         tools:showIn="@layout/activity_main">
+
         <ch.epfl.cs413.palettev01.views.Miniature
             android:id="@+id/MAIN_image"
             android:layout_width="match_parent"
             android:layout_height="359dp"
             android:layout_marginTop="?attr/actionBarSize"
             android:layout_weight="0"
+            android:clickable="false"
             android:keepScreenOn="true"
             android:src="@mipmap/bridge"
             tools:layout_editor_absoluteX="8dp"

@@ -14,8 +14,9 @@ public class PaletteAdapter extends BaseAdapter{
 
     private Context mContext;
     private int[] colors = new int[7];
-
+    private int selectedBox = -1;
     private int size = 0;
+
 
     public PaletteAdapter(Context c, int size ) {
 
@@ -50,6 +51,23 @@ public class PaletteAdapter extends BaseAdapter{
 
 
     /**
+     * Set color of the selected item of the palette with newColor
+     * if one item is indeed selected. Do nothing otherwise
+     * And notify the modification for display
+     * @param newColor
+     */
+    public void setColor(int newColor){
+
+        if (selectedBox != -1){
+            colors[selectedBox] = newColor;
+            this.notifyDataSetChanged();
+        }
+    }
+
+
+
+
+    /**
      * Get the palette element Color on position
      * @param position
      * @return one integer representing the color of the position element of the palette
@@ -61,6 +79,24 @@ public class PaletteAdapter extends BaseAdapter{
         }
         return colors[position];
     }
+
+
+
+
+
+
+    /**
+     * Set the selected box
+     * @param position
+     */
+    public void setSelectedBox(int position){
+
+        selectedBox = selectedBox == position ? -1 : position;
+        this.notifyDataSetChanged();
+    }
+
+
+
 
 
 
@@ -94,6 +130,12 @@ public class PaletteAdapter extends BaseAdapter{
         ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
         textView.setText("color#"+position);
         button.setBackgroundColor(colors[position]);
+
+        if(position == selectedBox){
+            textView.setTextColor(Color.RED);
+        }else{
+            textView.setTextColor(Color.BLACK);
+        }
 
         return grid;
     }

@@ -1,6 +1,8 @@
 package ch.epfl.cs413.palettev01.processing;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.util.Log;
 
 import ch.epfl.cs413.palettev01.views.Miniature;
 
@@ -69,10 +71,30 @@ public class PaletteBitmap {
 
 
 
+    public boolean isNull(){
+        return bitmap == null;
+    }
 
+    /**
+     * Get the color of the (x, y) pixel
+     * @param x
+     * @param y
+     * @return the color integer
+     */
+    public int getColor(int x, int y){
 
-
-
+        Log.d("X", ""+x);
+        Log.d("Y", ""+y);
+        Log.d("BitX", ""+bitmap.getWidth());
+        Log.d("BitY", ""+bitmap.getHeight());
+        try {
+            int color = bitmap.getPixel(x, y);
+            return color;
+        }
+        catch(Exception e){
+            return Color.BLACK;
+        }
+    }
 
 }
 

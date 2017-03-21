@@ -26,4 +26,11 @@ public class Miniature extends AppCompatImageView {
 
 
 
+
+
+
 }
+
+
+
+

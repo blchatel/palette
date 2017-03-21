@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -12,8 +13,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
 import ch.epfl.cs413.palettev01.views.Miniature;
@@ -48,6 +51,55 @@ public class CameraActivity extends AppCompatActivity {
         //Miniature
         mView = (Miniature) findViewById(R.id.MAIN_image);
 
+        mView.setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                    int[] viewCorrs = new int[2];
+                    mView.getLocationOnScreen(viewCorrs);
+
+                    int touchX = (int) event.getX();
+                    int touchY = (int) event.getY();
+
+                    int imageX = touchX - viewCorrs[0]; // viewCoords[0] is the X coordinate
+                    int imageY = touchY - viewCorrs[1]; // viewCoords[1] is the y coordinate
+
+                    ImageView imageView = ((ImageView)v);
+                    Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
+
+
+                    ((PaletteAdapter) palette.getAdapter()).setColor(bitmap.getPixel(imageX, imageY));
+                    return true;
+            }
+
+//            @Override
+//            public boolean onTouch(View v, MotionEvent event) {
+//
+//                if(!mPicture.isNull()) {
+//                    int[] viewCorrs = new int[2];
+//                    mView.getLocationOnScreen(viewCorrs);
+//
+//                    int touchX = (int) event.getX();
+//                    int touchY = (int) event.getY();
+//
+//                    int imageX = touchX - viewCorrs[0]; // viewCoords[0] is the X coordinate
+//                    int imageY = touchY - viewCorrs[1]; // viewCoords[1] is the y coordinate
+//
+//
+//                    Log.d("SizeX", ""+mView.getWidth());
+//                    Log.d("SizeY", ""+mView.getHeight());
+//
+//
+//                    if (imageX < mView.getWidth() && imageY < mView.getHeight() && imageX >= 0 && imageY >= 0) {
+//                        ((PaletteAdapter) palette.getAdapter()).setColor(mPicture.getColor(imageX, imageY));
+//                        return true;
+//                    }
+//                }
+//                return false;
+//            }
+        });
+
 
         //Pallette
         palette = (Palette) findViewById(R.id.MAIN_paletteGrid);
@@ -58,6 +110,14 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public void onItemClick(final AdapterView<?> parent, View view, final int position, long id) {
 
+                ((PaletteAdapter) parent.getAdapter()).setSelectedBox(position);
+            }
+        });
+
+        palette.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+            @Override
+            public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
 
                 PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
 
@@ -66,21 +126,26 @@ public class CameraActivity extends AppCompatActivity {
                 AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, ((PaletteAdapter)parent.getAdapter()).getColor(position),
                         new AmbilWarnaDialog.OnAmbilWarnaListener(){
 
-                    @Override
-                    public void onOk(AmbilWarnaDialog dialog, int color) {
-                        // color is the color selected by the user.
-                        ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
-                    }
+                            @Override
+                            public void onOk(AmbilWarnaDialog dialog, int color) {
+                                // color is the color selected by the user.
+                                ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
+                            }
 
-                    @Override
-                    public void onCancel(AmbilWarnaDialog dialog) {
-                        // cancel was selected by the user
-                    }
-                });
+                            @Override
+                            public void onCancel(AmbilWarnaDialog dialog) {
+                                // cancel was selected by the user
+                            }
+                        });
                 dialog.show();
 
+                return true;
             }
         });
+
+
+
+
         /////////////////////////////////////////////////////
 
     }
@@ -155,4 +220,5 @@ public class CameraActivity extends AppCompatActivity {
             mPicture.showBitmap(mView);
         }
     }
+
 }
