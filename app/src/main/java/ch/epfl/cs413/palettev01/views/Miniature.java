@@ -21,6 +21,7 @@ public class Miniature extends AppCompatImageView {
 
     public Miniature(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
+
     }
 
 

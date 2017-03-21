@@ -18,6 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="?attr/actionBarSize"
         android:layout_weight="0"
+        android:keepScreenOn="true"
         android:src="@mipmap/bridge"
         tools:layout_editor_absoluteX="8dp"
         tools:layout_editor_absoluteY="8dp" />

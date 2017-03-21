@@ -14,9 +14,11 @@ public class PaletteAdapter extends BaseAdapter{
 
     private Context mContext;
     private int[] colors = new int[7];
+
     private int size = 0;
 
     public PaletteAdapter(Context c, int size ) {
+
         mContext = c;
 
         if(size > 7){
@@ -24,47 +26,75 @@ public class PaletteAdapter extends BaseAdapter{
         }
         this.size = size;
 
+        // initialization of the palette color . For now simply grayscale value
         for (int i = 0; i<size; i++) {
             colors[i] = Color.argb( 255, 255/(i+1), 255/(i+1), 255/(i+1));
         }
     }
 
+
+    /**
+     * Set the palette element on position with newColor
+     * And notify the modification for display
+     * @param position
+     * @param newColor
+     */
+    public void setColor(int position, int newColor){
+
+        if (position >= size){
+            throw new IllegalArgumentException("Position too big");
+        }
+        colors[position] = newColor;
+        this.notifyDataSetChanged();
+    }
+
+
+    /**
+     * Get the palette element Color on position
+     * @param position
+     * @return one integer representing the color of the position element of the palette
+     */
+    public int getColor(int position) {
+
+        if (position >= size){
+            throw new IllegalArgumentException("Position too big");
+        }
+        return colors[position];
+    }
+
+
+
     @Override
     public int getCount() {
-        // TODO Auto-generated method stub
         return size;
     }
 
     @Override
     public Object getItem(int position) {
-        // TODO Auto-generated method stub
-        return null;
+        return colors[position];
     }
 
     @Override
     public long getItemId(int position) {
         // TODO Auto-generated method stub
+        // TODO I don't know how to implement this function
         return 0;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        // TODO Auto-generated method stub
+
         View grid;
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        if (convertView == null) {
+        grid = new View(mContext);
+        grid = inflater.inflate(R.layout.color_box, null);
+        TextView textView = (TextView) grid.findViewById(R.id.grid_text);
+        ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
+        textView.setText("color#"+position);
+        button.setBackgroundColor(colors[position]);
 
-            grid = new View(mContext);
-            grid = inflater.inflate(R.layout.color_box, null);
-            TextView textView = (TextView) grid.findViewById(R.id.grid_text);
-            ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
-            textView.setText("color#"+position);
-            button.setBackgroundColor(colors[position]);
-        } else {
-            grid = (View) convertView;
-        }
         return grid;
     }
 }

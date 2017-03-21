@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+tools:context="ch.epfl.cs413.palettev01.MainActivity" >
+<item android:title="Camera"
+    android:icon="@android:drawable/ic_menu_camera"
+    android:id="@+id/open_camera_item">
+</item>
+<item android:title="Gallery"
+    android:icon="@android:drawable/ic_menu_camera"
+    android:id="@+id/open_gallery_item">
+</item>
+<item android:id="@+id/action_settings"
+    android:title="@string/action_settings"
+    android:orderInCategory="100"
+    app:showAsAction="never" />
+
+<item android:id="@+id/action_help"
+    android:title="@string/action_help"
+    android:orderInCategory="90"
+    app:showAsAction="never" />
+</menu>
