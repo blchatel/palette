@@ -1,22 +1,24 @@
 package ch.epfl.cs413.palettev01;
 
-import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 import android.widget.ImageView;
+
+import java.io.IOException;
 
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
 import ch.epfl.cs413.palettev01.views.Miniature;
@@ -38,68 +40,27 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_camera);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        /////////////////////////////////////////////////////
+        Log.e( "EUREKA", "ON CREATE" );
+
+        setContentView(R.layout.activity_camera);
+
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        /// INITIALISATION
+        ////////////////////////////////////////////////////////////////////////////////////////////
 
         //Bitmap
         mPicture = new PaletteBitmap();
 
-
         //Miniature
         mView = (Miniature) findViewById(R.id.MAIN_image);
-
-        mView.setOnTouchListener(new View.OnTouchListener() {
-
+        mView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                    int[] viewCorrs = new int[2];
-                    mView.getLocationOnScreen(viewCorrs);
-
-                    int touchX = (int) event.getX();
-                    int touchY = (int) event.getY();
-
-                    int imageX = touchX - viewCorrs[0]; // viewCoords[0] is the X coordinate
-                    int imageY = touchY - viewCorrs[1]; // viewCoords[1] is the y coordinate
-
-                    ImageView imageView = ((ImageView)v);
-                    Bitmap bitmap = ((BitmapDrawable)imageView.getDrawable()).getBitmap();
-
-
-                    ((PaletteAdapter) palette.getAdapter()).setColor(bitmap.getPixel(imageX, imageY));
-                    return true;
+            public void onGlobalLayout() {
+                mPicture.setHeight(mView.getHeight());
+                mPicture.setWidth(mView.getWidth());
             }
-
-//            @Override
-//            public boolean onTouch(View v, MotionEvent event) {
-//
-//                if(!mPicture.isNull()) {
-//                    int[] viewCorrs = new int[2];
-//                    mView.getLocationOnScreen(viewCorrs);
-//
-//                    int touchX = (int) event.getX();
-//                    int touchY = (int) event.getY();
-//
-//                    int imageX = touchX - viewCorrs[0]; // viewCoords[0] is the X coordinate
-//                    int imageY = touchY - viewCorrs[1]; // viewCoords[1] is the y coordinate
-//
-//
-//                    Log.d("SizeX", ""+mView.getWidth());
-//                    Log.d("SizeY", ""+mView.getHeight());
-//
-//
-//                    if (imageX < mView.getWidth() && imageY < mView.getHeight() && imageX >= 0 && imageY >= 0) {
-//                        ((PaletteAdapter) palette.getAdapter()).setColor(mPicture.getColor(imageX, imageY));
-//                        return true;
-//                    }
-//                }
-//                return false;
-//            }
         });
-
 
         //Pallette
         palette = (Palette) findViewById(R.id.MAIN_paletteGrid);
@@ -143,33 +104,112 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        mView.setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                int[] viewCorrs = new int[2];
+                //x = 0; y = 213
+                mView.getLocationOnScreen(viewCorrs);
+
+                int touchX = (int) event.getX();
+                int touchY = (int) event.getY();
+
+                int imageX = touchX;//- viewCorrs[0]; // viewCoords[0] is the X coordinate
+                int imageY = touchY;//- viewCorrs[1]; // viewCoords[1] is the y coordinate
+
+                ImageView imageView = ((ImageView) v);
+                Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
+                //Bitmap
+                //1330 x 884
+
+                //MVIEW
+                //1080 x 942
+
+                //  Picture
+                //760 x 505
+
+//                ((PaletteAdapter) palette.getAdapter()).setColor(bitmap.getPixel(imageX, imageY));
+                return true;
+            }
+        });
 
 
 
-        /////////////////////////////////////////////////////
+
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        // RECOVERING THE INSTANCE STATE
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
+        if (savedInstanceState != null) {
+            mPicture.restaureFile(savedInstanceState.getString("FILE_KEY"));
+
+            mPicture.setHeight(savedInstanceState.getInt("HEIGHT_KEY"));
+            mPicture.setWidth(savedInstanceState.getInt("WIDTH_KEY"));
+        }
+
 
     }
 
+
+    /**
+     * invoked when the activity may be temporarily destroyed, save the instance state here
+     * @param outState
+     */
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+
+        Log.e( "EUREKA", "ON SAVE" );
+
+        if(! mPicture.isFileNull())
+            outState.putString("FILE_KEY", mPicture.fileAbsolutePath());
+
+        outState.putInt("HEIGHT_KEY", mPicture.getHeight());
+        outState.putInt("WIDTH_KEY", mPicture.getWidth());
+
+        // call superclass to save any view hierarchy
+        super.onSaveInstanceState(outState);
+    }
+
+
+    /**
+     *
+     * @param menu
+     * @return
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+
+        Log.e( "EUREKA", "ON CREATE OPTION MENU" );
+
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_camera, menu);
         return true;
     }
 
-
+    /**
+     *
+     * @param item
+     * @return
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.open_camera_item:
-                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                CameraActivity.this.startActivityForResult(camera, CAMERA_RESULT);
-                return true;
-            case R.id.open_gallery_item:
-                Intent pickPhoto = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                CameraActivity.this.startActivityForResult(pickPhoto , GALLERY_RESULT);//one can be replaced with any action code
 
+        Log.e( "EUREKA", "ON OPTION ITEM SELECTED" );
+
+        switch (item.getItemId()) {
+
+            case R.id.open_camera_item:
+
+                takePicture();
                 return true;
+
+            case R.id.open_gallery_item:
+
+                selectPicture();
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -180,30 +220,26 @@ public class CameraActivity extends AppCompatActivity {
         mPicture.recycle();
     }
 
+    /**
+     *
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         super.onActivityResult(requestCode, resultCode, data);
 
+        Log.e( "EUREKA", "ON RESULT" );
+
         // if results comes from the camera activity
-        if (resultCode == Activity.RESULT_OK && requestCode == CAMERA_RESULT) {
+        if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
 
-            // if a picture was taken
-            // Free the data of the last picture
-            mPicture.recycle();
-
-            // Get the picture taken by the user
-            mPicture.setBitmap((Bitmap) data.getExtras().get("data"));
-
-            // Avoid IllegalStateException with Immutable bitmap
-            mPicture.makeMutable();
-
-            // Show the picture
-            mPicture.showBitmap(mView);
-
+            galleryAddPic();
+            mPicture.setPicture(mView);
         }
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
-
-            mPicture.recycle();
 
             Uri selectedImage = data.getData();
             String[] filePath = { MediaStore.Images.Media.DATA };
@@ -214,11 +250,79 @@ public class CameraActivity extends AppCompatActivity {
             String selectedImagePath = c.getString(columnIndex);
             c.close();
 
-            mPicture.setBitmap(BitmapFactory.decodeFile(selectedImagePath)); // load
-            mPicture.makeMutable();
+            mPicture.restaureFile(selectedImagePath);
 
-            mPicture.showBitmap(mView);
+            mPicture.setPicture(mView);
         }
     }
+
+
+
+
+    /**
+     * Prepare and Use the Camera Intent to take a picture
+     */
+    private void takePicture() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+
+            // Create the File where the photo should go
+            mPicture.setFileToNull();
+
+            try {
+                mPicture.prepareImageFile();
+            } catch (IOException ex) {
+                // Error occurred while creating the File
+                Log.d("ERROR prepareImageFile", "ERROR - Prepare Image File");
+            }
+
+            // Continue only if the File was successfully created
+            if (!mPicture.isFileNull()) {
+                Uri photoUri = mPicture.getUri();
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                startActivityForResult(takePictureIntent, CAMERA_RESULT);
+            }else{
+                Log.d("ERROR file null", "ERROR - File file is null");
+            }
+        }
+    }
+
+
+
+
+    /**
+     * Prepare and Use the Gallery Intent to select an existing picture
+     */
+    private void selectPicture(){
+
+        // Create the File where the photo should go
+        mPicture.setFileToNull();
+
+        try {
+            Intent intent = new Intent( Intent.ACTION_GET_CONTENT );
+            intent.setType("image/*");
+            startActivityForResult(intent, GALLERY_RESULT);
+        } catch (ActivityNotFoundException e) {
+            Log.e("OpenImage ERROR", "No gallery: " + e);
+        }
+    }
+
+
+    /**
+     * Save this.file into the gallery
+     */
+    private void galleryAddPic() {
+
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+
+        Uri contentUri = mPicture.getUri();
+
+        mediaScanIntent.setData(contentUri);
+
+        this.sendBroadcast(mediaScanIntent);
+    }
+
 
 }

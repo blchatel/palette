@@ -11,6 +11,8 @@ import android.util.AttributeSet;
 public class Miniature extends AppCompatImageView {
 
 
+
+
     public Miniature(Context context) {
         super(context);
     }
