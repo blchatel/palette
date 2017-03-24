@@ -59,7 +59,7 @@ end
 
 % imagine we want to change one of the palette's color too a
 % redish color (200, 0, 0)
-newRGB = [0.7,0.2,0.2];
+newRGB = [0.7,0.5,0.5];
 newLAB = rgb2lab(newRGB);
 P = K-1;
 palette = sortedC(2:K, :);
@@ -69,7 +69,7 @@ i = 1; % The index of the color to change
 %% Here we transfer the Luminance first in the Palette
 oldPalette = palette;
 delta = palette(i, 1) - newLAB(1);
-oldLAB = palette(i);
+oldPaletteLAB = palette(i, :);
 
 % Update the palette's color
 for j=1:P
@@ -87,7 +87,8 @@ palette(i, 1) = newLAB(1);
 palette(i, 2) = newLAB(2);
 palette(i, 3) = newLAB(3);
 
-diff = palette - oldPalette;
+newPaletteLAB = palette(i, :);
+diff = newPaletteLAB - oldPaletteLAB;
 
 rgbPalette = lab2rgb(palette)*255;
 % To be in boundaries
@@ -114,8 +115,8 @@ end
 %% Now we transfer to every pixel
 % We go on the picture to apply the transfer
 image = zeros(nrows, ncols, 3);
-Cb = findBoundary2(oldPalette(i, :), diff, 0, 5);
-C_rate = labDistance(oldPalette(i,:), palette(i,:)) / labDistance(oldPalette(i, :), Cb);
+Cb = findBoundary2(oldPaletteLAB, oldPaletteLAB + 5 * diff);
+C_rate = labDistance(oldPaletteLAB, newPaletteLAB) / labDistance(oldPaletteLAB, Cb);
 
 
 
@@ -142,21 +143,49 @@ grid_img = ([g2(:), g0(:), g1(:)] - 1) / (G - 1);
 gm = gm2(:) * G_2 + gm0(:) * G + gm1(:) + 1;
 grid_lab = rgb2lab(grid_img);
 
-ngm = size(gm, 1);
-for iter = 1:ngm
-    iter
-    index = gm(iter);
-    Lab = grid_lab(index, :);
-    if Lab == oldLAB
-        Lab = newLab;
-    else
-        xb = findBoundary2(Lab, diff, 0, 10);
-        newLab = Lab + (xb - Lab) * C_rate;
-    end
-    rgb = lab2rgb(newLab);
-    rgb = min(1, max(0, rgb));
-    grid_img(index, :) = rgb;
+% ngm = size(gm, 1);
+% for iter = 1:ngm
+%     iter
+%     index = gm(iter);
+%     Lab = grid_lab(index, :);
+%     if Lab == oldPaletteLAB
+%         newLab = newPaletteLAB;
+%     else
+%         xb = findBoundary2(Lab, diff, 0, 10);
+%         newLab = Lab + (xb - Lab) * C_rate;
+%     end
+%     rgb = lab2rgb(newLab);
+%     rgb = min(1, max(0, rgb));
+%     grid_img(index, :) = rgb;
+% end
+
+select_old = (grid_lab == oldPaletteLAB);
+select_old = select_old(:, 1);
+if size(find(select_old), 1) > 0
+    grid_img(select_old, :) = zeros(size(find(select_old), 1), 3) + lab2rgb(newPaletteLAB);
 end
+select_new = find(~select_old);
+grid_new = grid_lab(select_new, :);
+
+grid_new_l = grid_new;
+grid_new_r = grid_new_l + 10 * diff;
+while size(find(outBoundaryArray(grid_new_r)), 1) < size(grid_new_r, 1)
+    grid_new_r = grid_new_r + 10 * diff;
+end
+
+one_diff_out = outBoundaryArray(grid_new + diff);
+grid_new_l(one_diff_out, :) = repmat(newPaletteLAB, size(find(one_diff_out), 1), 1);
+grid_new_r(one_diff_out, :) = grid_new(one_diff_out, :) + diff;
+
+grid_new_l = findBoundary2(grid_new_l, grid_new_r)
+
+% grid_new_res = grid_new + (grid_new_l - grid_new) * C_rate;
+grid_new_res = findNewColor(grid_new, grid_new_l, C_rate);
+
+grid_new_res = lab2rgb(grid_new_res);
+grid_new_res = min(1, max(0, grid_new_res));
+
+grid_img(select_new, :) = grid_new_res;
 
 [nei0, nei1, nei2] = meshgrid(0:1, 0:1, 0:1);
 neighbor_color = [nei2(:), nei0(:), nei1(:)];
@@ -164,7 +193,7 @@ neighbor_color = [nei2(:), nei0(:), nei1(:)];
 for iter=1:nrows * ncols
     w = pairs(iter, 1);
     h = pairs(iter, 2);
-    if h == 1
+    if h == 1 && mod(w, 10) == 0
         [w, nrows, ncols]
     end
     orgb = double(reshape(img(w, h, :), 1, 3)) / 255;
@@ -182,33 +211,6 @@ for iter=1:nrows * ncols
     image(w, h, :) = reshape(rgb, 1, 1, 3);
 end
 
-% stop
-% 
-% 
-% for iter=1:nrows * ncols
-%     w = pairs(iter, 1);
-%     h = pairs(iter, 2);
-%     if h == 1
-%         [w, nrows, ncols]
-%     end
-%     Lab = reshape(lab_img(w, h, :), 1, 3);
-%     
-%     if Lab == oldLAB
-%         Lab = newLab;
-%     else
-%         xb = findBoundary2(Lab, diff, 0, 10);
-%         Lab = Lab + (xb - Lab) * C_rate;
-%     end
-% 
-%     rgb = lab2rgb(Lab);
-%     rgb = min(1, max(0, rgb));
-%     
-%     image(w, h, :) = reshape(rgb, 1, 1, 3);
-%         
-% end
-
-
-
 figure(4)
 imshow(image)
 
@@ -216,6 +218,4 @@ imshow(image)
 function [ inter ] = interpolate( l, r, factor)
     inter = l * factor + r * (1-factor);
 end
-
-
 
