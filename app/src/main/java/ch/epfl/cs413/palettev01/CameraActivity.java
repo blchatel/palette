@@ -119,8 +119,9 @@ public class CameraActivity extends AppCompatActivity {
 
                     int color = mPicture.getColor(touchX, touchY);
 
-                    if (color != Color.BLACK)
+                    if (color != Color.TRANSPARENT)
                         a.setColor(color);
+
                     return true;
                 }
                 return false;
@@ -199,9 +200,15 @@ public class CameraActivity extends AppCompatActivity {
 
             case R.id.open_gallery_item:
 
-                selectPicture();
-                return true;
+                if(!mPicture.isFileNull()) {
+                    selectPicture();
+                    return true;
+                }
+                return false;
 
+            case R.id.black_and_white:
+                mPicture.transformBlackAndWhite(mView);
+                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -228,8 +235,10 @@ public class CameraActivity extends AppCompatActivity {
         // if results comes from the camera activity
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
 
+            //TODO not working as expected. GALLERY RESULT WORKS
             galleryAddPic();
             mPicture.setPicture(mView);
+
         }
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
 
@@ -247,8 +256,6 @@ public class CameraActivity extends AppCompatActivity {
             mPicture.setPicture(mView);
         }
     }
-
-
 
 
     /**

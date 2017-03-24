@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
-import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -166,7 +165,6 @@ public class PaletteBitmap {
      */
     public void setPicture(Miniature v) {
 
-
         // Free the data of the last picture
         recycle();
 
@@ -222,11 +220,10 @@ public class PaletteBitmap {
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
-
     /**
      * Get the color of the (x, y) pixel
-     * @param x
-     * @param y
+     * @param miniatureX
+     * @param miniatureY
      * @return the color integer
      */
     public int getColor(int miniatureX, int miniatureY){
@@ -236,14 +233,34 @@ public class PaletteBitmap {
             int y = (int)(miniatureY - 0.5*(height -scaled.getHeight()));
 
             if(x < 0 || y < 0 || x >= scaled.getWidth() || y >= scaled.getHeight())
-                return Color.BLACK;
+                return Color.TRANSPARENT;
             else {
                 return scaled.getPixel(x, y);
             }
         }
         catch(Exception e){
-            return Color.BLACK;
+            return Color.TRANSPARENT;
         }
+    }
+
+    public void transformBlackAndWhite(Miniature v){
+
+        for(int x = 0; x < scaled.getWidth(); x++){
+            for(int y = 0; y < scaled.getHeight(); y++) {
+
+                int pixel = scaled.getPixel(x, y);
+
+                // Black = -16777216
+                // white = -1
+                if(pixel > -8388608){
+                    scaled.setPixel(x, y, Color.WHITE);
+                }else{
+                    scaled.setPixel(x, y, Color.BLACK);
+                }
+            }
+        }
+
+        v.setImageBitmap(scaled);
     }
 
 }

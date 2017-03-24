@@ -11,6 +11,10 @@ tools:context="ch.epfl.cs413.palettev01.MainActivity" >
     android:icon="@android:drawable/ic_menu_camera"
     android:id="@+id/open_gallery_item">
 </item>
+<item android:title="Black and White"
+    android:icon="@android:drawable/ic_menu_camera"
+    android:id="@+id/black_and_white">
+</item>
 <item android:id="@+id/action_settings"
     android:title="@string/action_settings"
     android:orderInCategory="100"
