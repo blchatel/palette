@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -245,6 +246,11 @@ public class PaletteBitmap {
 
     public void transformBlackAndWhite(Miniature v){
 
+        Log.d("BW", ""+bitmap.getWidth());
+        Log.d("BH", ""+bitmap.getHeight());
+        Log.d("H", ""+scaled.getHeight());
+        Log.d("W", ""+scaled.getWidth());
+
         for(int x = 0; x < scaled.getWidth(); x++){
             for(int y = 0; y < scaled.getHeight(); y++) {
 
@@ -262,6 +268,17 @@ public class PaletteBitmap {
 
         v.setImageBitmap(scaled);
     }
+
+    public void myFunction(Miniature v){
+
+
+        //apply everything you want on scaled bitmap
+
+
+        //apply the resulting scaled to view
+        v.setImageBitmap(scaled);
+    }
+
 
 }
 

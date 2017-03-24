@@ -193,6 +193,9 @@ public class CameraActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
 
+            case R.id.my_function:
+                mPicture.myFunction(mView);
+
             case R.id.open_camera_item:
 
                 takePicture();
