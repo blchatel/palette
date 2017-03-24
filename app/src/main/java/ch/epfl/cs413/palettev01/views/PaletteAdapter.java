@@ -96,9 +96,13 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
 
-
-
-
+    /**
+     * Test if a box is selected
+     * @return boolean
+     */
+    public boolean isBoxSelected() {
+        return selectedBox > -1;
+    }
 
     @Override
     public int getCount() {

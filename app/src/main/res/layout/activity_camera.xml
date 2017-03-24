@@ -14,53 +14,60 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:minHeight="159dp"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         tools:context="ch.epfl.cs413.palettev01.MainActivity"
         tools:showIn="@layout/activity_main">
 
-        <ch.epfl.cs413.palettev01.views.Miniature
-            android:id="@+id/MAIN_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="?attr/actionBarSize"
-            android:layout_weight="0"
-            android:baselineAlignBottom="false"
-            android:clickable="false"
-            android:keepScreenOn="true"
-            android:scaleType="centerInside"
-            tools:layout_editor_absoluteX="8dp"
-            tools:layout_editor_absoluteY="8dp" />
 
-        <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:gravity="center|bottom"
+        <LinearLayout
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="0.2"
             android:orientation="vertical">
 
+                <Switch
+                    android:id="@+id/switch1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center" />
 
-            <ch.epfl.cs413.palettev01.views.Palette
-                android:id="@+id/MAIN_paletteGrid"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal|center"
-                android:layout_marginBottom="@android:dimen/notification_large_icon_height"
-                android:animationCache="false"
-                android:columnWidth="90dp"
-                android:horizontalSpacing="10dp"
-                android:numColumns="auto_fit"
-                android:stretchMode="columnWidth"
-                android:verticalSpacing="10dp">
-                <!--TODO: Create the element ColorBox to print a color in a small box.-->
-                <!--TODO: Each ColorBox should be clickable and should open a dialog color picker when clicked-->
-            </ch.epfl.cs413.palettev01.views.Palette>
 
-            <Switch
-                android:id="@+id/switch1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Select / Transform" />
+                <ch.epfl.cs413.palettev01.views.Palette
+                    android:id="@+id/MAIN_paletteGrid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal|center"
+                    android:layout_marginBottom="@android:dimen/notification_large_icon_height"
+                    android:animationCache="false"
+                    android:columnWidth="90dp"
+                    android:horizontalSpacing="10dp"
+                    android:numColumns="auto_fit"
+                    android:stretchMode="columnWidth"
+                    android:verticalSpacing="10dp"
+                    >
+                    <!--TODO: Create the element ColorBox to print a color in a small box.-->
+                    <!--TODO: Each ColorBox should be clickable and should open a dialog color picker when clicked-->
+                </ch.epfl.cs413.palettev01.views.Palette>
 
         </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dip"
+            android:layout_height="fill_parent"
+            android:layout_weight="0.8">
+
+            <ch.epfl.cs413.palettev01.views.Miniature
+                android:id="@+id/MAIN_image"
+                android:layout_width="0dip"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_horizontal|end"
+                android:layout_weight="0.8"
+                android:baselineAlignBottom="false"
+                android:clickable="false"
+                android:keepScreenOn="true"
+                tools:layout_editor_absoluteX="8dp"
+                tools:layout_editor_absoluteY="8dp" />
+        </LinearLayout>
+
     </LinearLayout>
 </android.support.design.widget.CoordinatorLayout>

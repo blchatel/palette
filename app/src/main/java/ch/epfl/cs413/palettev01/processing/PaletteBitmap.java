@@ -3,6 +3,7 @@ package ch.epfl.cs413.palettev01.processing;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
@@ -157,9 +158,6 @@ public class PaletteBitmap {
         if(scaled != null){
             scaled.recycle();
         }
-
-
-
     }
 
     /**
@@ -177,6 +175,13 @@ public class PaletteBitmap {
         Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath(), bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
+
+        if(photoW > photoH) {
+            bitmap = rotateImage(bitmap, 90);
+            int temp = photoH;
+            photoH = photoW;
+            photoW = temp;
+        }
 
         // Determine how much to scale down the image
         float scaleFactor = Math.max(photoW/(float)width, photoH/(float)height);
@@ -205,10 +210,17 @@ public class PaletteBitmap {
         file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Palette", imageFileName);
     }
 
-
-
-
-
+    /**
+     * Rotate a source bitmap to angle degree
+     * @param source
+     * @param angle
+     * @return
+     */
+    private Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
+    }
 
 
     /**
@@ -217,46 +229,22 @@ public class PaletteBitmap {
      * @param y
      * @return the color integer
      */
-    public int getColor(int x, int y){
+    public int getColor(int miniatureX, int miniatureY){
 
-        Log.d("X", ""+x);
-        Log.d("Y", ""+y);
-        Log.d("BitX", ""+bitmap.getWidth());
-        Log.d("BitY", ""+bitmap.getHeight());
         try {
-            int color = bitmap.getPixel(x, y);
-            return color;
+            int x = (int)(miniatureX - 0.5*(width -scaled.getWidth()));
+            int y = (int)(miniatureY - 0.5*(height -scaled.getHeight()));
+
+            if(x < 0 || y < 0 || x >= scaled.getWidth() || y >= scaled.getHeight())
+                return Color.BLACK;
+            else {
+                return scaled.getPixel(x, y);
+            }
         }
         catch(Exception e){
             return Color.BLACK;
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }
 

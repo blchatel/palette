@@ -3,8 +3,7 @@ package ch.epfl.cs413.palettev01;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,7 +15,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 
 import java.io.IOException;
 
@@ -109,29 +107,23 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                int[] viewCorrs = new int[2];
-                //x = 0; y = 213
-                mView.getLocationOnScreen(viewCorrs);
+                PaletteAdapter a = ((PaletteAdapter) palette.getAdapter());
 
-                int touchX = (int) event.getX();
-                int touchY = (int) event.getY();
+                if(!mPicture.isFileNull() && a.isBoxSelected()) {
+                    int[] viewCorrs = new int[2];
+                    //x = 0; y = 213
+                    mView.getLocationOnScreen(viewCorrs);
 
-                int imageX = touchX;//- viewCorrs[0]; // viewCoords[0] is the X coordinate
-                int imageY = touchY;//- viewCorrs[1]; // viewCoords[1] is the y coordinate
+                    int touchX = (int) event.getX();
+                    int touchY = (int) event.getY();
 
-                ImageView imageView = ((ImageView) v);
-                Bitmap bitmap = ((BitmapDrawable) imageView.getDrawable()).getBitmap();
-                //Bitmap
-                //1330 x 884
+                    int color = mPicture.getColor(touchX, touchY);
 
-                //MVIEW
-                //1080 x 942
-
-                //  Picture
-                //760 x 505
-
-//                ((PaletteAdapter) palette.getAdapter()).setColor(bitmap.getPixel(imageX, imageY));
-                return true;
+                    if (color != Color.BLACK)
+                        a.setColor(color);
+                    return true;
+                }
+                return false;
             }
         });
 
