@@ -1,7 +1,10 @@
 package ch.epfl.cs413.palettev01;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -26,6 +29,10 @@ import yuku.ambilwarna.AmbilWarnaDialog;
 
 
 public class CameraActivity extends AppCompatActivity {
+
+    private static final int CAMERA_REQUEST_CODE = 2002;
+    private static final int GALLERY_REQUEST_CODE = 2003;
+
 
     private static final int CAMERA_RESULT = 9;
     private static final int GALLERY_RESULT = 8;
@@ -186,6 +193,7 @@ public class CameraActivity extends AppCompatActivity {
      * @param item
      * @return
      */
+    @TargetApi(23)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -198,20 +206,35 @@ public class CameraActivity extends AppCompatActivity {
 
             case R.id.open_camera_item:
 
+//                // Add permission granting for CAMERA and GALLERY:
+//                if (checkSelfPermission(Manifest.permission.CAMERA)
+//                        != PackageManager.PERMISSION_GRANTED) {
+//
+//                    requestPermissions(new String[]{Manifest.permission.CAMERA},
+//                            CAMERA_REQUEST_CODE);
+//                }
+//                // Add permission granting for CAMERA and GALLERY:
+//                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+//                        != PackageManager.PERMISSION_GRANTED) {
+//
+//                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+//                            GALLERY_REQUEST_CODE);
+//                }
+
                 takePicture();
                 return true;
 
             case R.id.open_gallery_item:
 
+                selectPicture();
+                return true;
+
+            case R.id.black_and_white:
                 if(!mPicture.isFileNull()) {
-                    selectPicture();
+                    mPicture.transformBlackAndWhite(mView);
                     return true;
                 }
                 return false;
-
-            case R.id.black_and_white:
-                mPicture.transformBlackAndWhite(mView);
-                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
