@@ -5,11 +5,14 @@ xmlns:tools="http://schemas.android.com/tools"
 tools:context="ch.epfl.cs413.palettev01.MainActivity" >
 <item android:title="Camera"
     android:icon="@android:drawable/ic_menu_camera"
-    android:id="@+id/open_camera_item">
+    android:id="@+id/open_camera_item"
+    app:showAsAction="always">
 </item>
 <item android:title="Gallery"
-    android:icon="@android:drawable/ic_menu_camera"
-    android:id="@+id/open_gallery_item">
+    android:icon="@android:drawable/ic_menu_gallery"
+    android:id="@+id/open_gallery_item"
+    android:visible="true"
+    app:showAsAction="always">
 </item>
 <item android:title="Black and White"
     android:icon="@android:drawable/ic_menu_camera"
