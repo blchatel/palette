@@ -14,8 +14,8 @@
         android:minHeight="159dp"
         android:orientation="horizontal"
         android:baselineAligned="false"
-        tools:context="ch.epfl.cs413.palettev01.MainActivity"
-        tools:showIn="@layout/activity_main">
+        tools:context="ch.epfl.cs413.palettev01.CameraActivity"
+        tools:showIn="@layout/activity_camera">
 
 
         <LinearLayout

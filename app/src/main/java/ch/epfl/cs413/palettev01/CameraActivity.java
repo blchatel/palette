@@ -31,7 +31,8 @@ import yuku.ambilwarna.AmbilWarnaDialog;
 public class CameraActivity extends AppCompatActivity {
 
     private static final int CAMERA_REQUEST_CODE = 2002;
-    private static final int GALLERY_REQUEST_CODE = 2003;
+    private static final int GALLERY_REQUEST_CODE_READ = 2003;
+    private static final int GALLERY_REQUEST_CODE_WRITE = 2004;
 
 
     private static final int CAMERA_RESULT = 9;
@@ -143,7 +144,7 @@ public class CameraActivity extends AppCompatActivity {
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         if (savedInstanceState != null) {
-            mPicture.restaureFile(savedInstanceState.getString("FILE_KEY"));
+            mPicture.restoreFile(savedInstanceState.getString("FILE_KEY"));
 
             mPicture.setHeight(savedInstanceState.getInt("HEIGHT_KEY"));
             mPicture.setWidth(savedInstanceState.getInt("WIDTH_KEY"));
@@ -188,12 +189,42 @@ public class CameraActivity extends AppCompatActivity {
         return true;
     }
 
+    @TargetApi(23)
+    private void requestPermissions (int permission) {
+        if (permission == GALLERY_REQUEST_CODE_WRITE) {
+            // Add permission granting for GALLERY:
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        GALLERY_REQUEST_CODE_WRITE);
+            }
+        }
+        if (permission == GALLERY_REQUEST_CODE_READ) {
+            // Add permission granting for GALLERY:
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
+                        GALLERY_REQUEST_CODE_READ);
+            }
+        }
+        if (permission == CAMERA_REQUEST_CODE) {
+            // Add permission granting for CAMERA:
+            if (checkSelfPermission(Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+
+                requestPermissions(new String[]{Manifest.permission.CAMERA},
+                        CAMERA_REQUEST_CODE);
+            }
+        }
+    }
+
     /**
      *
      * @param item
      * @return
      */
-    @TargetApi(23)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
@@ -205,27 +236,13 @@ public class CameraActivity extends AppCompatActivity {
                 mPicture.myFunction(mView);
 
             case R.id.open_camera_item:
-
-//                // Add permission granting for CAMERA and GALLERY:
-//                if (checkSelfPermission(Manifest.permission.CAMERA)
-//                        != PackageManager.PERMISSION_GRANTED) {
-//
-//                    requestPermissions(new String[]{Manifest.permission.CAMERA},
-//                            CAMERA_REQUEST_CODE);
-//                }
-//                // Add permission granting for CAMERA and GALLERY:
-//                if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-//                        != PackageManager.PERMISSION_GRANTED) {
-//
-//                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-//                            GALLERY_REQUEST_CODE);
-//                }
-
+                requestPermissions(CAMERA_REQUEST_CODE);
+                requestPermissions(GALLERY_REQUEST_CODE_WRITE);
                 takePicture();
                 return true;
 
             case R.id.open_gallery_item:
-
+                requestPermissions(GALLERY_REQUEST_CODE_READ);
                 selectPicture();
                 return true;
 
@@ -254,30 +271,31 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-        super.onActivityResult(requestCode, resultCode, data);
-
+//        super.onActivityResult(requestCode, resultCode, data);
         Log.e( "EUREKA", "ON RESULT" );
 
         // if results comes from the camera activity
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
-
             //TODO not working as expected. GALLERY RESULT WORKS
             galleryAddPic();
             mPicture.setPicture(mView);
-
         }
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
 
-            Uri selectedImage = data.getData();
+            Uri selectedImage = data == null ? null:data.getData();
+            Log.d("<<GALLERY>>", "Selecteed image is : " + selectedImage);
             String[] filePath = { MediaStore.Images.Media.DATA };
             Cursor c = getContentResolver().query(selectedImage, filePath,
                     null, null, null);
+            Log.d("<<GALLERY>>", "Cursor value is : " + c.toString());
             c.moveToFirst();
             int columnIndex = c.getColumnIndex(filePath[0]);
             String selectedImagePath = c.getString(columnIndex);
             c.close();
 
-            mPicture.restaureFile(selectedImagePath);
+            Log.d("<<GALLERY>>", "Using gallery for file in " + selectedImagePath);
+
+            mPicture.restoreFile(selectedImagePath);
 
             mPicture.setPicture(mView);
         }

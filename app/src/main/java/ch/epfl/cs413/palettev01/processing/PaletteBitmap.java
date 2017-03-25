@@ -76,10 +76,11 @@ public class PaletteBitmap {
     }
 
     /**
-     * Setter for the file. This function is more meaningful with restaure name
+     * Setter for the file. This function is more meaningful with restore name
      * @param file
      */
-    public void restaureFile(String file){
+    public void restoreFile(String file){
+        Log.d("PaletteBitmap <<<<", file + " and null ? " + isFileNull());
         this.file = new File(file);
     }
 
@@ -206,7 +207,13 @@ public class PaletteBitmap {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + ".jpg";
 
-        file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/Palette", imageFileName);
+        try {
+            file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Palette", imageFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Log.d("<<ERROR>>", "File creation is not working.. PaletteBitmap_L214");
+        }
+
     }
 
     /**
