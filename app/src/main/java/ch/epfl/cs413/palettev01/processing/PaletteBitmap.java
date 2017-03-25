@@ -202,18 +202,23 @@ public class PaletteBitmap {
      * Prepare a file (.jpg) where to save a new image file (i.e. a camera file)
      * @throws IOException
      */
-    public void prepareImageFile() throws IOException {
+    public Uri prepareImageFile() throws IOException {
         // Create an image file name
+        final File root = new File(Environment.getExternalStorageDirectory() + File.separator + "palette" + File.separator);
+        root.mkdirs();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + ".jpg";
+//        final File sdImageMainDirectory = new File(root, imageFileName);
 
         try {
-            file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Palette", imageFileName);
+//            file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Palette", imageFileName);
+            file = new File(root, imageFileName);
         } catch (Exception e) {
             e.printStackTrace();
             Log.d("<<ERROR>>", "File creation is not working.. PaletteBitmap_L214");
         }
 
+        return Uri.fromFile(file);
     }
 
     /**

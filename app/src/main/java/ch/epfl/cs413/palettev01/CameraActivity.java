@@ -3,13 +3,19 @@ package ch.epfl.cs413.palettev01;
 import android.Manifest;
 import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
+import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -19,6 +25,7 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 
+import java.io.File;
 import java.io.IOException;
 
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
@@ -29,11 +36,6 @@ import yuku.ambilwarna.AmbilWarnaDialog;
 
 
 public class CameraActivity extends AppCompatActivity {
-
-    private static final int CAMERA_REQUEST_CODE = 2002;
-    private static final int GALLERY_REQUEST_CODE_READ = 2003;
-    private static final int GALLERY_REQUEST_CODE_WRITE = 2004;
-
 
     private static final int CAMERA_RESULT = 9;
     private static final int GALLERY_RESULT = 8;
@@ -153,7 +155,6 @@ public class CameraActivity extends AppCompatActivity {
 
     }
 
-
     /**
      * invoked when the activity may be temporarily destroyed, save the instance state here
      * @param outState
@@ -189,37 +190,6 @@ public class CameraActivity extends AppCompatActivity {
         return true;
     }
 
-    @TargetApi(23)
-    private void requestPermissions (int permission) {
-        if (permission == GALLERY_REQUEST_CODE_WRITE) {
-            // Add permission granting for GALLERY:
-            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                        GALLERY_REQUEST_CODE_WRITE);
-            }
-        }
-        if (permission == GALLERY_REQUEST_CODE_READ) {
-            // Add permission granting for GALLERY:
-            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                        GALLERY_REQUEST_CODE_READ);
-            }
-        }
-        if (permission == CAMERA_REQUEST_CODE) {
-            // Add permission granting for CAMERA:
-            if (checkSelfPermission(Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED) {
-
-                requestPermissions(new String[]{Manifest.permission.CAMERA},
-                        CAMERA_REQUEST_CODE);
-            }
-        }
-    }
-
     /**
      *
      * @param item
@@ -236,13 +206,10 @@ public class CameraActivity extends AppCompatActivity {
                 mPicture.myFunction(mView);
 
             case R.id.open_camera_item:
-                requestPermissions(CAMERA_REQUEST_CODE);
-                requestPermissions(GALLERY_REQUEST_CODE_WRITE);
                 takePicture();
                 return true;
 
             case R.id.open_gallery_item:
-                requestPermissions(GALLERY_REQUEST_CODE_READ);
                 selectPicture();
                 return true;
 
@@ -283,15 +250,17 @@ public class CameraActivity extends AppCompatActivity {
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
 
             Uri selectedImage = data == null ? null:data.getData();
-            Log.d("<<GALLERY>>", "Selecteed image is : " + selectedImage);
-            String[] filePath = { MediaStore.Images.Media.DATA };
-            Cursor c = getContentResolver().query(selectedImage, filePath,
-                    null, null, null);
-            Log.d("<<GALLERY>>", "Cursor value is : " + c.toString());
-            c.moveToFirst();
-            int columnIndex = c.getColumnIndex(filePath[0]);
-            String selectedImagePath = c.getString(columnIndex);
-            c.close();
+//            Log.d("<<GALLERY>>", "Selected image is : " + selectedImage);
+//            String[] filePath = { MediaStore.Images.Media.DATA };
+//            Cursor c = getContentResolver().query(selectedImage, filePath,
+//                    null, null, null);
+//            Log.d("<<GALLERY>>", "Cursor value is : " + c.toString());
+//            int columnIndex = c.getColumnIndex(filePath[0]);
+//            c.moveToFirst();
+//            String selectedImagePath = c.getString(columnIndex);
+//            c.close();
+
+            String selectedImagePath = getPath(this, selectedImage);
 
             Log.d("<<GALLERY>>", "Using gallery for file in " + selectedImagePath);
 
@@ -325,6 +294,7 @@ public class CameraActivity extends AppCompatActivity {
             if (!mPicture.isFileNull()) {
                 Uri photoUri = mPicture.getUri();
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+                Log.d("<<takePicture>>", "photo uri is " + photoUri);
                 startActivityForResult(takePictureIntent, CAMERA_RESULT);
             }else{
                 Log.d("ERROR file null", "ERROR - File file is null");
@@ -344,9 +314,16 @@ public class CameraActivity extends AppCompatActivity {
         mPicture.setFileToNull();
 
         try {
-            Intent intent = new Intent( Intent.ACTION_GET_CONTENT );
-            intent.setType("image/*");
-            startActivityForResult(intent, GALLERY_RESULT);
+            if (Build.VERSION.SDK_INT < 19) {
+                Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+                intent.setType("image/*");
+                startActivityForResult(intent, GALLERY_RESULT);
+            } else {
+                Intent intent = new Intent( Intent.ACTION_OPEN_DOCUMENT );
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("image/*");
+                startActivityForResult(intent, GALLERY_RESULT);
+            }
         } catch (ActivityNotFoundException e) {
             Log.e("OpenImage ERROR", "No gallery: " + e);
         }
@@ -365,6 +342,150 @@ public class CameraActivity extends AppCompatActivity {
         mediaScanIntent.setData(contentUri);
 
         this.sendBroadcast(mediaScanIntent);
+    }
+
+
+
+    /**
+     * Get a file path from a Uri. This will get the the path for Storage Access
+     * Framework Documents, as well as the _data field for the MediaStore and
+     * other file-based ContentProviders.
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     * @author paulburke
+     */
+    public static String getPath(final Context context, final Uri uri) {
+
+        final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
+
+        // DocumentProvider
+        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
+            // ExternalStorageProvider
+            if (isExternalStorageDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                if ("primary".equalsIgnoreCase(type)) {
+                    return Environment.getExternalStorageDirectory() + "/" + split[1];
+                }
+
+                // TODO handle non-primary volumes
+            }
+            // DownloadsProvider
+            else if (isDownloadsDocument(uri)) {
+
+                final String id = DocumentsContract.getDocumentId(uri);
+                final Uri contentUri = ContentUris.withAppendedId(
+                        Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+
+                return getDataColumn(context, contentUri, null, null);
+            }
+            // MediaProvider
+            else if (isMediaDocument(uri)) {
+                final String docId = DocumentsContract.getDocumentId(uri);
+                final String[] split = docId.split(":");
+                final String type = split[0];
+
+                Uri contentUri = null;
+                if ("image".equals(type)) {
+                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                } else if ("video".equals(type)) {
+                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+                } else if ("audio".equals(type)) {
+                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+                }
+
+                final String selection = "_id=?";
+                final String[] selectionArgs = new String[] {
+                        split[1]
+                };
+
+                return getDataColumn(context, contentUri, selection, selectionArgs);
+            }
+        }
+        // MediaStore (and general)
+        else if ("content".equalsIgnoreCase(uri.getScheme())) {
+
+            // Return the remote address
+            if (isGooglePhotosUri(uri))
+                return uri.getLastPathSegment();
+
+            return getDataColumn(context, uri, null, null);
+        }
+        // File
+        else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            return uri.getPath();
+        }
+
+        return null;
+    }
+
+    /**
+     * Get the value of the data column for this Uri. This is useful for
+     * MediaStore Uris, and other file-based ContentProviders.
+     *
+     * @param context The context.
+     * @param uri The Uri to query.
+     * @param selection (Optional) Filter used in the query.
+     * @param selectionArgs (Optional) Selection arguments used in the query.
+     * @return The value of the _data column, which is typically a file path.
+     */
+    public static String getDataColumn(Context context, Uri uri, String selection,
+                                       String[] selectionArgs) {
+
+        Cursor cursor = null;
+        final String column = "_data";
+        final String[] projection = {
+                column
+        };
+
+        try {
+            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
+                    null);
+            if (cursor != null && cursor.moveToFirst()) {
+                final int index = cursor.getColumnIndexOrThrow(column);
+                return cursor.getString(index);
+            }
+        } finally {
+            if (cursor != null)
+                cursor.close();
+        }
+        return null;
+    }
+
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is ExternalStorageProvider.
+     */
+    public static boolean isExternalStorageDocument(Uri uri) {
+        return "com.android.externalstorage.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is DownloadsProvider.
+     */
+    public static boolean isDownloadsDocument(Uri uri) {
+        return "com.android.providers.downloads.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is MediaProvider.
+     */
+    public static boolean isMediaDocument(Uri uri) {
+        return "com.android.providers.media.documents".equals(uri.getAuthority());
+    }
+
+    /**
+     * @param uri The Uri to check.
+     * @return Whether the Uri authority is Google Photos.
+     */
+    public static boolean isGooglePhotosUri(Uri uri) {
+        return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
 
 
