@@ -22,6 +22,9 @@ tools:context="ch.epfl.cs413.palettev01.MainActivity" >
     android:icon="@android:drawable/ic_menu_camera"
     android:id="@+id/my_function">
 </item>
+<item android:title="Extract Palette"
+    android:id="@+id/extract_palette">
+</item>
 <item android:id="@+id/action_settings"
     android:title="@string/action_settings"
     android:orderInCategory="100"

@@ -97,7 +97,7 @@ public class CameraActivity extends AppCompatActivity {
 
                             @Override
                             public void onOk(AmbilWarnaDialog dialog, int color) {
-                                // color is the color selected by the user.
+                                // color is the color selected by the user
                                 ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
                             }
 
@@ -216,6 +216,13 @@ public class CameraActivity extends AppCompatActivity {
             case R.id.black_and_white:
                 if(!mPicture.isFileNull()) {
                     mPicture.transformBlackAndWhite(mView);
+                    return true;
+                }
+                return false;
+
+            case R.id.extract_palette:
+                if(!mPicture.isFileNull()) {
+                    mPicture.extractPalette(palette);
                     return true;
                 }
                 return false;
@@ -353,7 +360,6 @@ public class CameraActivity extends AppCompatActivity {
      *
      * @param context The context.
      * @param uri The Uri to query.
-     * @author paulburke
      */
     public static String getPath(final Context context, final Uri uri) {
 

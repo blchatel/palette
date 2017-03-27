@@ -12,7 +12,6 @@ public class Miniature extends AppCompatImageView {
 
 
 
-
     public Miniature(Context context) {
         super(context);
     }
@@ -25,10 +24,6 @@ public class Miniature extends AppCompatImageView {
         super(context, attrs, defStyle);
 
     }
-
-
-
-
 
 
 }

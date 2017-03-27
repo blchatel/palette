@@ -6,14 +6,18 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import ch.epfl.cs413.palettev01.views.Miniature;
+import ch.epfl.cs413.palettev01.views.Palette;
+import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 
 /**
  * Created by bastien on 21.03.17.
@@ -283,14 +287,23 @@ public class PaletteBitmap {
 
     public void myFunction(Miniature v){
 
-
         //apply everything you want on scaled bitmap
-
 
         //apply the resulting scaled to view
         v.setImageBitmap(scaled);
     }
 
 
+    public void extractPalette(Palette palette) {
+        int paletteSize = 5;
+        Kmeans kmeans = new Kmeans(paletteSize, scaled);
+        List<LabColor> paletteColors = kmeans.run();
+        Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
+        for (int i = 0; i < paletteColors.size(); i++) {
+            LabColor Lab = paletteColors.get(i);
+            ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
+            Log.d("<PaletteBitmap>", "Color " + i + " is " + paletteColors.get(i));
+        }
+    }
 }
 
