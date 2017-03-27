@@ -68,7 +68,7 @@ public class Kmeans {
      * The structure to store the bins values
      */
     private class Bins {
-        Map<BinsTriplet, RGBColor> bins;
+        Map<BinsTriplet, Pair<LabColor, Integer>> bins;
 
         Bins(Map<BinsTriplet, List<RGBColor>> binPixelMap) {
             bins = new HashMap<>();
@@ -78,25 +78,30 @@ public class Kmeans {
         private void createBins(Map<BinsTriplet, List<RGBColor>> binPixelMap) {
             for (Map.Entry<BinsTriplet, List<RGBColor>> entry: binPixelMap.entrySet()) {
                 // Compute mean for each triplet
-                RGBColor c = new RGBColor(0,0,0);
-                for (int i=0; i < entry.getValue().size(); i++) {
-                    c.add(entry.getValue().get(i));
+                int count = entry.getValue().size();
+                LabColor c = new LabColor(0,0,0);
+                for (int i=0; i < count; i++) {
+                    RGBColor rgb = entry.getValue().get(i);
+                    // Convert to Lab
+                    double[] Lab = new double[3];
+                    ColorUtils.RGBToLAB(rgb.r, rgb.g, rgb.b, Lab);
+                    c = c.addColor(new LabColor(Lab));
                 }
-                c.divide(entry.getValue().size());
+                c = c.divide(count);
 
 //                // Convert to Lab
 //                double[] Lab = new double[3];
 //                ColorUtils.RGBToLAB(c.r, c.g, c.b, Lab);
                 // Add the bin entry
-                bins.put(entry.getKey(), c);
+                bins.put(entry.getKey(), Pair.create(c, count));
             }
         }
 
-        RGBColor getBinValue(BinsTriplet coord) {
-            return bins.get(coord);
+        LabColor getBinValue(BinsTriplet coord) {
+            return bins.get(coord).first;
         }
 
-        Collection<RGBColor> getAll () {
+        Collection<Pair<LabColor, Integer>> getAll () {
             return bins.values();
         }
 
@@ -105,14 +110,14 @@ public class Kmeans {
          *
          * @return the values separated to permit parallelization
          */
-        public List<Collection<RGBColor>> getAllParallel() {
-            List<RGBColor> binsValues = new ArrayList<>(bins.values());
-            List<Collection<RGBColor>> out = new ArrayList<>();
+        public List<Collection<Pair<LabColor, Integer>>> getAllParallel() {
+            List<Pair<LabColor, Integer>> binsValues = new ArrayList<>(bins.values());
+            List<Collection<Pair<LabColor, Integer>>> out = new ArrayList<>();
             int maxInPool = 500;
             // TODO ? size or values.size ?
             int j = 0;
             while (j < bins.size()) {
-                Collection<RGBColor> partOut = new HashSet<>();
+                Collection<Pair<LabColor, Integer>> partOut = new HashSet<>();
                 for (int i = 0; i < maxInPool && j < bins.size(); i++, j++) {
                     partOut.add(binsValues.get(j));
                 }
@@ -202,24 +207,21 @@ public class Kmeans {
      *
      * @return the assignements
      */
-    private List<Collection<LabColor>> assignToCenters (boolean isParallel) {
+    private List<Collection<Pair<LabColor, Integer>>> assignToCenters (boolean isParallel) {
         long time1 = System.nanoTime();
         if (!isParallel) {
             /// Basic K-means
-            List<Collection<LabColor>> assignments = new ArrayList<>();
+            List<Collection<Pair<LabColor, Integer>>> assignments = new ArrayList<>();
             for (int i = 0; i < K + 1; i++) {
-                assignments.add(new HashSet<LabColor>());
+                assignments.add(new HashSet<Pair<LabColor, Integer>>());
             }
 
-            Collection<RGBColor> binsList = this.bins.getAll();
-            for (RGBColor rgb : binsList) {
-                double [] Lab = new double[3];
-                ColorUtils.RGBToLAB(rgb.r, rgb.g, rgb.b, Lab);
-                LabColor lab = new LabColor(Lab);
-                double minDist = lab.squareDistanceTo(mPaletteClusters.get(0));
+            Collection<Pair<LabColor, Integer>> binsList = this.bins.getAll();
+            for (Pair<LabColor, Integer> lab : binsList) {
+                double minDist = lab.first.squareDistanceTo(mPaletteClusters.get(0));
                 int chosenIndex = 0;
                 for (int i = 1; i < K + 1; i++) {
-                    double next = lab.squareDistanceTo(mPaletteClusters.get(i));
+                    double next = lab.first.squareDistanceTo(mPaletteClusters.get(i));
                     if (next < minDist) {
                         minDist = next;
                         chosenIndex = i;
@@ -238,7 +240,7 @@ public class Kmeans {
             for (int i = 1; i < K + 1; i++) {
                 // We first set it to zero such that it won't affect the division
                 LabColor meanColor = new LabColor(0, 0, 0);
-                for (LabColor c : assignments.get(i)) {
+                for (Pair<LabColor, Integer> c : assignments.get(i)) {
                     meanColor = meanColor.addColor(c);
                 }
                 meanColor = meanColor.divide(assignments.get(i).size());
@@ -256,8 +258,8 @@ public class Kmeans {
             return assignments;
         } else {
             /// Parallel k-means
-            List<Collection<RGBColor>> binsList = this.bins.getAllParallel();
-            List<Collection<LabColor>> assignments = null;
+            List<Collection<Pair<LabColor, Integer>>> binsList = this.bins.getAllParallel();
+            List<Collection<Pair<LabColor, Integer>>> assignments = null;
             try {
                 assignments = parralelizedAssignement(binsList);
 
@@ -323,19 +325,19 @@ public class Kmeans {
      * @throws InterruptedException
      * @throws ExecutionException
      */
-    public int paralellizeMean(List<Collection<LabColor>> inputs) throws InterruptedException, ExecutionException {
+    public int paralellizeMean(List<Collection<Pair<LabColor, Integer>>> inputs) throws InterruptedException, ExecutionException {
 
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService service = Executors.newFixedThreadPool(threads);
 
         List<Pair<Future<LabColor>, Integer>> futures = new ArrayList<>();
         int i = 0;
-        for (final Collection<LabColor> input : inputs) {
+        for (final Collection<Pair<LabColor, Integer>> input : inputs) {
             Callable<LabColor> callable = new Callable<LabColor>() {
                 public LabColor call() throws Exception {
                     LabColor meanColor = new LabColor(0,0,0);
 
-                    for (LabColor c: input) {
+                    for (Pair<LabColor, Integer> c: input) {
                         meanColor = meanColor.addColor(c);
                     }
                     meanColor = meanColor.divide(input.size());
@@ -371,29 +373,25 @@ public class Kmeans {
      * @throws InterruptedException
      * @throws ExecutionException
      */
-    private List<Collection<LabColor>> parralelizedAssignement(List<Collection<RGBColor>> inputs) throws InterruptedException, ExecutionException {
+    private List<Collection<Pair<LabColor, Integer>>> parralelizedAssignement(List<Collection<Pair<LabColor, Integer>>> inputs) throws InterruptedException, ExecutionException {
         int threads = Runtime.getRuntime().availableProcessors();
         ExecutorService service = Executors.newFixedThreadPool(threads);
 
-        List<Future<List<Collection<LabColor>>>> futures = new ArrayList<>();
-        for (final Collection<RGBColor> input: inputs) {
-            Callable<List<Collection<LabColor>>> callable = new Callable<List<Collection<LabColor>>>() {
-                public List<Collection<LabColor>> call() throws Exception {
+        List<Future<List<Collection<Pair<LabColor, Integer>>>>> futures = new ArrayList<>();
+        for (final Collection<Pair<LabColor, Integer>> input: inputs) {
+            Callable<List<Collection<Pair<LabColor, Integer>>>> callable = new Callable<List<Collection<Pair<LabColor, Integer>>>>() {
+                public List<Collection<Pair<LabColor, Integer>>> call() throws Exception {
 
-                    List<Collection<LabColor>> partialAssign = new ArrayList<>();
+                    List<Collection<Pair<LabColor, Integer>>> partialAssign = new ArrayList<>();
                     for (int i = 0; i < K+1; i++) {
-                        partialAssign.add(new HashSet<LabColor>());
+                        partialAssign.add(new HashSet<Pair<LabColor, Integer>>());
                     }
 
-                    for (RGBColor rgb: input) {
-                        double [] Lab = new double[3];
-                        ColorUtils.RGBToLAB(rgb.r, rgb.g, rgb.b, Lab);
-                        LabColor lab = new LabColor(Lab);
-
-                        double minDist = lab.squareDistanceTo(mPaletteClusters.get(0));
+                    for (Pair<LabColor, Integer> lab: input) {
+                        double minDist = lab.first.squareDistanceTo(mPaletteClusters.get(0));
                         int chosenIndex = 0;
                         for (int i = 1; i < K+1; i++) {
-                            double next = lab.squareDistanceTo(mPaletteClusters.get(i));
+                            double next = lab.first.squareDistanceTo(mPaletteClusters.get(i));
                             if (next < minDist) {
                                 minDist = next;
                                 chosenIndex = i;
@@ -412,10 +410,10 @@ public class Kmeans {
         service.shutdown();
 
         // Merge all the futures into one output
-        List<Collection<LabColor>> output = futures.get(0).get();
+        List<Collection<Pair<LabColor, Integer>>> output = futures.get(0).get();
         for (int i = 1; i < futures.size(); i++) {
             int j = 0;
-            for (Collection<LabColor> c : futures.get(i).get()) {
+            for (Collection<Pair<LabColor, Integer>> c : futures.get(i).get()) {
                 output.get(j).addAll(c);
                 j++;
             }

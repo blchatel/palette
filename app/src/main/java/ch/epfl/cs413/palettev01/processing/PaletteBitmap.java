@@ -296,7 +296,8 @@ public class PaletteBitmap {
 
     public void extractPalette(Palette palette) {
         int paletteSize = 5;
-        Kmeans kmeans = new Kmeans(paletteSize, scaled);
+        Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, true);
+        Kmeans kmeans = new Kmeans(paletteSize, smallImage);
         List<LabColor> paletteColors = kmeans.run();
         Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
         for (int i = 0; i < paletteColors.size(); i++) {

@@ -2,6 +2,7 @@ package ch.epfl.cs413.palettev01.processing;
 
 import android.graphics.Color;
 import android.util.Log;
+import android.util.Pair;
 
 import java.util.Random;
 
@@ -107,6 +108,10 @@ class LabColor {
 
     public LabColor addColor(LabColor c) {
         return new LabColor(L+c.L, a+c.a, b+c.b);
+    }
+
+    public LabColor addColor(Pair<LabColor, Integer> pair) {
+        return new LabColor(L+pair.first.L * pair.second, a+pair.first.a * pair.second, b+pair.first.b * pair.second);
     }
 
     public LabColor divide(int div) {
