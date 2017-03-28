@@ -1,7 +1,6 @@
 package ch.epfl.cs413.palettev01.processing;
 
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 import android.util.Pair;
@@ -12,11 +11,15 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
+import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 
 /**
  * Created by joachim on 3/25/17.
@@ -62,6 +65,27 @@ public class Kmeans {
         int l;
         int m;
         int n;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            BinsTriplet triplet = (BinsTriplet) o;
+
+            if (l != triplet.l) return false;
+            if (m != triplet.m) return false;
+            return n == triplet.n;
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = l;
+            result = 31 * result + m;
+            result = 31 * result + n;
+            return result;
+        }
     }
 
     /**
@@ -76,6 +100,14 @@ public class Kmeans {
         }
 
         private void createBins(Map<BinsTriplet, List<RGBColor>> binPixelMap) {
+            // In the same time we take the initial clusters
+            Random r = new Random();
+            int[] indexes = new int[PaletteAdapter.PALETTE_SIZE];
+            for (int i = 0; i < indexes.length; i++) {
+                indexes[i] = r.nextInt(binPixelMap.size());
+            }
+
+            int k = 0;
             for (Map.Entry<BinsTriplet, List<RGBColor>> entry: binPixelMap.entrySet()) {
                 // Compute mean for each triplet
                 int count = entry.getValue().size();
@@ -89,9 +121,17 @@ public class Kmeans {
                 }
                 c = c.divide(count);
 
-//                // Convert to Lab
-//                double[] Lab = new double[3];
-//                ColorUtils.RGBToLAB(c.r, c.g, c.b, Lab);
+                for (int i = 0; i < indexes.length; i++) {
+                    if (indexes[i] == k) {
+                        if (mPaletteClusters.contains(c)) {
+                            mPaletteClusters.add(c.addColor(new LabColor(1.0, 1.0, 1.0)));
+                        } else {
+                            mPaletteClusters.add(c);
+                        }
+                    }
+                }
+
+                k++;
                 // Add the bin entry
                 bins.put(entry.getKey(), Pair.create(c, count));
             }
@@ -164,26 +204,27 @@ public class Kmeans {
      */
     public Kmeans (int k, Bitmap img) {
         this.K = k;
-        mBinPixelsMap = createBinPixelMap(img);
-        Log.d("<Kmeans", "Created bin-pixel map of size : " + mBinPixelsMap.size());
-        this.bins = new Bins(mBinPixelsMap);
-        Log.d("<Kmeans", "Created bins structure containing " + bins.bins.size() + " colors !");
-
-
         /// We first add the black cluster in order to avoid a dark palette
         mPaletteClusters = new ArrayList<>();
         mPaletteClusters.add(new LabColor(0,0,0));
+
+        mBinPixelsMap = createBinPixelMap(img);
+        Log.d("<Kmeans", "Created bin-pixel map of size : " + mBinPixelsMap.size());
+        // This will also init the clusters
+        this.bins = new Bins(mBinPixelsMap);
+        Log.d("<Kmeans", "Created bins structure containing " + bins.bins.size() + " colors !");
+
         moves = 1;
     }
 
     public List<LabColor> run () {
-        initClusters();
+//        initClusters();
         Log.d("<<Kmeans>>", "Centers initialized");
 
         int it = 0;
         while (it < maxIt || moves == 0) {
             moves = 0;
-            assignToCenters(true);
+            assignToCenters(false);
             it++;
             Log.d("<<Kmeans>>", "Kmeans iteration " + it);
         }
@@ -196,6 +237,8 @@ public class Kmeans {
      */
     private void initClusters () {
         for (int i=0; i < K; i++) {
+            Random r = new Random();
+//            r.nextInt()
             mPaletteClusters.add(LabColor.generateRandom());
         }
     }
@@ -240,10 +283,12 @@ public class Kmeans {
             for (int i = 1; i < K + 1; i++) {
                 // We first set it to zero such that it won't affect the division
                 LabColor meanColor = new LabColor(0, 0, 0);
+                int divTot = 0;
                 for (Pair<LabColor, Integer> c : assignments.get(i)) {
                     meanColor = meanColor.addColor(c);
+                    divTot += c.second;
                 }
-                meanColor = meanColor.divide(assignments.get(i).size());
+                meanColor = meanColor.divide(divTot);
 
                 LabColor lastC = mPaletteClusters.get(i);
                 if (lastC != meanColor) {
@@ -335,12 +380,14 @@ public class Kmeans {
         for (final Collection<Pair<LabColor, Integer>> input : inputs) {
             Callable<LabColor> callable = new Callable<LabColor>() {
                 public LabColor call() throws Exception {
+                    int divTot = 0;
                     LabColor meanColor = new LabColor(0,0,0);
 
                     for (Pair<LabColor, Integer> c: input) {
                         meanColor = meanColor.addColor(c);
+                        divTot += c.second;
                     }
-                    meanColor = meanColor.divide(input.size());
+                    meanColor = meanColor.divide(divTot);
 
                     return meanColor;
                 }

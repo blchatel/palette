@@ -8,10 +8,13 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 
+import java.util.List;
+
 import ch.epfl.cs413.palettev01.R;
 
 public class PaletteAdapter extends BaseAdapter{
 
+    public static final int PALETTE_SIZE = 3;
     private Context mContext;
     private int[] colors = new int[7];
     private int selectedBox = -1;
@@ -130,16 +133,17 @@ public class PaletteAdapter extends BaseAdapter{
 
         grid = new View(mContext);
         grid = inflater.inflate(R.layout.color_box, null);
-        TextView textView = (TextView) grid.findViewById(R.id.grid_text);
+//        TextView textView = (TextView) grid.findViewById(R.id.grid_text);
         ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
-        textView.setText("color#"+position);
+//        textView.setText("color#"+position);
         button.setBackgroundColor(colors[position]);
 
-        if(position == selectedBox){
-            textView.setTextColor(Color.RED);
-        }else{
-            textView.setTextColor(Color.BLACK);
-        }
+        //TODO : Find a nicer way without printing colors name
+//        if(position == selectedBox){
+//            textView.setTextColor(Color.RED);
+//        } else {
+//            textView.setTextColor(Color.BLACK);
+//        }
 
         return grid;
     }

@@ -53,6 +53,27 @@ class RGBColor {
         g = g/div;
         b = b/div;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RGBColor rgbColor = (RGBColor) o;
+
+        if (r != rgbColor.r) return false;
+        if (g != rgbColor.g) return false;
+        return b == rgbColor.b;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = r;
+        result = 31 * result + g;
+        result = 31 * result + b;
+        return result;
+    }
 }
 
 class LabColor {
@@ -100,8 +121,8 @@ class LabColor {
         float rL, rA, rB;
         Random r = new Random();
         rL = r.nextFloat() * 100;
-        rA = r.nextFloat() * 200 - 100;
-        rB = r.nextFloat() * 200 - 100;
+        rA = r.nextFloat() * 256 - 128;
+        rB = r.nextFloat() * 256 - 128;
 
         return new LabColor(rL, rA, rB);
     }
@@ -116,5 +137,31 @@ class LabColor {
 
     public LabColor divide(int div) {
         return new LabColor(L/div, a/div, b/div);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        LabColor labColor = (LabColor) o;
+
+        if (Double.compare(labColor.L, L) != 0) return false;
+        if (Double.compare(labColor.a, a) != 0) return false;
+        return Double.compare(labColor.b, b) == 0;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result;
+        long temp;
+        temp = Double.doubleToLongBits(L);
+        result = (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(a);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(b);
+        result = 31 * result + (int) (temp ^ (temp >>> 32));
+        return result;
     }
 }

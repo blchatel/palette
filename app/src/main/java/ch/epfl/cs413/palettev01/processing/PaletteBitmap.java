@@ -12,6 +12,8 @@ import android.util.Log;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -295,15 +297,21 @@ public class PaletteBitmap {
 
 
     public void extractPalette(Palette palette) {
-        int paletteSize = 5;
-        Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, true);
+        int paletteSize = PaletteAdapter.PALETTE_SIZE;
+        Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, false);
         Kmeans kmeans = new Kmeans(paletteSize, smallImage);
         List<LabColor> paletteColors = kmeans.run();
+        Collections.sort(paletteColors, new Comparator<LabColor>() {
+            @Override
+            public int compare(LabColor o1, LabColor o2) {
+                return (o1.L < o2.L) ? 1 : (o1.L > o2.L) ? -1 : 0;
+            }
+        });
         Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
-        for (int i = 0; i < paletteColors.size(); i++) {
+        for (int i = 0; i < paletteSize+1; i++) {
             LabColor Lab = paletteColors.get(i);
+            Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
             ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
-            Log.d("<PaletteBitmap>", "Color " + i + " is " + paletteColors.get(i));
         }
     }
 }

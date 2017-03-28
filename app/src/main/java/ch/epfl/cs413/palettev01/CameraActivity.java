@@ -1,12 +1,9 @@
 package ch.epfl.cs413.palettev01;
 
-import android.Manifest;
-import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -15,7 +12,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -25,7 +21,6 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 
-import java.io.File;
 import java.io.IOException;
 
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
@@ -72,7 +67,7 @@ public class CameraActivity extends AppCompatActivity {
 
         //Pallette
         palette = (Palette) findViewById(R.id.MAIN_paletteGrid);
-        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, 6);
+        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE+1);
         palette.setAdapter(adapter);
         palette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
