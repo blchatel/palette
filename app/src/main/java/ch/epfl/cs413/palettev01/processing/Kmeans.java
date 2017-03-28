@@ -171,7 +171,7 @@ public class Kmeans {
     /**
      * Max iterations number
      */
-    private final int maxIt = 5;
+    private final int maxIt = 15;
 
     /**
      * Simplification of colors to bins

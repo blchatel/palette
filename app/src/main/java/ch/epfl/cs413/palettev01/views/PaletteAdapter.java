@@ -14,7 +14,7 @@ import ch.epfl.cs413.palettev01.R;
 
 public class PaletteAdapter extends BaseAdapter{
 
-    public static final int PALETTE_SIZE = 3;
+    public static final int PALETTE_SIZE = 5;
     private Context mContext;
     private int[] colors = new int[7];
     private int selectedBox = -1;
