@@ -7,6 +7,8 @@ android {
         applicationId "ch.epfl.cs413.palettev01"
         minSdkVersion 21
         targetSdkVersion 21
+        renderscriptTargetApi 21
+        renderscriptSupportModeEnabled true
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"

@@ -198,7 +198,12 @@ public class CameraActivity extends AppCompatActivity {
         switch (item.getItemId()) {
 
             case R.id.my_function:
-                mPicture.myFunction(mView);
+                if(!mPicture.isFileNull()) {
+                    mPicture.myFunction(mView, this);
+
+                    return true;
+                }
+                return false;
 
             case R.id.open_camera_item:
                 takePicture();

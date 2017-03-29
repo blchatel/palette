@@ -20,6 +20,14 @@ import java.util.List;
 import ch.epfl.cs413.palettev01.views.Miniature;
 import ch.epfl.cs413.palettev01.views.Palette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
+import android.content.Context;
+import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.Element;
+import android.support.v8.renderscript.RenderScript;
+import android.support.v8.renderscript.ScriptIntrinsicBlur;
+import android.support.v8.renderscript.Type;
+import ch.epfl.cs413.palettev01.ScriptC_hist;
+
 
 /**
  * Created by bastien on 21.03.17.
@@ -287,12 +295,18 @@ public class PaletteBitmap {
         v.setImageBitmap(scaled);
     }
 
-    public void myFunction(Miniature v){
+    public void myFunction(Miniature v, Context context){
+        Log.d("BW", ""+bitmap.getWidth());
+        Log.d("BH", ""+bitmap.getHeight());
+        Log.d("H", ""+scaled.getHeight());
+        Log.d("W", ""+scaled.getWidth());
 
-        //apply everything you want on scaled bitmap
+        long startTime = System.nanoTime();
+        Bitmap res = histogramEqualization(scaled, context);
+        long consumingTime = System.nanoTime() - startTime;
+        Log.d("time", Long.toString(consumingTime));
 
-        //apply the resulting scaled to view
-        v.setImageBitmap(scaled);
+        v.setImageBitmap(res);
     }
 
 
@@ -313,6 +327,44 @@ public class PaletteBitmap {
             Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
             ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
         }
+    }
+
+    public Bitmap histogramEqualization(Bitmap image, Context context) {
+        //Get image size
+        int width = image.getWidth();
+        int height = image.getHeight();
+
+        //Create new bitmap
+        Bitmap res = image.copy(image.getConfig(), true);
+
+        //Create renderscript
+        RenderScript rs = RenderScript.create(context);
+
+        //Create allocation from Bitmap
+        Allocation allocationA = Allocation.createFromBitmap(rs, res);
+
+        //Create allocation with same type
+        Allocation allocationB = Allocation.createTyped(rs, allocationA.getType());
+
+        //Create script from rs file.
+        ScriptC_hist histEqScript = new ScriptC_hist(rs);
+
+        //Set size in script
+        histEqScript.set_size(width*height);
+
+        //Call the first kernel.
+        histEqScript.forEach_blackWhite(allocationA, allocationB);
+
+        //Copy script result into bitmap
+        allocationB.copyTo(res);
+
+        //Destroy everything to free memory
+        allocationA.destroy();
+        allocationB.destroy();
+        histEqScript.destroy();
+        rs.destroy();
+
+        return res;
     }
 }
 
