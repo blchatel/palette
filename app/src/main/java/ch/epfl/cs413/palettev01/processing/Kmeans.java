@@ -2,17 +2,17 @@ package ch.epfl.cs413.palettev01.processing;
 
 import android.graphics.Bitmap;
 import android.support.v4.graphics.ColorUtils;
-import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -26,6 +26,9 @@ import ch.epfl.cs413.palettev01.views.PaletteAdapter;
  */
 
 public class Kmeans {
+    /// The parallel function seems not to be working
+    private static final boolean IN_PARALLEL = false;
+
     /**
      * Saving the location of a pixel
      */
@@ -101,16 +104,17 @@ public class Kmeans {
 
         private void createBins(Map<BinsTriplet, List<RGBColor>> binPixelMap) {
             // In the same time we take the initial clusters
-            Random r = new Random();
-            int[] indexes = new int[PaletteAdapter.PALETTE_SIZE];
-            for (int i = 0; i < indexes.length; i++) {
-                indexes[i] = r.nextInt(binPixelMap.size());
+            List<Pair<Integer, LabColor>> indexes = new ArrayList<>();
+            List<LabColor> stored = new ArrayList<>();
+            for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
+                indexes.add(Pair.create(-1, new LabColor(0,0,0)));
             }
 
             int k = 0;
             for (Map.Entry<BinsTriplet, List<RGBColor>> entry: binPixelMap.entrySet()) {
                 // Compute mean for each triplet
                 int count = entry.getValue().size();
+
                 LabColor c = new LabColor(0,0,0);
                 for (int i=0; i < count; i++) {
                     RGBColor rgb = entry.getValue().get(i);
@@ -121,19 +125,43 @@ public class Kmeans {
                 }
                 c = c.divide(count);
 
-                for (int i = 0; i < indexes.length; i++) {
-                    if (indexes[i] == k) {
-                        if (mPaletteClusters.contains(c)) {
-                            mPaletteClusters.add(c.addColor(new LabColor(1.0, 1.0, 1.0)));
-                        } else {
-                            mPaletteClusters.add(c);
+                double distanceMin = 1000;
+                boolean okay = true;
+                if (count > indexes.get(0).first) {
+                    for (int i = 0; i < indexes.size(); i++) {
+                        if (indexes.get(i).first != -1) {
+                            double squareDist = c.squareDistanceTo(indexes.get(i).second);
+                            if (squareDist < distanceMin) {
+//                                Log.d("<<Init Clusters>>", "The square distance is " + squareDist);
+                                okay = false;
+                                break;
+                            }
                         }
+                    }
+                    if (c.squareDistanceTo(mPaletteClusters.get(0)) > distanceMin && okay) {
+                        indexes.set(0, Pair.create(count, c));
+                        Collections.sort(indexes, new Comparator<Pair<Integer, LabColor>>() {
+                            @Override
+                            public int compare(Pair<Integer, LabColor> o1, Pair<Integer, LabColor> o2) {
+                                return (o1.first < o2.first) ? -1 : 1;
+                            }
+                        });
+                    } else {
+                        stored.add(c);
                     }
                 }
 
                 k++;
                 // Add the bin entry
                 bins.put(entry.getKey(), Pair.create(c, count));
+            }
+
+            for (int i = 0; i < indexes.size(); i++) {
+                if (indexes.get(i).first == -1) {
+                    mPaletteClusters.add(stored.remove(stored.size()-1));
+                } else {
+                    mPaletteClusters.add(indexes.get(i).second);
+                }
             }
         }
 
@@ -146,7 +174,7 @@ public class Kmeans {
         }
 
         /**
-         * TODO : Is this one really efficient ?
+         * TODO : Is this one really efficient ? Nope not working yet
          *
          * @return the values separated to permit parallelization
          */
@@ -154,7 +182,6 @@ public class Kmeans {
             List<Pair<LabColor, Integer>> binsValues = new ArrayList<>(bins.values());
             List<Collection<Pair<LabColor, Integer>>> out = new ArrayList<>();
             int maxInPool = 500;
-            // TODO ? size or values.size ?
             int j = 0;
             while (j < bins.size()) {
                 Collection<Pair<LabColor, Integer>> partOut = new HashSet<>();
@@ -209,24 +236,24 @@ public class Kmeans {
         mPaletteClusters.add(new LabColor(0,0,0));
 
         mBinPixelsMap = createBinPixelMap(img);
-        Log.d("<Kmeans", "Created bin-pixel map of size : " + mBinPixelsMap.size());
+//        Log.d("<Kmeans", "Created bin-pixel map of size : " + mBinPixelsMap.size());
         // This will also init the clusters
         this.bins = new Bins(mBinPixelsMap);
-        Log.d("<Kmeans", "Created bins structure containing " + bins.bins.size() + " colors !");
+//        Log.d("<Kmeans", "Created bins structure containing " + bins.bins.size() + " colors !");
 
         moves = 1;
     }
 
     public List<LabColor> run () {
 //        initClusters();
-        Log.d("<<Kmeans>>", "Centers initialized");
+//        Log.d("<<Kmeans>>", "Centers initialized");
 
         int it = 0;
         while (it < maxIt || moves == 0) {
             moves = 0;
-            assignToCenters(false);
+            assignToCenters(IN_PARALLEL);
             it++;
-            Log.d("<<Kmeans>>", "Kmeans iteration " + it);
+//            Log.d("<<Kmeans>>", "Kmeans iteration " + it);
         }
 
         return mPaletteClusters;
@@ -270,14 +297,14 @@ public class Kmeans {
                         chosenIndex = i;
                     }
                 }
-
+//                Log.d("square distance", "Min dist is : " + minDist);
                 // We assign to the closer center
                 assignments.get(chosenIndex).add(lab);
             }
 
             long time2 = System.nanoTime();
             long timeTaken = time2 - time1;
-            Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
+//            Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
 
             // We are done assigning, now we can update the new centers
             for (int i = 1; i < K + 1; i++) {
@@ -299,7 +326,7 @@ public class Kmeans {
 
             long time3 = System.nanoTime();
             timeTaken = time3 - time1;
-            Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
+//            Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
             return assignments;
         } else {
             /// Parallel k-means
@@ -310,13 +337,13 @@ public class Kmeans {
 
                 long time2 = System.nanoTime();
                 long timeTaken = time2 - time1;
-                Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
+//                Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
 
                 moves = paralellizeMean(assignments);
 
                 long time3 = System.nanoTime();
                 timeTaken = time3 - time1;
-                Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
+//                Log.d("<<TIMER>>", "Time taken " + timeTaken + " ns");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ExecutionException e) {
