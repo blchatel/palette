@@ -160,13 +160,14 @@ public class CameraActivity extends AppCompatActivity {
 
     private void launchAsyncPaletteExtract() {
         if (!mPicture.isEmpty()) {
-            Log.d("<<OnCreate_Async>>", "AsyncTask is launched ! ");
+//            Log.d("<<OnCreate_Async>>", "AsyncTask is launched ! ");
             AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
 
                 @Override
                 protected List<LabColor> doInBackground(Object... params) {
                     int paletteSize = PaletteAdapter.PALETTE_SIZE;
-                    Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), 200, 200, false);
+                    double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
+                    Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage);
                     List<LabColor> paletteColors = kmeans.run();
                     Collections.sort(paletteColors, new Comparator<LabColor>() {
@@ -175,16 +176,16 @@ public class CameraActivity extends AppCompatActivity {
                             return (o1.getL() < o2.getL()) ? 1 : (o1.getL() > o2.getL()) ? -1 : 0;
                         }
                     });
-                    Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
+//                    Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
                     return paletteColors;
                 }
 
                 @Override
                 protected void onPostExecute(List<LabColor> labColors) {
-                    Log.d("PostExecute", "I'm changing palette now !");
+//                    Log.d("PostExecute", "I'm changing palette now !");
                     for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
                         LabColor Lab = labColors.get(i);
-                        Log.d("<<Sorted>>", "Luminosity is " + Lab.getL());
+//                        Log.d("<<Sorted>>", "Luminosity is " + Lab.getL());
                         ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
                     }
                 }
