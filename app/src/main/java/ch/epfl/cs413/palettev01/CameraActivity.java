@@ -5,13 +5,16 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
@@ -22,7 +25,12 @@ import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
+import ch.epfl.cs413.palettev01.processing.Kmeans;
+import ch.epfl.cs413.palettev01.processing.LabColor;
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
 import ch.epfl.cs413.palettev01.views.Miniature;
 import ch.epfl.cs413.palettev01.views.Palette;
@@ -67,7 +75,7 @@ public class CameraActivity extends AppCompatActivity {
 
         //Pallette
         palette = (Palette) findViewById(R.id.MAIN_paletteGrid);
-        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE+1);
+        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
         palette.setAdapter(adapter);
         palette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -143,11 +151,48 @@ public class CameraActivity extends AppCompatActivity {
         if (savedInstanceState != null) {
             mPicture.restoreFile(savedInstanceState.getString("FILE_KEY"));
 
+            launchAsyncPaletteExtract();
+
             mPicture.setHeight(savedInstanceState.getInt("HEIGHT_KEY"));
             mPicture.setWidth(savedInstanceState.getInt("WIDTH_KEY"));
         }
+    }
 
+    private void launchAsyncPaletteExtract() {
+        if (!mPicture.isEmpty()) {
+//            Log.d("<<OnCreate_Async>>", "AsyncTask is launched ! ");
+            AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
 
+                @Override
+                protected List<LabColor> doInBackground(Object... params) {
+                    int paletteSize = PaletteAdapter.PALETTE_SIZE;
+                    double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
+                    Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
+                    Kmeans kmeans = new Kmeans(paletteSize, smallImage);
+                    List<LabColor> paletteColors = kmeans.run();
+                    Collections.sort(paletteColors, new Comparator<LabColor>() {
+                        @Override
+                        public int compare(LabColor o1, LabColor o2) {
+                            return (o1.getL() < o2.getL()) ? 1 : (o1.getL() > o2.getL()) ? -1 : 0;
+                        }
+                    });
+//                    Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
+                    return paletteColors;
+                }
+
+                @Override
+                protected void onPostExecute(List<LabColor> labColors) {
+//                    Log.d("PostExecute", "I'm changing palette now !");
+                    for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
+                        LabColor Lab = labColors.get(i);
+//                        Log.d("<<Sorted>>", "Luminosity is " + Lab.getL());
+                        ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
+                    }
+                }
+            };
+
+            extractPalette.execute();
+        }
     }
 
     /**
@@ -252,29 +297,22 @@ public class CameraActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
             //TODO not working as expected. GALLERY RESULT WORKS
             galleryAddPic();
-            mPicture.setPicture(mView);
         }
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
 
-            Uri selectedImage = data == null ? null:data.getData();
-//            Log.d("<<GALLERY>>", "Selected image is : " + selectedImage);
-//            String[] filePath = { MediaStore.Images.Media.DATA };
-//            Cursor c = getContentResolver().query(selectedImage, filePath,
-//                    null, null, null);
-//            Log.d("<<GALLERY>>", "Cursor value is : " + c.toString());
-//            int columnIndex = c.getColumnIndex(filePath[0]);
-//            c.moveToFirst();
-//            String selectedImagePath = c.getString(columnIndex);
-//            c.close();
+            Uri selectedImage = data == null ? null : data.getData();
 
             String selectedImagePath = getPath(this, selectedImage);
 
             Log.d("<<GALLERY>>", "Using gallery for file in " + selectedImagePath);
 
             mPicture.restoreFile(selectedImagePath);
-
-            mPicture.setPicture(mView);
         }
+
+        mPicture.setPicture(mView);
+
+        // We launch the extraction of the palette here in async
+        launchAsyncPaletteExtract();
     }
 
 

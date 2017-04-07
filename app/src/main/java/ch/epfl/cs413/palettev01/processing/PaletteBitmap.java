@@ -82,8 +82,6 @@ public class PaletteBitmap {
 
     }
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///  SETTERS
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,6 +122,14 @@ public class PaletteBitmap {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///  GETTER
     ////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Check if the bitmap has been initialized yet
+     * @return
+     */
+    public boolean isEmpty () {
+        return bitmap==null;
+    }
 
     /**
      * Check if the file attribute is null
@@ -349,7 +355,7 @@ public class PaletteBitmap {
             }
         });
         Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
-        for (int i = 0; i < paletteSize+1; i++) {
+        for (int i = 0; i < paletteSize; i++) {
             LabColor Lab = paletteColors.get(i);
             Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
             ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
@@ -389,6 +395,10 @@ public class PaletteBitmap {
         rs.destroy();
 
         return res;
+    }
+
+    public Bitmap getScaled() {
+        return scaled;
     }
 }
 
