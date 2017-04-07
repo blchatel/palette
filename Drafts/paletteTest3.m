@@ -117,7 +117,11 @@ end
 image = zeros(nrows, ncols, 3);
 Cb = findBoundary2(oldPaletteLAB, oldPaletteLAB + 5 * diff);
 C_rate = labDistance(oldPaletteLAB, newPaletteLAB) / labDistance(oldPaletteLAB, Cb);
+newPaletteLAB
+oldPaletteLAB
+Cb
 
+stop
 
 
 [p0, p1] = meshgrid(1:nrows, 1:ncols);
@@ -177,7 +181,7 @@ one_diff_out = outBoundaryArray(grid_new + diff);
 grid_new_l(one_diff_out, :) = repmat(newPaletteLAB, size(find(one_diff_out), 1), 1);
 grid_new_r(one_diff_out, :) = grid_new(one_diff_out, :) + diff;
 
-grid_new_l = findBoundary2(grid_new_l, grid_new_r)
+grid_new_l = findBoundary2(grid_new_l, grid_new_r);
 
 % grid_new_res = grid_new + (grid_new_l - grid_new) * C_rate;
 grid_new_res = findNewColor(grid_new, grid_new_l, C_rate);
@@ -195,7 +199,7 @@ for iter=1:nrows * ncols
     h = pairs(iter, 2);
     if h == 1 && mod(w, 10) == 0
         [w, nrows, ncols]
-    end
+     end
     orgb = double(reshape(img(w, h, :), 1, 3)) / 255;
     rgb = orgb * (G - 1);
     index = min(floor(rgb), G-2);

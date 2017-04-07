@@ -1,17 +1,23 @@
 package ch.epfl.cs413.palettev01.processing;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -302,11 +308,32 @@ public class PaletteBitmap {
         Log.d("W", ""+scaled.getWidth());
 
         long startTime = System.nanoTime();
+        int test;
+        int r,g,b,a;
+        for (int i= 0; i < 2; i++)
+            for (int j=0; j<2; j++) {
+                test = scaled.getPixel(i * 100, j * 100);
+                a = (test >> 24) & 0xff;
+                r = (test >> 16) & 0xff;
+                g = (test >> 8) & 0xff;
+                b = test & 0xff;
+                Log.d(Integer.toString(i) + "," + Integer.toString(j), Integer.toHexString(test) + " " + Integer.toString(r) + " " + Integer.toString(g) + " " + Integer.toString(b) + " " + Integer.toString(a));
+            }
         Bitmap res = histogramEqualization(scaled, context);
+        scaled = res;
+        for (int i= 0; i < 2; i++)
+            for (int j=0; j<2; j++) {
+                test = scaled.getPixel(i * 100, j * 100);
+                a = (test >> 24) & 0xff;
+                r = (test >> 16) & 0xff;
+                g = (test >> 8) & 0xff;
+                b = test & 0xff;
+                Log.d(Integer.toString(i) + "," + Integer.toString(j), Integer.toHexString(test) + " " + Integer.toString(r) + " " + Integer.toString(g) + " " + Integer.toString(b) + " " + Integer.toString(a));
+            }
         long consumingTime = System.nanoTime() - startTime;
         Log.d("time", Long.toString(consumingTime));
 
-        v.setImageBitmap(res);
+        v.setImageBitmap(scaled);
     }
 
 
@@ -349,11 +376,8 @@ public class PaletteBitmap {
         //Create script from rs file.
         ScriptC_hist histEqScript = new ScriptC_hist(rs);
 
-        //Set size in script
-        histEqScript.set_size(width*height);
-
         //Call the first kernel.
-        histEqScript.forEach_blackWhite(allocationA, allocationB);
+        histEqScript.forEach_test(allocationA, allocationB);
 
         //Copy script result into bitmap
         allocationB.copyTo(res);
