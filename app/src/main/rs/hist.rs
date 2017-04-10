@@ -4,6 +4,8 @@
 
 float3 old_Plab, new_Plab, Cb;
 float c_rate;
+float white_x, white_y, white_z;
+float XYZEpsilon, XYZKappa;
 
 
 //Method to keep the result between 0 and 1
@@ -17,20 +19,13 @@ static float PivotRgb(float n) {
 }
 
 static float PivotXYZ(float n) {
-    float XYZEpsilon, XYZKappa;
-	XYZEpsilon = 216.0f/24389.0f;
-	XYZKappa = 24389.0f/27.0f;
-	return (n > XYZEpsilon)? native_powr(n, 1.0f/3.0f) : (XYZKappa*n + 16)/116;
+	return (n > XYZEpsilon)? native_powr(n, 1.0f/3.0f) : (XYZKappa*n + 16.0f)/116.0f;
 }
 
 static float3 RGB2LAB ( float3 rgb_color)
 {
 	float r, g, b;
 	float x, y, z;
-    float white_x, white_y, white_z;
-	white_x = 95.047f;
-	white_y = 100.000f;
-	white_z = 108.883f;
 
 	r = PivotRgb(rgb_color.r);
 	g = PivotRgb(rgb_color.g);
@@ -52,28 +47,21 @@ static float3 LAB2RGB(float3 lab_color) {
   float L_value = lab_color.r;
   float A_value = lab_color.g;
   float B_value = lab_color.b;
-  float y = (L_value + 16.0)/116.0;
-  float x = A_value/500.0 + y;
-  float  z = y - B_value/200.0;
+  float y = (L_value + 16.0f)/116.0f;
+  float x = A_value/500.0f + y;
+  float  z = y - B_value/200.0f;
   float t1, t2, t3;
   float tx, ty, tz;
   float r,g,b;
-  float white_x, white_y, white_z;
-  white_x = 95.047f;
-  white_y = 100.000f;
-  white_z = 108.883f;
-    float XYZEpsilon, XYZKappa;
-	XYZEpsilon = 216.0f/24389.0f;
-	XYZKappa = 24389.0f/27.0f;
 
   float x3 = x * x * x;
   if(x3 > XYZEpsilon){
     t1 = x3;
   } else {
-    t1 = (x - 16.0/116.0)/7.787;
+    t1 = (x - 16.0f/116.0f)/7.787f;
   }
   if (L_value > (XYZKappa*XYZEpsilon)){
-    float Lt = (L_value + 16.0)/116.0;
+    float Lt = (L_value + 16.0f)/116.0f;
     t2 = Lt * Lt * Lt;
   } else {
     t2 = L_value/XYZKappa;
@@ -82,29 +70,29 @@ static float3 LAB2RGB(float3 lab_color) {
   if (z3 > XYZEpsilon){
     t3 = z3;
   } else {
-    t3 = (z - 16.0/116.0)/7.787;
+    t3 = (z - 16.0f/116.0f)/7.787f;
   }
   tx = t1 * white_x / 100.0f;
   ty = t2 * white_y / 100.0f;
   tz = t3 * white_z / 100.0f;
 
-  r = tx*3.2406 + ty*(-1.5372) + tz*(-0.4986);
-  g = tx*(-0.9689) + ty*1.8758 + tz*0.0415;
-  b = tx*0.0557 + ty*(-0.2040) + tz*1.0570;
-  if (r > 0.0031308){
-    r = 1.055*native_powr(r, 1.0f/2.4) - 0.055;
+  r = tx*3.2406f + ty*(-1.5372f) + tz*(-0.4986f);
+  g = tx*(-0.9689f) + ty*1.8758f + tz*0.0415f;
+  b = tx*0.0557f + ty*(-0.2040f) + tz*1.0570f;
+  if (r > 0.0031308f){
+    r = 1.055f * native_powr(r, 1.0f/2.4f) - 0.055f;
   } else {
-    r = 12.92*r;
+    r = 12.92f * r;
   }
-  if (g > 0.0031308) {
-    g = 1.055*native_powr(g, 1.0f/2.4) - 0.055;
+  if (g > 0.0031308f) {
+    g = 1.055f * native_powr(g, 1.0f/2.4f) - 0.055f;
   } else {
-    g = 12.92*g;
+    g = 12.92f * g;
   }
-  if (b > 0.0031308){
-    b = 1.055*native_powr(b, 1.0f/2.4) - 0.055;
+  if (b > 0.0031308f){
+    b = 1.055f * native_powr(b, 1.0f / 2.4f) - 0.055f;
   } else {
-    b = 12.92*b;
+    b = 12.92f * b;
   }
 
   float3 res;
@@ -122,10 +110,10 @@ uchar4 __attribute__((kernel)) test(uchar4 in, uint32_t x, uint32_t y) {
     rgb.b = f4.b;
     float3 res;
     res = RGB2LAB(rgb);
-    res.r /= 100.0f;
-    res.g /= 100.0f;
-    res.b /= 100.0f;
-    //res = LAB2RGB(res);
+    // res.r /= 100.0f;
+    // res.g /= 100.0f;
+    // res.b /= 100.0f;
+    res = LAB2RGB(res);
     return rsPackColorTo8888(res.r, res.g, res.b, f4.a);
 }
 
@@ -139,10 +127,14 @@ uchar4 __attribute__((kernel)) blackWhite(uchar4 in, uint32_t x, uint32_t y) {
 }
 
 void init() {
+	white_x = 95.047f;
+	white_y = 100.000f;
+	white_z = 108.883f;
+	XYZEpsilon = 216.0f/24389.0f;
+	XYZKappa = 24389.0f/27.0f;
 }
 
 void init_fun() {
-
 	old_Plab.r = 73.2794f;
 	old_Plab.g = -0.6067f;
 	old_Plab.b = -19.2662f;
