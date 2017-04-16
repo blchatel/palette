@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.design.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -11,9 +12,10 @@
         android:id="@+id/MAIN_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:alwaysDrawnWithCache="false"
+        android:baselineAligned="false"
         android:minHeight="159dp"
         android:orientation="horizontal"
-        android:baselineAligned="false"
         tools:context="ch.epfl.cs413.palettev01.CameraActivity"
         tools:showIn="@layout/activity_camera">
 
@@ -24,25 +26,25 @@
             android:layout_weight="0.2"
             android:orientation="vertical">
 
-                <Switch
-                    android:id="@+id/switch1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center" />
+            <Switch
+                android:id="@+id/switch1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center" />
 
 
-                <ch.epfl.cs413.palettev01.views.Palette
-                    android:id="@+id/MAIN_paletteGrid"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_horizontal|center"
-                    android:layout_marginBottom="@android:dimen/notification_large_icon_height"
-                    android:animationCache="false"
-                    android:columnWidth="90dp"
-                    android:horizontalSpacing="10dp"
-                    android:numColumns="auto_fit"
-                    android:stretchMode="columnWidth"
-                    android:verticalSpacing="10dp"/>
+            <ch.epfl.cs413.palettev01.views.Palette
+                android:id="@+id/MAIN_paletteGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal|center"
+                android:layout_marginBottom="@android:dimen/notification_large_icon_height"
+                android:animationCache="false"
+                android:columnWidth="90dp"
+                android:horizontalSpacing="10dp"
+                android:numColumns="auto_fit"
+                android:stretchMode="columnWidth"
+                android:verticalSpacing="10dp" />
         </LinearLayout>
 
         <LinearLayout
