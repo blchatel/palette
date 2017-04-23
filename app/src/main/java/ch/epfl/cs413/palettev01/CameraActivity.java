@@ -21,7 +21,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.AdapterView;
 
 import java.io.IOException;
@@ -65,13 +64,6 @@ public class CameraActivity extends AppCompatActivity {
 
         //Miniature
         mView = (Miniature) findViewById(R.id.MAIN_image);
-        mView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                mPicture.setHeight(mView.getHeight());
-                mPicture.setWidth(mView.getWidth());
-            }
-        });
 
         //Pallette
         palette = (Palette) findViewById(R.id.MAIN_paletteGrid);
@@ -143,12 +135,37 @@ public class CameraActivity extends AppCompatActivity {
 
 
 
+//        SensorManager sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+//        sensorManager.registerListener(new SensorEventListener() {
+//            int orientation=-1;;
+//
+//            @Override
+//            public void onSensorChanged(SensorEvent event) {
+//                if (event.values[1]<6.5 && event.values[1]>-6.5) {
+//                    if (orientation!=1) {
+//                        Log.d("Sensor", "Landscape");
+//                    }
+//                    orientation=1;
+//                } else {
+//                    if (orientation!=0) {
+//                        Log.d("Sensor", "Portrait");
+//                    }
+//                    orientation=0;
+//                }
+//            }
+//
+//            @Override
+//            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+//            }
+//        }, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // RECOVERING THE INSTANCE STATE
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         if (savedInstanceState != null) {
+            Log.e( "EUREKA", "ON RESTAURE" );
             mPicture.restoreFile(savedInstanceState.getString("FILE_KEY"));
 
             launchAsyncPaletteExtract();
@@ -158,7 +175,16 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus){
+        mPicture.setHeight(mView.getHeight());
+        mPicture.setWidth(mView.getWidth());
+    }
+
+
+
     private void launchAsyncPaletteExtract() {
+
         if (!mPicture.isEmpty()) {
 //            Log.d("<<OnCreate_Async>>", "AsyncTask is launched ! ");
             AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
@@ -277,6 +303,7 @@ public class CameraActivity extends AppCompatActivity {
     }
 
     public void onDestroy() {
+        Log.e( "EUREKA", "ON DESTROY" );
         super.onDestroy();
         mPicture.recycle();
     }
@@ -290,29 +317,36 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
-//        super.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
         Log.e( "EUREKA", "ON RESULT" );
+
 
         // if results comes from the camera activity
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
             //TODO not working as expected. GALLERY RESULT WORKS
-            galleryAddPic();
-        }
-        else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
 
-            Uri selectedImage = data == null ? null : data.getData();
+            Uri selectedImage = galleryAddPic();
 
             String selectedImagePath = getPath(this, selectedImage);
 
-            Log.d("<<GALLERY>>", "Using gallery for file in " + selectedImagePath);
+            mPicture.restoreFile(selectedImagePath);
+            mPicture.setPicture(mView);
+            // We launch the extraction of the palette here in async
+            launchAsyncPaletteExtract();
+
+        }
+        // if result comes from the gallery
+        else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
+
+            Uri selectedImage = data == null ? null : data.getData();
+            String selectedImagePath = getPath(this, selectedImage);
 
             mPicture.restoreFile(selectedImagePath);
+            mPicture.setPicture(mView);
+            // We launch the extraction of the palette here in async
+            launchAsyncPaletteExtract();
         }
 
-        mPicture.setPicture(mView);
-
-        // We launch the extraction of the palette here in async
-        launchAsyncPaletteExtract();
     }
 
 
@@ -325,9 +359,6 @@ public class CameraActivity extends AppCompatActivity {
         // Ensure that there's a camera activity to handle the intent
         if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
 
-            // Create the File where the photo should go
-            mPicture.setFileToNull();
-
             try {
                 mPicture.prepareImageFile();
             } catch (IOException ex) {
@@ -338,8 +369,8 @@ public class CameraActivity extends AppCompatActivity {
             // Continue only if the File was successfully created
             if (!mPicture.isFileNull()) {
                 Uri photoUri = mPicture.getUri();
+
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                Log.d("<<takePicture>>", "photo uri is " + photoUri);
                 startActivityForResult(takePictureIntent, CAMERA_RESULT);
             }else{
                 Log.d("ERROR file null", "ERROR - File file is null");
@@ -354,9 +385,6 @@ public class CameraActivity extends AppCompatActivity {
      * Prepare and Use the Gallery Intent to select an existing picture
      */
     private void selectPicture(){
-
-        // Create the File where the photo should go
-        mPicture.setFileToNull();
 
         try {
             if (Build.VERSION.SDK_INT < 19) {
@@ -378,15 +406,17 @@ public class CameraActivity extends AppCompatActivity {
     /**
      * Save this.file into the gallery
      */
-    private void galleryAddPic() {
+    private Uri galleryAddPic() {
 
         Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
 
         Uri contentUri = mPicture.getUri();
-
         mediaScanIntent.setData(contentUri);
 
         this.sendBroadcast(mediaScanIntent);
+        return mediaScanIntent.getData();
+
+//        return contentUri;
     }
 
 

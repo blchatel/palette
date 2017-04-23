@@ -1,24 +1,21 @@
 package ch.epfl.cs413.palettev01.processing;
 
-import android.Manifest;
-import android.content.pm.PackageManager;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v8.renderscript.Float3;
+import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.RenderScript;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -217,7 +214,6 @@ public class PaletteBitmap {
         float scaleFactor = Math.max(photoW/(float)width, photoH/(float)height);
         Bitmap scaled = Bitmap.createScaledBitmap(bitmap, (int)(photoW/scaleFactor), (int)(photoH/scaleFactor), true);
 
-
         // Make bitmap and scaled mutable
         // Avoid IllegalStateException with Immutable bitmap
         this.bitmap = bitmap.copy(bitmap.getConfig(), true);
@@ -312,10 +308,6 @@ public class PaletteBitmap {
     }
 
     public void myFunction(Miniature v, Context context){
-        Log.d("BW", ""+bitmap.getWidth());
-        Log.d("BH", ""+bitmap.getHeight());
-        Log.d("H", ""+scaled.getHeight());
-        Log.d("W", ""+scaled.getWidth());
 
         long startTime = System.nanoTime();
         int test;

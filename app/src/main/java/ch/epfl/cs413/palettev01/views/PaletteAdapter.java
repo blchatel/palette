@@ -6,9 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.TextView;
-
-import java.util.List;
 
 import ch.epfl.cs413.palettev01.R;
 
@@ -131,19 +128,16 @@ public class PaletteAdapter extends BaseAdapter{
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        grid = new View(mContext);
         grid = inflater.inflate(R.layout.color_box, null);
-//        TextView textView = (TextView) grid.findViewById(R.id.grid_text);
         ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
-//        textView.setText("color#"+position);
+        ColorBox activate = (ColorBox) grid.findViewById(R.id.grid_box_activation);
         button.setBackgroundColor(colors[position]);
 
-        //TODO : Find a nicer way without printing colors name
-//        if(position == selectedBox){
-//            textView.setTextColor(Color.RED);
-//        } else {
-//            textView.setTextColor(Color.BLACK);
-//        }
+        if(position == selectedBox){
+            activate.setBackgroundColor(Color.BLUE);
+        } else {
+            activate.setBackgroundColor(Color.TRANSPARENT);
+        }
 
         return grid;
     }
