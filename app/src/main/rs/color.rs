@@ -102,6 +102,19 @@ static float3 LAB2RGB(float3 lab_color) {
   return res;
 }
 
+rs_allocation grid;
+
+void initGrid() {
+    int i;
+    float3 res;
+    for (i = 0; i < 10; i++) {
+        res.r = 0.1f * i;
+        res.g = 0.1f * i;
+        res.b = 0.1f * i;
+        rsSetElementAt_float3(grid, res, i);
+    }
+}
+
 uchar4 __attribute__((kernel)) test(uchar4 in, uint32_t x, uint32_t y) {
     float4 f4 = rsUnpackColor8888(in);
     float3 rgb;
@@ -109,11 +122,12 @@ uchar4 __attribute__((kernel)) test(uchar4 in, uint32_t x, uint32_t y) {
     rgb.g = f4.g;
     rgb.b = f4.b;
     float3 res;
-    res = RGB2LAB(rgb);
+    // res = RGB2LAB(rgb);
     // res.r /= 100.0f;
     // res.g /= 100.0f;
     // res.b /= 100.0f;
-    res = LAB2RGB(res);
+    // res = LAB2RGB(res);
+    res = rsGetElementAt_float3(grid, 4);
     return rsPackColorTo8888(res.r, res.g, res.b, f4.a);
 }
 

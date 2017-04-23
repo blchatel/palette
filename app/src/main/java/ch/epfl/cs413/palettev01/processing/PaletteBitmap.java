@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.graphics.ColorUtils;
+import android.support.v8.renderscript.Float3;
 import android.util.Log;
 
 import java.io.File;
@@ -32,7 +33,7 @@ import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.support.v8.renderscript.Type;
-import ch.epfl.cs413.palettev01.ScriptC_hist;
+import ch.epfl.cs413.palettev01.ScriptC_color;
 
 
 /**
@@ -72,6 +73,8 @@ public class PaletteBitmap {
      * Width of the destination Miniature View for the bitmap
      */
     private int width;
+
+
 
 
 
@@ -185,6 +188,7 @@ public class PaletteBitmap {
         if(scaled != null){
             scaled.recycle();
         }
+
     }
 
     /**
@@ -342,7 +346,6 @@ public class PaletteBitmap {
         v.setImageBitmap(scaled);
     }
 
-
     public void extractPalette(Palette palette) {
         int paletteSize = PaletteAdapter.PALETTE_SIZE;
         Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, false);
@@ -367,11 +370,16 @@ public class PaletteBitmap {
         int width = image.getWidth();
         int height = image.getHeight();
 
+        RenderScript rs;
+        ScriptC_color colorScript;
+        //Create renderscript
+        rs = RenderScript.create(context);
+
+        //Create script from rs file.
+        colorScript = new ScriptC_color(rs);
+
         //Create new bitmap
         Bitmap res = image.copy(image.getConfig(), true);
-
-        //Create renderscript
-        RenderScript rs = RenderScript.create(context);
 
         //Create allocation from Bitmap
         Allocation allocationA = Allocation.createFromBitmap(rs, res);
@@ -379,19 +387,31 @@ public class PaletteBitmap {
         //Create allocation with same type
         Allocation allocationB = Allocation.createTyped(rs, allocationA.getType());
 
-        //Create script from rs file.
-        ScriptC_hist histEqScript = new ScriptC_hist(rs);
+        float[] grid = new float[30];
+        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), 10, Allocation.USAGE_SCRIPT);
+        allocationGrid.setAutoPadding(true);
+        allocationGrid.copyFrom(grid);
+        colorScript.set_grid(allocationGrid);
+        colorScript.invoke_initGrid();
 
         //Call the first kernel.
-        histEqScript.forEach_test(allocationA, allocationB);
+        colorScript.forEach_test(allocationA, allocationA);
 
         //Copy script result into bitmap
-        allocationB.copyTo(res);
+        allocationA.copyTo(res);
+
+        for (int i=0; i<8; i++)
+            Log.d("test" + Integer.toString(i), Float.toString(grid[i]));
+
+        allocationGrid.copyTo(grid);
+        for (int i=0; i<8; i++)
+            Log.d("test" + Integer.toString(i), Float.toString(grid[i]));
 
         //Destroy everything to free memory
         allocationA.destroy();
         allocationB.destroy();
-        histEqScript.destroy();
+        allocationGrid.destroy();
+        colorScript.destroy();
         rs.destroy();
 
         return res;
