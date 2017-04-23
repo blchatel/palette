@@ -8,7 +8,6 @@ import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
 import android.support.v4.graphics.ColorUtils;
-import android.support.v8.renderscript.Float3;
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.RenderScript;
 import android.util.Log;
@@ -24,11 +23,7 @@ import java.util.List;
 import ch.epfl.cs413.palettev01.views.Miniature;
 import ch.epfl.cs413.palettev01.views.Palette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
-import android.content.Context;
-import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
-import android.support.v8.renderscript.RenderScript;
-import android.support.v8.renderscript.ScriptIntrinsicBlur;
 import android.support.v8.renderscript.Type;
 import ch.epfl.cs413.palettev01.ScriptC_color;
 
@@ -307,37 +302,6 @@ public class PaletteBitmap {
         v.setImageBitmap(scaled);
     }
 
-    public void myFunction(Miniature v, Context context){
-
-        long startTime = System.nanoTime();
-        int test;
-        int r,g,b,a;
-        for (int i= 0; i < 2; i++)
-            for (int j=0; j<2; j++) {
-                test = scaled.getPixel(i * 100, j * 100);
-                a = (test >> 24) & 0xff;
-                r = (test >> 16) & 0xff;
-                g = (test >> 8) & 0xff;
-                b = test & 0xff;
-                Log.d(Integer.toString(i) + "," + Integer.toString(j), Integer.toHexString(test) + " " + Integer.toString(r) + " " + Integer.toString(g) + " " + Integer.toString(b) + " " + Integer.toString(a));
-            }
-        Bitmap res = histogramEqualization(scaled, context);
-        scaled = res;
-        for (int i= 0; i < 2; i++)
-            for (int j=0; j<2; j++) {
-                test = scaled.getPixel(i * 100, j * 100);
-                a = (test >> 24) & 0xff;
-                r = (test >> 16) & 0xff;
-                g = (test >> 8) & 0xff;
-                b = test & 0xff;
-                Log.d(Integer.toString(i) + "," + Integer.toString(j), Integer.toHexString(test) + " " + Integer.toString(r) + " " + Integer.toString(g) + " " + Integer.toString(b) + " " + Integer.toString(a));
-            }
-        long consumingTime = System.nanoTime() - startTime;
-        Log.d("time", Long.toString(consumingTime));
-
-        v.setImageBitmap(scaled);
-    }
-
     public void extractPalette(Palette palette) {
         int paletteSize = PaletteAdapter.PALETTE_SIZE;
         Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, false);
@@ -357,18 +321,153 @@ public class PaletteBitmap {
         }
     }
 
-    public Bitmap histogramEqualization(Bitmap image, Context context) {
-        //Get image size
-        int width = image.getWidth();
-        int height = image.getHeight();
+    public void myFunction(Miniature v){
 
-        RenderScript rs;
-        ScriptC_color colorScript;
+        long startTime = System.nanoTime();
+        int test;
+        int r,g,b,a;
+        Bitmap res = histogramEqualization(scaled);
+        scaled = res;
+        for (int i= 0; i < 2; i++)
+            for (int j=0; j<2; j++) {
+                test = scaled.getPixel(i * 100, j * 100);
+                a = (test >> 24) & 0xff;
+                r = (test >> 16) & 0xff;
+                g = (test >> 8) & 0xff;
+                b = test & 0xff;
+                Log.d(Integer.toString(i) + "," + Integer.toString(j), Integer.toHexString(test) + " " + Integer.toString(r) + " " + Integer.toString(g) + " " + Integer.toString(b) + " " + Integer.toString(a));
+            }
+        long consumingTime = System.nanoTime() - startTime;
+        Log.d("time", Long.toString(consumingTime));
+
+        v.setImageBitmap(scaled);
+    }
+
+    private RenderScript rs;
+    private ScriptC_color colorScript;
+    private Bitmap input_pic;
+    private float[] grid;
+    private float[] temp_grid;
+    private int grid_g;
+    private float[] old_palette;
+
+    public void rsInit(Context context) {
         //Create renderscript
         rs = RenderScript.create(context);
 
         //Create script from rs file.
         colorScript = new ScriptC_color(rs);
+    }
+
+    public void initGrid() {
+        grid_g = 12;
+        int g1 = grid_g + 1;
+        grid = new float[3 * g1 * g1 * g1];
+        temp_grid = new float[3 * g1 * g1 * g1];
+        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
+        allocationGrid.setAutoPadding(true);
+        allocationGrid.copyFrom(grid);
+        colorScript.set_grid(allocationGrid);
+        colorScript.set_grid_g(grid_g);
+        colorScript.invoke_initGrid();
+        allocationGrid.copyTo(grid);
+        allocationGrid.destroy();
+        System.arraycopy(grid, 0, temp_grid, 0, 3 * g1 * g1 * g1);
+        input_pic = Bitmap.createBitmap(scaled);
+    }
+
+    public void testInitTransPalette(Palette palette) {
+        old_palette = new float[3];
+        double [] lab_color = new double[3];
+        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2);
+        int color = 0xff000000 + 158 * 0x10000 + 182 * 0x100 + 215;
+        ColorUtils.colorToLAB(color, lab_color);
+        for (int i=0; i<3; i++)
+            old_palette[i] = (float) lab_color[i];
+    }
+
+    public void testTransGrid(Palette palette) {
+        float[] new_palette = new float[3];
+        int paletteSize = 1;
+        double [] lab_color = new double[3];
+        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2) + 0x100000;
+        int color = 0xff000000 + 178 * 0x10000 + 128 * 0x100 + 128;
+        ColorUtils.colorToLAB(color, lab_color);
+        for (int i=0; i<3; i++)
+            new_palette[i] = (float) lab_color[i];
+        Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationOld.setAutoPadding(true);
+        allocationOld.copyFrom(old_palette);
+        Allocation allocationNew = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationNew.setAutoPadding(true);
+        allocationNew.copyFrom(new_palette);
+        Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        colorScript.set_old_palette(allocationOld);
+        colorScript.set_new_palette(allocationNew);
+        colorScript.set_paletteSize(paletteSize);
+        colorScript.set_diff(allocationDiff);
+        colorScript.set_c_rate(allocation_rate);
+
+        int g1 = grid_g + 1;
+        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
+        allocationGrid.setAutoPadding(true);
+        allocationGrid.copyFrom(grid);
+        Allocation allocationTempGrid = Allocation.createTyped(rs, allocationGrid.getType());
+        allocationTempGrid.setAutoPadding(true);
+
+        colorScript.invoke_cal_palette_rate();
+        colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
+        allocationTempGrid.copyTo(temp_grid);
+
+        allocationOld.destroy();
+        allocationNew.destroy();
+        allocationDiff.destroy();
+        allocation_rate.destroy();
+        allocationGrid.destroy();
+        allocationTempGrid.destroy();
+    }
+
+    public void transImage(Miniature v) {
+        int g1 = grid_g + 1;
+        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
+        allocationGrid.setAutoPadding(true);
+        allocationGrid.copyFrom(temp_grid);
+        Allocation allocationA = Allocation.createFromBitmap(rs, input_pic);
+        Allocation allocationB = Allocation.createTyped(rs, allocationA.getType());
+
+        colorScript.set_grid(allocationGrid);
+        colorScript.set_grid_g(grid_g);
+        colorScript.forEach_image_transfer(allocationA, allocationB);
+
+        allocationB.copyTo(scaled);
+        allocationA.destroy();
+        allocationB.destroy();
+        allocationGrid.destroy();
+        v.setImageBitmap(scaled);
+    }
+
+    public void initTransPalette(Palette palette) {
+        int paletteSize = PaletteAdapter.PALETTE_SIZE;
+        old_palette = new float[3 * paletteSize];
+        for (int i=0; i<paletteSize; i++) {
+            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
+            double [] lab_color = new double[3];
+            ColorUtils.colorToLAB(color, lab_color);
+            for (int j=0; j<3; j++)
+                old_palette[i * 3 + j] = (float) lab_color[j];
+        }
+    }
+
+    public void rsClose() {
+        colorScript.destroy();
+        rs.destroy();
+    }
+
+    public Bitmap histogramEqualization(Bitmap image) {
+        //Get image size
+        int width = image.getWidth();
+        int height = image.getHeight();
 
         //Create new bitmap
         Bitmap res = image.copy(image.getConfig(), true);
@@ -384,7 +483,7 @@ public class PaletteBitmap {
         allocationGrid.setAutoPadding(true);
         allocationGrid.copyFrom(grid);
         colorScript.set_grid(allocationGrid);
-        colorScript.invoke_initGrid();
+        colorScript.invoke_initGrid2();
 
         //Call the first kernel.
         colorScript.forEach_test(allocationA, allocationA);
@@ -403,8 +502,6 @@ public class PaletteBitmap {
         allocationA.destroy();
         allocationB.destroy();
         allocationGrid.destroy();
-        colorScript.destroy();
-        rs.destroy();
 
         return res;
     }

@@ -270,7 +270,24 @@ public class CameraActivity extends AppCompatActivity {
 
             case R.id.my_function:
                 if(!mPicture.isFileNull()) {
-                    mPicture.myFunction(mView, this);
+                    long startTime = System.nanoTime();
+                    long consumingTime;
+                    mPicture.rsInit(this);
+                    consumingTime = System.nanoTime() - startTime;
+                    Log.d("time", Long.toString(consumingTime));
+                    mPicture.initGrid();
+                    mPicture.testInitTransPalette(palette);
+                    mPicture.testTransGrid(palette);
+                    consumingTime = System.nanoTime() - startTime;
+                    Log.d("time", Long.toString(consumingTime));
+                    mPicture.transImage(mView);
+                    consumingTime = System.nanoTime() - startTime;
+                    Log.d("time", Long.toString(consumingTime));
+                    // mPicture.initTransPalette(palette);
+                    // mPicture.myFunction(mView);
+                    mPicture.rsClose();
+                    consumingTime = System.nanoTime() - startTime;
+                    Log.d("time", Long.toString(consumingTime));
 
                     return true;
                 }
