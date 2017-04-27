@@ -73,7 +73,6 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(final AdapterView<?> parent, View view, final int position, long id) {
-
                 ((PaletteAdapter) parent.getAdapter()).setSelectedBox(position);
             }
         });
@@ -82,7 +81,6 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
-
                 PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
 
                 // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
@@ -92,6 +90,26 @@ public class CameraActivity extends AppCompatActivity {
 
                             @Override
                             public void onOk(AmbilWarnaDialog dialog, int color) {
+                                /// TODO : Here we just changed a color in Palette !
+                                /// TODO : Should transform the palette's colors
+                                /// TODO : Should apply transform to bitmap
+                                // If there is a picture to modify
+                                if(!mPicture.isFileNull()) {
+                                    /// TODO : Do this initialization on image selection rather than here
+                                    // We initialise the render script
+                                    mPicture.rsInit(getApplicationContext());
+                                    // Init the grid
+                                    mPicture.initGrid();
+                                    /// TODO : Do this after first palette extraction
+                                    // Init the palette
+                                    mPicture.initTransPalette(palette);
+
+                                    mPicture.testTransGrid(palette);
+                                    mPicture.transImage(mView);
+                                    // mPicture.initTransPalette(palette);
+                                    // mPicture.myFunction(mView);
+                                    mPicture.rsClose();
+                                }
                                 // color is the color selected by the user
                                 ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
                             }
@@ -134,38 +152,12 @@ public class CameraActivity extends AppCompatActivity {
         });
 
 
-
-//        SensorManager sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-//        sensorManager.registerListener(new SensorEventListener() {
-//            int orientation=-1;;
-//
-//            @Override
-//            public void onSensorChanged(SensorEvent event) {
-//                if (event.values[1]<6.5 && event.values[1]>-6.5) {
-//                    if (orientation!=1) {
-//                        Log.d("Sensor", "Landscape");
-//                    }
-//                    orientation=1;
-//                } else {
-//                    if (orientation!=0) {
-//                        Log.d("Sensor", "Portrait");
-//                    }
-//                    orientation=0;
-//                }
-//            }
-//
-//            @Override
-//            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-//            }
-//        }, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
-
-
         ////////////////////////////////////////////////////////////////////////////////////////////
         // RECOVERING THE INSTANCE STATE
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         if (savedInstanceState != null) {
-            Log.e( "EUREKA", "ON RESTAURE" );
+            Log.e( "EUREKA", "ON RESTORE" );
             mPicture.restoreFile(savedInstanceState.getString("FILE_KEY"));
 
             launchAsyncPaletteExtract();
@@ -181,12 +173,12 @@ public class CameraActivity extends AppCompatActivity {
         mPicture.setWidth(mView.getWidth());
     }
 
-
-
+    /**
+     * It will simply launch a palette extraction in background
+     */
     private void launchAsyncPaletteExtract() {
-
+        /// TODO : Put a charging indicator
         if (!mPicture.isEmpty()) {
-//            Log.d("<<OnCreate_Async>>", "AsyncTask is launched ! ");
             AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
 
                 @Override
@@ -202,16 +194,13 @@ public class CameraActivity extends AppCompatActivity {
                             return (o1.getL() < o2.getL()) ? 1 : (o1.getL() > o2.getL()) ? -1 : 0;
                         }
                     });
-//                    Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
                     return paletteColors;
                 }
 
                 @Override
                 protected void onPostExecute(List<LabColor> labColors) {
-//                    Log.d("PostExecute", "I'm changing palette now !");
                     for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
                         LabColor Lab = labColors.get(i);
-//                        Log.d("<<Sorted>>", "Luminosity is " + Lab.getL());
                         ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
                     }
                 }
@@ -270,24 +259,24 @@ public class CameraActivity extends AppCompatActivity {
 
             case R.id.my_function:
                 if(!mPicture.isFileNull()) {
-                    long startTime = System.nanoTime();
-                    long consumingTime;
+//                    long startTime = System.nanoTime();
+//                    long consumingTime;
                     mPicture.rsInit(this);
-                    consumingTime = System.nanoTime() - startTime;
-                    Log.d("time", Long.toString(consumingTime));
+//                    consumingTime = System.nanoTime() - startTime;
+//                    Log.d("time", Long.toString(consumingTime));
                     mPicture.initGrid();
                     mPicture.testInitTransPalette(palette);
                     mPicture.testTransGrid(palette);
-                    consumingTime = System.nanoTime() - startTime;
-                    Log.d("time", Long.toString(consumingTime));
+//                    consumingTime = System.nanoTime() - startTime;
+//                    Log.d("time", Long.toString(consumingTime));
                     mPicture.transImage(mView);
-                    consumingTime = System.nanoTime() - startTime;
-                    Log.d("time", Long.toString(consumingTime));
+//                    consumingTime = System.nanoTime() - startTime;
+//                    Log.d("time", Long.toString(consumingTime));
                     // mPicture.initTransPalette(palette);
                     // mPicture.myFunction(mView);
                     mPicture.rsClose();
-                    consumingTime = System.nanoTime() - startTime;
-                    Log.d("time", Long.toString(consumingTime));
+//                    consumingTime = System.nanoTime() - startTime;
+//                    Log.d("time", Long.toString(consumingTime));
 
                     return true;
                 }

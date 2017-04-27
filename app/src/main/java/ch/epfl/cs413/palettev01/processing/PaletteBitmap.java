@@ -316,7 +316,7 @@ public class PaletteBitmap {
         Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
         for (int i = 0; i < paletteSize; i++) {
             LabColor Lab = paletteColors.get(i);
-            Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
+//            Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
             ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
         }
     }
@@ -447,8 +447,14 @@ public class PaletteBitmap {
         v.setImageBitmap(scaled);
     }
 
+
+    /**
+     * Create old_palette with the given palette
+     *
+     * @param palette
+     */
     public void initTransPalette(Palette palette) {
-        int paletteSize = PaletteAdapter.PALETTE_SIZE;
+        int paletteSize = ((PaletteAdapter)palette.getAdapter()).getSize();
         old_palette = new float[3 * paletteSize];
         for (int i=0; i<paletteSize; i++) {
             int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);

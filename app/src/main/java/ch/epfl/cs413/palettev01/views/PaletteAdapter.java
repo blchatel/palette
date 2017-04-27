@@ -13,12 +13,12 @@ public class PaletteAdapter extends BaseAdapter{
 
     public static final int PALETTE_SIZE = 5;
     private Context mContext;
-    private int[] colors = new int[7];
+    private int[] colors;
     private int selectedBox = -1;
     private int size = 0;
 
 
-    public PaletteAdapter(Context c, int size ) {
+    public PaletteAdapter(Context c, int size) {
 
         mContext = c;
 
@@ -26,6 +26,7 @@ public class PaletteAdapter extends BaseAdapter{
             throw new IllegalArgumentException("Size argument must be integer smaller than 8");
         }
         this.size = size;
+        colors = new int[size];
 
         // initialization of the palette color . For now simply grayscale value
         for (int i = 0; i<size; i++) {
@@ -33,6 +34,9 @@ public class PaletteAdapter extends BaseAdapter{
         }
     }
 
+    public int getSize() {
+        return size;
+    }
 
     /**
      * Set the palette element on position with newColor
@@ -41,10 +45,10 @@ public class PaletteAdapter extends BaseAdapter{
      * @param newColor
      */
     public void setColor(int position, int newColor){
-
-        if (position >= size){
-            throw new IllegalArgumentException("Position too big");
+        if (position >= size || position < 0){
+            throw new IllegalArgumentException("Position out of bounds");
         }
+
         colors[position] = newColor;
         this.notifyDataSetChanged();
     }
@@ -57,10 +61,8 @@ public class PaletteAdapter extends BaseAdapter{
      * @param newColor
      */
     public void setColor(int newColor){
-
         if (selectedBox != -1){
-            colors[selectedBox] = newColor;
-            this.notifyDataSetChanged();
+            setColor(selectedBox, newColor);
         }
     }
 
@@ -141,4 +143,8 @@ public class PaletteAdapter extends BaseAdapter{
 
         return grid;
     }
+
+    // TODO: Maybie we need a rs here too in order to transform directly the palette colors when
+    // TODO: changing one without having to recompute the kmeans
+
 }

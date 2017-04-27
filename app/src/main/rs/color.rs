@@ -18,6 +18,7 @@ static float PivotXYZ(float n) {
 	return (n > XYZEpsilon)? native_powr(n, 1.0f/3.0f) : (XYZKappa*n + 16.0f)/116.0f;
 }
 
+/// Convert RGB color to Lab color
 static float3 RGB2LAB ( float3 rgb_color)
 {
 	float r, g, b;
@@ -39,6 +40,7 @@ static float3 RGB2LAB ( float3 rgb_color)
 	return res;
 }
 
+/// Convert Lab color to RGB color
 static float3 LAB2RGB(float3 lab_color) {
   float L_value = lab_color.r;
   float A_value = lab_color.g;
@@ -98,6 +100,7 @@ static float3 LAB2RGB(float3 lab_color) {
   return res;
 }
 
+/// Check if the given Lab color is out of boundary
 static bool out_boundary(float3 color_lab) {
     float3 color_rgb;
     float delta;
@@ -107,6 +110,7 @@ static bool out_boundary(float3 color_lab) {
              (color_rgb.g < -delta) || (color_rgb.g > 1.0f + delta) ||
              (color_rgb.b < -delta) || (color_rgb.b > 1.0f + delta));
 }
+
 
 static float3 find_out(float3 c0, float3 diff) {
     float3 res, new_diff;
@@ -122,6 +126,7 @@ static float3 find_out(float3 c0, float3 diff) {
     return res;
 }
 
+/// Find the boundary point in lab space
 static float3 find_boundary(float3 c0, float3 c1) {
     float3 r, l, c;
     int i;
@@ -137,6 +142,7 @@ static float3 find_boundary(float3 c0, float3 c1) {
     return l;
 }
 
+/// Compute the lab distance between 2 colors
 static float lab_dis(float3 c0, float3 c1) {
     float3 dc;
     dc = c0 - c1;
@@ -246,6 +252,7 @@ void cal_palette_rate() {
     }
 }
 
+/// RGB grid init
 void initGrid2() {
     int i;
     float3 res;
@@ -257,6 +264,7 @@ void initGrid2() {
     }
 }
 
+/// Lab grid init
 void initGrid() {
     int g1 = grid_g + 1;
     float3 c;
