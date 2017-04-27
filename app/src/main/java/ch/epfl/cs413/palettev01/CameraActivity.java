@@ -90,28 +90,61 @@ public class CameraActivity extends AppCompatActivity {
 
                             @Override
                             public void onOk(AmbilWarnaDialog dialog, int color) {
+                                // color is the color selected by the user
+                                ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
+
                                 /// TODO : Here we just changed a color in Palette !
                                 /// TODO : Should transform the palette's colors
                                 /// TODO : Should apply transform to bitmap
                                 // If there is a picture to modify
                                 if(!mPicture.isFileNull()) {
-                                    /// TODO : Do this initialization on image selection rather than here
-                                    // We initialise the render script
-                                    mPicture.rsInit(getApplicationContext());
-                                    // Init the grid
-                                    mPicture.initGrid();
-                                    /// TODO : Do this after first palette extraction
-                                    // Init the palette
-                                    mPicture.initTransPalette(palette);
+                                /// TODO : Need not async extract palette or just a function to transform colors of the palette
 
-                                    mPicture.testTransGrid(palette);
+//                                AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
+//
+//                                    @Override
+//                                    protected List<LabColor> doInBackground(Object... params) {
+//                                        int paletteSize = PaletteAdapter.PALETTE_SIZE;
+//                                        double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
+//                                        Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
+//                                        Kmeans kmeans = new Kmeans(paletteSize, smallImage);
+//                                        List<LabColor> paletteColors = kmeans.run();
+//                                        Collections.sort(paletteColors, new Comparator<LabColor>() {
+//                                            @Override
+//                                            public int compare(LabColor o1, LabColor o2) {
+//                                                return (o1.getL() < o2.getL()) ? 1 : (o1.getL() > o2.getL()) ? -1 : 0;
+//                                            }
+//                                        });
+//                                        return paletteColors;
+//                                    }
+
+//                                    @Override
+//                                    protected void onPostExecute(List<LabColor> labColors) {
+//                                        for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
+//                                            LabColor Lab = paletteColors.get(i);
+//                                            ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
+//                                        }
+//                                    }
+//                                };
+
+//                                    /// TODO : Do this initialization on image selection rather than here
+//                                    // We initialise the render script
+//                                    mPicture.rsInit(getApplicationContext());
+//                                    // Init the grid
+//                                    mPicture.initGrid();
+//                                    /// TODO : Do this after first palette extraction
+//                                    // Init the palette
+//                                    mPicture.initTransPalette(palette);
+
+                                    // We transform the grid
+                                    mPicture.transGrid(palette);
+
+                                    // And finally we can also transform the image
                                     mPicture.transImage(mView);
                                     // mPicture.initTransPalette(palette);
                                     // mPicture.myFunction(mView);
                                     mPicture.rsClose();
                                 }
-                                // color is the color selected by the user
-                                ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
                             }
 
                             @Override
@@ -203,6 +236,9 @@ public class CameraActivity extends AppCompatActivity {
                         LabColor Lab = labColors.get(i);
                         ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
                     }
+                    // TODO : Write place for this init ?
+                    // Init the palette
+                    mPicture.initTransPalette(palette);
                 }
             };
 
@@ -353,6 +389,11 @@ public class CameraActivity extends AppCompatActivity {
             launchAsyncPaletteExtract();
         }
 
+        /// TODO : Putted initialisation at right place ?
+        // We initialise the render script
+        mPicture.rsInit(getApplicationContext());
+        // Init the grid
+        mPicture.initGrid();
     }
 
 

@@ -465,6 +465,53 @@ public class PaletteBitmap {
         }
     }
 
+    public void transGrid(Palette palette) {
+        PaletteAdapter paletteAdapter = ((PaletteAdapter)palette.getAdapter());
+        int paletteSize = paletteAdapter.getSize();
+
+        // We create the new palette
+        float[] new_palette = new float[3 * paletteSize];
+        for (int i = 0; i < paletteSize; i++) {
+            int color = paletteAdapter.getColor(i);
+            double[] lab_color = new double[3];
+            ColorUtils.colorToLAB(color, lab_color);
+            for (int j=0; j<3; j++)
+                new_palette[3*i + j] = (float)lab_color[j];
+        }
+
+        Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationOld.setAutoPadding(true);
+        allocationOld.copyFrom(old_palette);
+        Allocation allocationNew = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationNew.setAutoPadding(true);
+        allocationNew.copyFrom(new_palette);
+        Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        colorScript.set_old_palette(allocationOld);
+        colorScript.set_new_palette(allocationNew);
+        colorScript.set_paletteSize(paletteSize);
+        colorScript.set_diff(allocationDiff);
+        colorScript.set_c_rate(allocation_rate);
+
+        int g1 = grid_g + 1;
+        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
+        allocationGrid.setAutoPadding(true);
+        allocationGrid.copyFrom(grid);
+        Allocation allocationTempGrid = Allocation.createTyped(rs, allocationGrid.getType());
+        allocationTempGrid.setAutoPadding(true);
+
+        colorScript.invoke_cal_palette_rate();
+        colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
+        allocationTempGrid.copyTo(temp_grid);
+
+        allocationOld.destroy();
+        allocationNew.destroy();
+        allocationDiff.destroy();
+        allocation_rate.destroy();
+        allocationGrid.destroy();
+        allocationTempGrid.destroy();
+    }
+
     public void rsClose() {
         colorScript.destroy();
         rs.destroy();
