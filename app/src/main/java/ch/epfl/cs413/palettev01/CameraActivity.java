@@ -99,43 +99,6 @@ public class CameraActivity extends AppCompatActivity {
                                 // If there is a picture to modify
                                 if(!mPicture.isFileNull()) {
                                 /// TODO : Need not async extract palette or just a function to transform colors of the palette
-
-//                                AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
-//
-//                                    @Override
-//                                    protected List<LabColor> doInBackground(Object... params) {
-//                                        int paletteSize = PaletteAdapter.PALETTE_SIZE;
-//                                        double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
-//                                        Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
-//                                        Kmeans kmeans = new Kmeans(paletteSize, smallImage);
-//                                        List<LabColor> paletteColors = kmeans.run();
-//                                        Collections.sort(paletteColors, new Comparator<LabColor>() {
-//                                            @Override
-//                                            public int compare(LabColor o1, LabColor o2) {
-//                                                return (o1.getL() < o2.getL()) ? 1 : (o1.getL() > o2.getL()) ? -1 : 0;
-//                                            }
-//                                        });
-//                                        return paletteColors;
-//                                    }
-
-//                                    @Override
-//                                    protected void onPostExecute(List<LabColor> labColors) {
-//                                        for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
-//                                            LabColor Lab = paletteColors.get(i);
-//                                            ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
-//                                        }
-//                                    }
-//                                };
-
-//                                    /// TODO : Do this initialization on image selection rather than here
-//                                    // We initialise the render script
-//                                    mPicture.rsInit(getApplicationContext());
-//                                    // Init the grid
-//                                    mPicture.initGrid();
-//                                    /// TODO : Do this after first palette extraction
-//                                    // Init the palette
-//                                    mPicture.initTransPalette(palette);
-
                                     // We transform the grid
                                     mPicture.transGrid(palette);
 
