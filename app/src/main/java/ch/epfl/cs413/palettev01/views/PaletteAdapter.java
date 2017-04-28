@@ -2,12 +2,17 @@ package ch.epfl.cs413.palettev01.views;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.support.v4.graphics.ColorUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import ch.epfl.cs413.palettev01.R;
+import ch.epfl.cs413.palettev01.processing.LabColor;
+
+import static java.lang.Math.exp;
+import static java.lang.Math.log;
 
 public class PaletteAdapter extends BaseAdapter{
 
@@ -142,6 +147,44 @@ public class PaletteAdapter extends BaseAdapter{
         }
 
         return grid;
+    }
+
+    private double smoothL (double x, double d) {
+        double lambda = 0.2 * log(2);
+        return log(exp(lambda*x) + exp(lambda*d) - 1) / lambda - x;
+    }
+
+    /**
+     * Luminance update on a color change
+     *
+     * @param position
+     * @param color
+     */
+    public void updateAll(int position, int color) {
+        double[] new_lab = new double[3];
+        ColorUtils.colorToLAB(color, new_lab);
+        double[] old_lab_pos = new double[3];
+        ColorUtils.colorToLAB(getColor(position), old_lab_pos);
+        double delta = old_lab_pos[0] - new_lab[0];
+        for (int i = 0; i < size; i++) {
+            int newColor = color;
+            if (i < position) { // Palette colors with higher luminance
+                double[] old_lab = new double[3];
+                ColorUtils.colorToLAB(getColor(i), old_lab);
+                new_lab[0] = new_lab[0] - smoothL(-delta, old_lab[0]-old_lab_pos[0]);
+                newColor = ColorUtils.LABToColor(new_lab[0], old_lab[1], old_lab[2]);
+            } else if (i > position) {
+                double[] old_lab = new double[3];
+                ColorUtils.colorToLAB(getColor(i), old_lab);
+                new_lab[0] = smoothL(delta, old_lab_pos[0]-old_lab[0]);
+                newColor = ColorUtils.LABToColor(new_lab[0], old_lab[1], old_lab[2]);
+//                newColor = getColor(i);
+            }
+
+            // If i==position we just want to return the color
+
+            setColor(i, newColor);
+        }
     }
 
     // TODO: Maybie we need a rs here too in order to transform directly the palette colors when

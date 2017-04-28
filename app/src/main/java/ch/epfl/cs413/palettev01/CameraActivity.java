@@ -91,15 +91,16 @@ public class CameraActivity extends AppCompatActivity {
                             @Override
                             public void onOk(AmbilWarnaDialog dialog, int color) {
                                 // color is the color selected by the user
-                                ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
 
                                 /// TODO : Here we just changed a color in Palette !
-                                /// TODO : Should transform the palette's colors
+                                /// Transform the palette's colors
+                                ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
+
                                 /// TODO : Should apply transform to bitmap
                                 // If there is a picture to modify
                                 if(!mPicture.isFileNull()) {
                                     // We transform the grid
-                                    mPicture.transGrid(palette);
+                                    mPicture.transGrid(palette, position);
 
                                     // And finally we can also transform the image
                                     mPicture.transImage(mView);
@@ -195,7 +196,7 @@ public class CameraActivity extends AppCompatActivity {
                         LabColor Lab = labColors.get(i);
                         ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
                     }
-                    // TODO : Write place for this init ?
+
                     // Init the palette
                     mPicture.initTransPalette(palette);
                 }
@@ -268,7 +269,7 @@ public class CameraActivity extends AppCompatActivity {
 //                    consumingTime = System.nanoTime() - startTime;
 //                    Log.d("time", Long.toString(consumingTime));
                     // mPicture.initTransPalette(palette);
-                    // mPicture.myFunction(mView);
+//                     mPicture.myFunction(mView);
 //                    mPicture.rsClose();
 //                    consumingTime = System.nanoTime() - startTime;
 //                    Log.d("time", Long.toString(consumingTime));
@@ -348,6 +349,10 @@ public class CameraActivity extends AppCompatActivity {
             launchAsyncPaletteExtract();
         }
 
+        try {
+            mPicture.rsClose();
+        } catch(Exception e) {
+        }
         /// TODO : Putted initialisation at right place ?
         // We initialise the render script
         mPicture.rsInit(getApplicationContext());

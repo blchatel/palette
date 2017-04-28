@@ -427,8 +427,7 @@ public class PaletteBitmap {
         }
     }
 
-    public void transGrid(Palette palette) {
-        int changedIndex = 0;
+    public void transGrid(Palette palette, int changedIndex) {
         PaletteAdapter paletteAdapter = ((PaletteAdapter)palette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
 
@@ -438,12 +437,12 @@ public class PaletteBitmap {
             int color = paletteAdapter.getColor(i);
             double[] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
-            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
-            LabColor newC = new LabColor(lab_color);
-            if (!oldC.equals(newC)) {
-                Log.d("PALETTE_COLOR", "Color changed from " + oldC + " to " + newC + " at position " + i);
-                changedIndex =  i;
-            }
+//            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
+//            LabColor newC = new LabColor(lab_color);
+//            if (!oldC.equals(newC)) {
+//                Log.d("PALETTE_COLOR", "Color changed from " + oldC + " to " + newC + " at position " + i);
+//                changedIndex =  i;
+//            }
             for (int j=0; j<3; j++)
                 new_palette[3*i + j] = (float)lab_color[j];
         }
