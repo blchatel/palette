@@ -106,7 +106,7 @@ public class CameraActivity extends AppCompatActivity {
                                     mPicture.transImage(mView);
                                     // mPicture.initTransPalette(palette);
                                     // mPicture.myFunction(mView);
-                                    mPicture.rsClose();
+                                    // mPicture.rsClose();
                                 }
                             }
 

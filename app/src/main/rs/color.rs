@@ -206,7 +206,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
     res.g = 0;
     res.b = 0;
 
-    for (i = 0; i < paletteSize; i++) {
+    for (i = 0; i < 1; i++) {
         c_diff = rsGetElementAt_float3(diff, i);
         rate = rsGetElementAt_float(c_rate, i);
         c_new = rsGetElementAt_float3(new_palette, i);

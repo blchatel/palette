@@ -478,6 +478,12 @@ public class PaletteBitmap {
             for (int j=0; j<3; j++)
                 new_palette[3*i + j] = (float)lab_color[j];
         }
+        Log.d("old palette", Float.toString(old_palette[0]) + " " +
+                Float.toString(old_palette[1]) + " " +
+                Float.toString(old_palette[2]) + " ");
+        Log.d("new palette", Float.toString(new_palette[0]) + " " +
+                Float.toString(new_palette[1]) + " " +
+                Float.toString(new_palette[2]) + " ");
 
         Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         allocationOld.setAutoPadding(true);
