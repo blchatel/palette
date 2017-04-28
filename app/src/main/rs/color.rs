@@ -206,6 +206,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
     res.g = 0;
     res.b = 0;
 
+    // TODO: take all colors into account
     for (i = 0; i < 1; i++) {
         c_diff = rsGetElementAt_float3(diff, i);
         rate = rsGetElementAt_float(c_rate, i);
@@ -310,4 +311,43 @@ void init() {
 	white_z = 108.883f;
 	XYZEpsilon = 216.0f/24389.0f;
 	XYZKappa = 24389.0f/27.0f;
+}
+
+/// -- Tests --
+int i;
+
+float3 __attribute__((kernel)) grid_transfer_i(float3 in, uint32_t x) {
+    float3 res;
+    float3 c_l, c_r, c_boundary, c_out, c_res, c_diff, c_new, c_c;
+    int j;
+    float rate, d_now, d_target;
+    bool out;
+
+    res.r = 0;
+    res.g = 0;
+    res.b = 0;
+
+    c_diff = rsGetElementAt_float3(diff, i);
+    rate = rsGetElementAt_float(c_rate, i);
+    c_new = rsGetElementAt_float3(new_palette, i);
+    c_out = c_diff + in;
+    c_r = find_out(in, c_diff);
+    out = out_boundary(c_out);
+    c_r = out? c_out : c_r;
+    c_l = out? c_new : in;
+    c_boundary = find_boundary(c_l, c_r);
+    d_target = lab_dis(in, c_boundary);
+    d_target *= rate;
+    c_r = c_boundary;
+    c_l = in;
+    for (j = 0; j < 5; j++) {
+        c_c = (c_l + c_r) / 2.0f;
+        d_now = lab_dis(in, c_c);
+        c_l = (d_now > d_target) ? c_l : c_c;
+        c_r = (d_now > d_target) ? c_c : c_r;
+    }
+    c_res = (rate < 0.000001f) ? in : c_l;
+    res += c_res;
+
+    return res;
 }

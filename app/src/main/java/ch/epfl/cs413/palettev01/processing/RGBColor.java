@@ -25,17 +25,20 @@ public class RGBColor {
 
     static RGBColor intToRGB(int p) {
         int[] rgb = new int[3];
-//        rgb[0] = (p & 0xff0000) >> 16;
-//        rgb[1] = (p & 0xff00) >> 8;
-//        rgb[2] = p & 0xff;
-
-//        Log.d("<RGB>", "R is " + rgb[0] + " G : " + rgb[1] + " B : " + rgb[2]);
-
         rgb[0] = Color.red(p);
         rgb[1] = Color.green(p);
         rgb[2] = Color.blue(p);
 
         return new RGBColor(rgb);
+    }
+
+    float[] getRGB () {
+        float[] rgb = new float[3];
+        rgb[0] = (float)r;
+        rgb[1] = (float)g;
+        rgb[2] = (float)b;
+
+        return rgb;
     }
 
     public void add (RGBColor c) {

@@ -351,6 +351,12 @@ public class PaletteBitmap {
     private int grid_g;
     private float[] old_palette;
 
+    // TODO: Refactoring for more readability
+//    private LabColor[][][] tempGrid;
+//    private LabColor[][][] newGrid;
+//    private LabColor[] oldPalette;
+
+
     public void rsInit(Context context) {
         //Create renderscript
         rs = RenderScript.create(context);
@@ -374,58 +380,6 @@ public class PaletteBitmap {
         allocationGrid.destroy();
         System.arraycopy(grid, 0, temp_grid, 0, 3 * g1 * g1 * g1);
         input_pic = Bitmap.createBitmap(scaled);
-    }
-
-    public void testInitTransPalette(Palette palette) {
-        old_palette = new float[3];
-        double [] lab_color = new double[3];
-        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2);
-        int color = 0xff000000 + 158 * 0x10000 + 182 * 0x100 + 215;
-        ColorUtils.colorToLAB(color, lab_color);
-        for (int i=0; i<3; i++)
-            old_palette[i] = (float) lab_color[i];
-    }
-
-    public void testTransGrid(Palette palette) {
-        float[] new_palette = new float[3];
-        int paletteSize = 1;
-        double [] lab_color = new double[3];
-        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2) + 0x100000;
-        int color = 0xff000000 + 178 * 0x10000 + 128 * 0x100 + 128;
-        ColorUtils.colorToLAB(color, lab_color);
-        for (int i=0; i<3; i++)
-            new_palette[i] = (float) lab_color[i];
-        Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
-        allocationOld.setAutoPadding(true);
-        allocationOld.copyFrom(old_palette);
-        Allocation allocationNew = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
-        allocationNew.setAutoPadding(true);
-        allocationNew.copyFrom(new_palette);
-        Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
-        Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
-        colorScript.set_old_palette(allocationOld);
-        colorScript.set_new_palette(allocationNew);
-        colorScript.set_paletteSize(paletteSize);
-        colorScript.set_diff(allocationDiff);
-        colorScript.set_c_rate(allocation_rate);
-
-        int g1 = grid_g + 1;
-        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
-        allocationGrid.setAutoPadding(true);
-        allocationGrid.copyFrom(grid);
-        Allocation allocationTempGrid = Allocation.createTyped(rs, allocationGrid.getType());
-        allocationTempGrid.setAutoPadding(true);
-
-        colorScript.invoke_cal_palette_rate();
-        colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
-        allocationTempGrid.copyTo(temp_grid);
-
-        allocationOld.destroy();
-        allocationNew.destroy();
-        allocationDiff.destroy();
-        allocation_rate.destroy();
-        allocationGrid.destroy();
-        allocationTempGrid.destroy();
     }
 
     public void transImage(Miniature v) {
@@ -455,6 +409,14 @@ public class PaletteBitmap {
      */
     public void initTransPalette(Palette palette) {
         int paletteSize = ((PaletteAdapter)palette.getAdapter()).getSize();
+//        oldPalette = new LabColor[paletteSize];
+//        for (int i=0; i < paletteSize; i++) {
+//            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
+//            double [] labColor = new double[3];
+//            ColorUtils.colorToLAB(color, labColor);
+//            oldPalette[i] = new LabColor(labColor);
+//        }
+
         old_palette = new float[3 * paletteSize];
         for (int i=0; i<paletteSize; i++) {
             int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
@@ -466,6 +428,7 @@ public class PaletteBitmap {
     }
 
     public void transGrid(Palette palette) {
+        int changedIndex = 0;
         PaletteAdapter paletteAdapter = ((PaletteAdapter)palette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
 
@@ -479,16 +442,11 @@ public class PaletteBitmap {
             LabColor newC = new LabColor(lab_color);
             if (!oldC.equals(newC)) {
                 Log.d("PALETTE_COLOR", "Color changed from " + oldC + " to " + newC + " at position " + i);
+                changedIndex =  i;
             }
             for (int j=0; j<3; j++)
                 new_palette[3*i + j] = (float)lab_color[j];
         }
-//        Log.d("old palette", Float.toString(old_palette[0]) + " " +
-//                Float.toString(old_palette[1]) + " " +
-//                Float.toString(old_palette[2]) + " ");
-//        Log.d("new palette", Float.toString(new_palette[0]) + " " +
-//                Float.toString(new_palette[1]) + " " +
-//                Float.toString(new_palette[2]) + " ");
 
         Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         allocationOld.setAutoPadding(true);
@@ -513,7 +471,8 @@ public class PaletteBitmap {
         allocationTempGrid.setAutoPadding(true);
 
         colorScript.invoke_cal_palette_rate();
-        colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
+        colorScript.set_i(changedIndex);
+        colorScript.forEach_grid_transfer_i(allocationGrid, allocationTempGrid);
         allocationTempGrid.copyTo(temp_grid);
 
         allocationOld.destroy();
@@ -573,6 +532,63 @@ public class PaletteBitmap {
 
     public Bitmap getScaled() {
         return scaled;
+    }
+
+
+    /**
+     * Test functions
+     */
+
+    public void testInitTransPalette(Palette palette) {
+        old_palette = new float[3];
+        double [] lab_color = new double[3];
+        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2);
+        int color = 0xff000000 + 158 * 0x10000 + 182 * 0x100 + 215;
+        ColorUtils.colorToLAB(color, lab_color);
+        for (int i=0; i<3; i++)
+            old_palette[i] = (float) lab_color[i];
+    }
+
+    public void testTransGrid(Palette palette) {
+        float[] new_palette = new float[3];
+        int paletteSize = 1;
+        double [] lab_color = new double[3];
+        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2) + 0x100000;
+        int color = 0xff000000 + 178 * 0x10000 + 128 * 0x100 + 128;
+        ColorUtils.colorToLAB(color, lab_color);
+        for (int i=0; i<3; i++)
+            new_palette[i] = (float) lab_color[i];
+        Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationOld.setAutoPadding(true);
+        allocationOld.copyFrom(old_palette);
+        Allocation allocationNew = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationNew.setAutoPadding(true);
+        allocationNew.copyFrom(new_palette);
+        Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        colorScript.set_old_palette(allocationOld);
+        colorScript.set_new_palette(allocationNew);
+        colorScript.set_paletteSize(paletteSize);
+        colorScript.set_diff(allocationDiff);
+        colorScript.set_c_rate(allocation_rate);
+
+        int g1 = grid_g + 1;
+        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
+        allocationGrid.setAutoPadding(true);
+        allocationGrid.copyFrom(grid);
+        Allocation allocationTempGrid = Allocation.createTyped(rs, allocationGrid.getType());
+        allocationTempGrid.setAutoPadding(true);
+
+        colorScript.invoke_cal_palette_rate();
+        colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
+        allocationTempGrid.copyTo(temp_grid);
+
+        allocationOld.destroy();
+        allocationNew.destroy();
+        allocationDiff.destroy();
+        allocation_rate.destroy();
+        allocationGrid.destroy();
+        allocationTempGrid.destroy();
     }
 }
 

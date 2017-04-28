@@ -269,7 +269,7 @@ public class CameraActivity extends AppCompatActivity {
 //                    Log.d("time", Long.toString(consumingTime));
                     // mPicture.initTransPalette(palette);
                     // mPicture.myFunction(mView);
-                    mPicture.rsClose();
+//                    mPicture.rsClose();
 //                    consumingTime = System.nanoTime() - startTime;
 //                    Log.d("time", Long.toString(consumingTime));
 

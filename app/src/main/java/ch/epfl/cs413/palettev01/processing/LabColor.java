@@ -40,6 +40,14 @@ public class LabColor {
     /// ---------  Getters and Setters functions  ---------- ///
     /// ---------------------------------------------------- ///
 
+    public float[] getLab() {
+        float[] lab = new float[3];
+        lab[0] = (float)L;
+        lab[1] = (float)a;
+        lab[2] = (float)b;
+        return lab;
+    }
+
     public double getL() {
         return L;
     }
