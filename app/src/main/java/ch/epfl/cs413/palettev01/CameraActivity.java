@@ -98,15 +98,11 @@ public class CameraActivity extends AppCompatActivity {
                                 /// TODO : Should apply transform to bitmap
                                 // If there is a picture to modify
                                 if(!mPicture.isFileNull()) {
-                                    mPicture.initGrid();
-
-                                    mPicture.testInitTransPalette(palette);
-                                    mPicture.testTransGrid(palette);
                                     // We transform the grid
-//                                    mPicture.transGrid(palette);
+                                    mPicture.transGrid(palette);
 
                                     // And finally we can also transform the image
-//                                    mPicture.transImage(mView);
+                                    mPicture.transImage(mView);
                                 }
                             }
 
@@ -356,7 +352,7 @@ public class CameraActivity extends AppCompatActivity {
         // We initialise the render script
         mPicture.rsInit(getApplicationContext());
         // Init the grid
-//        mPicture.initGrid();
+        mPicture.initGrid();
     }
 
 
