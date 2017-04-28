@@ -1,5 +1,6 @@
 package ch.epfl.cs413.palettev01.processing;
 
+import android.util.Log;
 import android.util.Pair;
 
 import java.util.Random;
@@ -99,12 +100,15 @@ public class LabColor {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+        int precision = 1000;
 
         LabColor labColor = (LabColor) o;
 
-        if (Double.compare(labColor.L, L) != 0) return false;
-        if (Double.compare(labColor.a, a) != 0) return false;
-        return Double.compare(labColor.b, b) == 0;
+        if ((int)(labColor.L*precision) != (int)(L*precision)) return false;
+        if ((int)(labColor.a*precision) != (int)(a*precision)) return false;
+
+//        Log.d("EQUALITY ?", "For now they are equal.");
+        return (int)(labColor.b*precision) == (int)(b*precision);
 
     }
 
@@ -119,5 +123,10 @@ public class LabColor {
         temp = Double.doubleToLongBits(b);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + L + ", " + a + ", " + b + ")";
     }
 }

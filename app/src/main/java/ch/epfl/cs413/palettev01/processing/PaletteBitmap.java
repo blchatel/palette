@@ -387,12 +387,25 @@ public class PaletteBitmap {
     }
 
     public void testTransGrid(Palette palette) {
+        PaletteAdapter paletteAdapter = (PaletteAdapter)palette.getAdapter();
         float[] new_palette = new float[3];
         int paletteSize = 1;
         double [] lab_color = new double[3];
+
+        for (int i = 0; i < paletteSize; i++) {
+            int color = paletteAdapter.getColor(i);
+            double[] lab = new double[3];
+            ColorUtils.colorToLAB(color, lab);
+            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
+            LabColor newC = new LabColor(lab);
+            if (!oldC.equals(newC)) {
+                lab_color = lab;
+            }
+        }
+
         // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2) + 0x100000;
-        int color = 0xff000000 + 178 * 0x10000 + 128 * 0x100 + 128;
-        ColorUtils.colorToLAB(color, lab_color);
+//        int color = 0xff000000 + 178 * 0x10000 + 128 * 0x100 + 128;
+//        ColorUtils.colorToLAB(color, lab_color);
         for (int i=0; i<3; i++)
             new_palette[i] = (float) lab_color[i];
         Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
@@ -466,6 +479,9 @@ public class PaletteBitmap {
     }
 
     public void transGrid(Palette palette) {
+
+
+
         PaletteAdapter paletteAdapter = ((PaletteAdapter)palette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
 
@@ -475,6 +491,11 @@ public class PaletteBitmap {
             int color = paletteAdapter.getColor(i);
             double[] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
+            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
+            LabColor newC = new LabColor(lab_color);
+            if (!oldC.equals(newC)) {
+                Log.d("PALETTE_COLOR", "Color changed from " + oldC + " to " + newC + " at position " + i);
+            }
             for (int j=0; j<3; j++)
                 new_palette[3*i + j] = (float)lab_color[j];
         }
@@ -485,6 +506,8 @@ public class PaletteBitmap {
         Allocation allocationNew = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         allocationNew.setAutoPadding(true);
         allocationNew.copyFrom(new_palette);
+
+        // TODO: @AllocationDiff and @allocation_rate might never be assigned with the actual diff ?!
         Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
         colorScript.set_old_palette(allocationOld);
@@ -493,6 +516,7 @@ public class PaletteBitmap {
         colorScript.set_diff(allocationDiff);
         colorScript.set_c_rate(allocation_rate);
 
+        // TODO: Why +1 here ? Don't we want a g*g*g grid with g=12 ?
         int g1 = grid_g + 1;
         Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
         allocationGrid.setAutoPadding(true);
