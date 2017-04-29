@@ -73,15 +73,8 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public void onItemClick(final AdapterView<?> parent, View view, final int position, long id) {
-                ((PaletteAdapter) parent.getAdapter()).setSelectedBox(position);
-            }
-        });
-
-        palette.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-
-            @Override
-            public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
-                PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
+                final PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
+                pA.setSelectedBox(position);
 
                 // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
                 // for example, 0xff000000 is black, 0xff0000ff is blue. Please be aware of the initial 0xff which is the alpha.
@@ -105,15 +98,25 @@ public class CameraActivity extends AppCompatActivity {
                                     // And finally we can also transform the image
                                     mPicture.transImage(mView);
                                 }
+
+                                pA.setSelectedBox(-1);
                             }
 
                             @Override
                             public void onCancel(AmbilWarnaDialog dialog) {
                                 // cancel was selected by the user
+                                pA.setSelectedBox(-1);
                             }
                         });
                 dialog.show();
+            }
+        });
 
+        palette.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+
+            @Override
+            public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
+                ((PaletteAdapter) parent.getAdapter()).setSelectedBox(position);
                 return true;
             }
         });
@@ -349,15 +352,18 @@ public class CameraActivity extends AppCompatActivity {
             launchAsyncPaletteExtract();
         }
 
-        try {
-            mPicture.rsClose();
-        } catch(Exception e) {
+        if (mPicture != null) {
+            try {
+                mPicture.rsClose();
+            } catch (Exception e) {
+                // To avoid closing a non existing element
+            }
+
+            // We initialise the render script
+            mPicture.rsInit(getApplicationContext());
+            // Init the grid
+            mPicture.initGrid();
         }
-        /// TODO : Putted initialisation at right place ?
-        // We initialise the render script
-        mPicture.rsInit(getApplicationContext());
-        // Init the grid
-        mPicture.initGrid();
     }
 
 

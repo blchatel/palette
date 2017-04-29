@@ -3,6 +3,7 @@ package ch.epfl.cs413.palettev01.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.graphics.ColorUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -97,9 +98,14 @@ public class PaletteAdapter extends BaseAdapter{
      * @param position
      */
     public void setSelectedBox(int position){
-
         selectedBox = selectedBox == position ? -1 : position;
         this.notifyDataSetChanged();
+
+//        for (int i=0; i < size; i++) {
+//            double[] new_lab = new double[3];
+//            ColorUtils.colorToLAB(getColor(i), new_lab);
+//            Log.d("LAB L value", "At " + i + " L is : " + new_lab[0]);
+//        }
     }
 
 
@@ -137,13 +143,15 @@ public class PaletteAdapter extends BaseAdapter{
 
         grid = inflater.inflate(R.layout.color_box, null);
         ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
-        ColorBox activate = (ColorBox) grid.findViewById(R.id.grid_box_activation);
+//        ColorBox activate = (ColorBox) grid.findViewById(R.id.grid_box_activation);
         button.setBackgroundColor(colors[position]);
 
         if(position == selectedBox){
-            activate.setBackgroundColor(Color.BLUE);
+//            activate.setBackgroundColor(Color.BLUE);
+            button.setSelected();
         } else {
-            activate.setBackgroundColor(Color.TRANSPARENT);
+//            activate.setBackgroundColor(Color.TRANSPARENT);
+            button.setNotSelected();
         }
 
         return grid;
@@ -161,33 +169,33 @@ public class PaletteAdapter extends BaseAdapter{
      * @param color
      */
     public void updateAll(int position, int color) {
+        /// TOOD : This produces strange results for now ! Fix it
+//        Log.d("position", "Position selected is " + (position == selectedBox));
         double[] new_lab = new double[3];
         ColorUtils.colorToLAB(color, new_lab);
         double[] old_lab_pos = new double[3];
         ColorUtils.colorToLAB(getColor(position), old_lab_pos);
         double delta = old_lab_pos[0] - new_lab[0];
+
         for (int i = 0; i < size; i++) {
             int newColor = color;
             if (i < position) { // Palette colors with higher luminance
                 double[] old_lab = new double[3];
                 ColorUtils.colorToLAB(getColor(i), old_lab);
-                new_lab[0] = new_lab[0] - smoothL(-delta, old_lab[0]-old_lab_pos[0]);
+                old_lab[0] = new_lab[0] - smoothL(delta, old_lab_pos[0]-old_lab[0]);
                 newColor = ColorUtils.LABToColor(new_lab[0], old_lab[1], old_lab[2]);
             } else if (i > position) {
                 double[] old_lab = new double[3];
                 ColorUtils.colorToLAB(getColor(i), old_lab);
-                new_lab[0] = smoothL(delta, old_lab_pos[0]-old_lab[0]);
-                newColor = ColorUtils.LABToColor(new_lab[0], old_lab[1], old_lab[2]);
+                old_lab[0] = new_lab[0] + smoothL(-delta, old_lab[0]-old_lab_pos[0]);
+                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
 //                newColor = getColor(i);
             }
 
-            // If i==position we just want to return the color
+            /// TODO : The part checking if RGB is correct is not there. Maybe the problem
 
+            // If i==position we just want to return the color
             setColor(i, newColor);
         }
     }
-
-    // TODO: Maybie we need a rs here too in order to transform directly the palette colors when
-    // TODO: changing one without having to recompute the kmeans
-
 }

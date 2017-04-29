@@ -26,18 +26,20 @@
             android:layout_weight="0.2"
             android:orientation="vertical">
 
-            <Switch
-                android:id="@+id/switch1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center" />
+            <!--TODO : Think better this design-->
+            <!--<Switch-->
+                <!--android:id="@+id/switch1"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center" />-->
 
 
             <ch.epfl.cs413.palettev01.views.Palette
                 android:id="@+id/MAIN_paletteGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal|center"
+                android:layout_gravity="center_horizontal|center_vertical"
+                android:layout_marginTop="20dp"
                 android:layout_marginBottom="@android:dimen/notification_large_icon_height"
                 android:animationCache="false"
                 android:columnWidth="90dp"

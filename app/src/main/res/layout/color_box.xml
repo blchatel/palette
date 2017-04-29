@@ -9,10 +9,12 @@
         android:id="@+id/grid_color_box"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_gravity="center"/>
-    <ch.epfl.cs413.palettev01.views.ColorBox
-        android:id="@+id/grid_box_activation"
-        android:layout_width="50dp"
-        android:layout_height="5dp"
-        android:layout_gravity="center"/>
+        android:layout_gravity="center"
+        android:layout_marginBottom="15dp"/>
+    <!--TODO: Upper this is in order for the last square to be displayed actually-->
+    <!--<ch.epfl.cs413.palettev01.views.ColorBox-->
+        <!--android:id="@+id/grid_box_activation"-->
+        <!--android:layout_width="50dp"-->
+        <!--android:layout_height="5dp"-->
+        <!--android:layout_gravity="center"/>-->
 </LinearLayout>
