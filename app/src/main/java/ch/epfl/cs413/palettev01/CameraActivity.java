@@ -22,6 +22,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ProgressBar;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -175,6 +176,9 @@ public class CameraActivity extends AppCompatActivity {
     private void launchAsyncPaletteExtract() {
         /// TODO : Put a charging indicator
         if (!mPicture.isEmpty()) {
+            final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
+            paletteProgressBar.setVisibility(View.VISIBLE);
+            palette.setVisibility(View.GONE);
             AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
 
                 @Override
@@ -202,6 +206,8 @@ public class CameraActivity extends AppCompatActivity {
 
                     // Init the palette
                     mPicture.initTransPalette(palette);
+                    palette.setVisibility(View.VISIBLE);
+                    paletteProgressBar.setVisibility(View.GONE);
                 }
             };
 

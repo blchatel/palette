@@ -47,6 +47,15 @@
                 android:numColumns="auto_fit"
                 android:stretchMode="columnWidth"
                 android:verticalSpacing="10dp" />
+
+            <ProgressBar
+                android:visibility="gone"
+                android:layout_gravity="center"
+                android:layout_marginBottom="30dp"
+                android:layout_marginTop="90dp"
+                android:id="@+id/palette_progressbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
         <LinearLayout
