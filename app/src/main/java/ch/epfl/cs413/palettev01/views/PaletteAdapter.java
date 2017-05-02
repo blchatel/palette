@@ -36,7 +36,7 @@ public class PaletteAdapter extends BaseAdapter{
 
         // initialization of the palette color . For now simply grayscale value
         for (int i = 0; i<size; i++) {
-            colors[i] = Color.argb( 255, 255/(i+1), 255/(i+1), 255/(i+1));
+            colors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
         }
     }
 
@@ -100,12 +100,6 @@ public class PaletteAdapter extends BaseAdapter{
     public void setSelectedBox(int position){
         selectedBox = selectedBox == position ? -1 : position;
         this.notifyDataSetChanged();
-
-//        for (int i=0; i < size; i++) {
-//            double[] new_lab = new double[3];
-//            ColorUtils.colorToLAB(getColor(i), new_lab);
-//            Log.d("LAB L value", "At " + i + " L is : " + new_lab[0]);
-//        }
     }
 
 
@@ -129,8 +123,6 @@ public class PaletteAdapter extends BaseAdapter{
 
     @Override
     public long getItemId(int position) {
-        // TODO Auto-generated method stub
-        // TODO I don't know how to implement this function
         return 0;
     }
 
@@ -143,14 +135,11 @@ public class PaletteAdapter extends BaseAdapter{
 
         grid = inflater.inflate(R.layout.color_box, null);
         ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
-//        ColorBox activate = (ColorBox) grid.findViewById(R.id.grid_box_activation);
         button.setBackgroundColor(colors[position]);
 
         if(position == selectedBox){
-//            activate.setBackgroundColor(Color.BLUE);
             button.setSelected();
         } else {
-//            activate.setBackgroundColor(Color.TRANSPARENT);
             button.setNotSelected();
         }
 
@@ -169,8 +158,6 @@ public class PaletteAdapter extends BaseAdapter{
      * @param color
      */
     public void updateAll(int position, int color) {
-        /// TOOD : This produces strange results for now ! Fix it
-//        Log.d("position", "Position selected is " + (position == selectedBox));
         double[] new_lab = new double[3];
         ColorUtils.colorToLAB(color, new_lab);
         double[] old_lab_pos = new double[3];
@@ -183,16 +170,15 @@ public class PaletteAdapter extends BaseAdapter{
                 double[] old_lab = new double[3];
                 ColorUtils.colorToLAB(getColor(i), old_lab);
                 old_lab[0] = new_lab[0] - smoothL(delta, old_lab_pos[0]-old_lab[0]);
-                newColor = ColorUtils.LABToColor(new_lab[0], old_lab[1], old_lab[2]);
+                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
             } else if (i > position) {
                 double[] old_lab = new double[3];
                 ColorUtils.colorToLAB(getColor(i), old_lab);
                 old_lab[0] = new_lab[0] + smoothL(-delta, old_lab[0]-old_lab_pos[0]);
                 newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
-//                newColor = getColor(i);
             }
 
-            /// TODO : The part checking if RGB is correct is not there. Maybe the problem
+            /// TODO : We don't check if palette color goes out of bounds !
 
             // If i==position we just want to return the color
             setColor(i, newColor);

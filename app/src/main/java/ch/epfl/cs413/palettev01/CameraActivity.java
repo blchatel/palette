@@ -191,7 +191,7 @@ public class CameraActivity extends AppCompatActivity {
                     Collections.sort(paletteColors, new Comparator<LabColor>() {
                         @Override
                         public int compare(LabColor o1, LabColor o2) {
-                            return (o1.getL() < o2.getL()) ? 1 : (o1.getL() > o2.getL()) ? -1 : 0;
+                            return (o1.getL() > o2.getL()) ? 1 : (o1.getL() < o2.getL()) ? -1 : 0;
                         }
                     });
                     return paletteColors;
@@ -199,9 +199,9 @@ public class CameraActivity extends AppCompatActivity {
 
                 @Override
                 protected void onPostExecute(List<LabColor> labColors) {
-                    for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
+                    for (int i = 1; i < labColors.size(); i++) {
                         LabColor Lab = labColors.get(i);
-                        ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
+                        ((PaletteAdapter)palette.getAdapter()).setColor(i-1, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
                     }
 
                     // Init the palette
