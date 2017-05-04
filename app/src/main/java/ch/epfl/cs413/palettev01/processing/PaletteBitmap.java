@@ -27,7 +27,6 @@ import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.Type;
 import ch.epfl.cs413.palettev01.ScriptC_color;
 
-
 /**
  * Created by bastien on 21.03.17.
  */
@@ -350,6 +349,7 @@ public class PaletteBitmap {
     private float[] temp_grid;
     private int grid_g;
     private float[] old_palette;
+    private float[] palette_weights;
 
     // TODO: Refactoring for more readability
 //    private LabColor[][][] tempGrid;
@@ -425,6 +425,49 @@ public class PaletteBitmap {
             for (int j=0; j<3; j++)
                 old_palette[i * 3 + j] = (float) lab_color[j];
         }
+
+        palette_weights = new float[paletteSize * paletteSize + 1];
+        float []palette_distance = new float [paletteSize * paletteSize + 1];
+        double [][]palette_distance_2D = new double [paletteSize][paletteSize];
+        Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationOld.setAutoPadding(true);
+        allocationOld.copyFrom(old_palette);
+        Allocation allocationDistance = Allocation.createSized(rs, Element.F32(rs), paletteSize * paletteSize + 1, Allocation.USAGE_SCRIPT);
+        colorScript.set_old_palette(allocationOld);
+        colorScript.set_palette_distance(allocationDistance);
+        colorScript.invoke_calculate_distance(paletteSize);
+        allocationDistance.copyTo(palette_distance);
+        float palette_mean_distance = palette_distance[paletteSize * paletteSize];
+
+        allocationDistance.destroy();
+        allocationOld.destroy();
+
+        for (int i=0; i<paletteSize; i++)
+            for (int j=0; j<paletteSize; j++)
+                palette_distance_2D[i][j] = palette_distance[i * paletteSize + j];
+        Jama.Matrix A = new Jama.Matrix(palette_distance_2D);
+        Jama.Matrix B = Jama.Matrix.identity(paletteSize, paletteSize);
+        Jama.Matrix C = A.solve(B);
+        palette_distance_2D = C.getArray();
+        for (int i=0; i<paletteSize; i++)
+            for (int j=0; j<paletteSize; j++)
+                palette_weights[i * paletteSize + j] = (float)(palette_distance_2D[i][j]);
+        palette_weights[paletteSize * paletteSize] = palette_mean_distance;
+        /*
+        Log.d("dis mean", Float.toString(palette_mean_distance));
+        for (int i=0; i<paletteSize; i++)
+            Log.d("dis " + Integer.toString(i), Float.toString(palette_distance[i * paletteSize + 0]) + " "
+                    + Float.toString(palette_distance[i * paletteSize + 1]) + " "
+                    + Float.toString(palette_distance[i * paletteSize + 2]) + " "
+                    + Float.toString(palette_distance[i * paletteSize + 3]) + " "
+                    + Float.toString(palette_distance[i * paletteSize + 4]));
+        for (int i=0; i<paletteSize; i++)
+            Log.d(Integer.toString(i), Float.toString(palette_weights[i * paletteSize + 0]) + " "
+                                       + Float.toString(palette_weights[i * paletteSize + 1]) + " "
+                                       + Float.toString(palette_weights[i * paletteSize + 2]) + " "
+                                       + Float.toString(palette_weights[i * paletteSize + 3]) + " "
+                                       + Float.toString(palette_weights[i * paletteSize + 4]));
+        */
     }
 
     public void transGrid(Palette palette, int changedIndex) {
@@ -455,11 +498,14 @@ public class PaletteBitmap {
         allocationNew.copyFrom(new_palette);
         Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        Allocation allocation_weights = Allocation.createSized(rs, Element.F32(rs), paletteSize * paletteSize + 1, Allocation.USAGE_SCRIPT);
+        allocation_weights.copyFrom(palette_weights);
         colorScript.set_old_palette(allocationOld);
         colorScript.set_new_palette(allocationNew);
         colorScript.set_paletteSize(paletteSize);
         colorScript.set_diff(allocationDiff);
         colorScript.set_c_rate(allocation_rate);
+        colorScript.set_palette_weights(allocation_weights);
 
 
         int g1 = grid_g + 1;
@@ -471,8 +517,24 @@ public class PaletteBitmap {
 
         colorScript.invoke_cal_palette_rate();
         colorScript.set_i(changedIndex);
-        colorScript.forEach_grid_transfer_i(allocationGrid, allocationTempGrid);
+        colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
         allocationTempGrid.copyTo(temp_grid);
+        int test_i = 0;
+        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
+                   Float.toString(temp_grid[test_i * 3 + 1]) + " " +
+                   Float.toString(temp_grid[test_i * 3 + 2]));
+        test_i = 100;
+        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
+                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
+                Float.toString(temp_grid[test_i * 3 + 2]));
+        test_i = 200;
+        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
+                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
+                Float.toString(temp_grid[test_i * 3 + 2]));
+        test_i = 300;
+        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
+                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
+                Float.toString(temp_grid[test_i * 3 + 2]));
 
         allocationOld.destroy();
         allocationNew.destroy();
@@ -480,6 +542,7 @@ public class PaletteBitmap {
         allocation_rate.destroy();
         allocationGrid.destroy();
         allocationTempGrid.destroy();
+        allocation_weights.destroy();
     }
 
     public void rsClose() {
