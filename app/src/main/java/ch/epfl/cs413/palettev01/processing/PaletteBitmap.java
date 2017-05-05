@@ -498,6 +498,7 @@ public class PaletteBitmap {
         allocationNew.copyFrom(new_palette);
         Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        Allocation allocation_max = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
         Allocation allocation_weights = Allocation.createSized(rs, Element.F32(rs), paletteSize * paletteSize + 1, Allocation.USAGE_SCRIPT);
         allocation_weights.copyFrom(palette_weights);
         colorScript.set_old_palette(allocationOld);
@@ -505,6 +506,7 @@ public class PaletteBitmap {
         colorScript.set_paletteSize(paletteSize);
         colorScript.set_diff(allocationDiff);
         colorScript.set_c_rate(allocation_rate);
+        colorScript.set_c_max(allocation_max);
         colorScript.set_palette_weights(allocation_weights);
 
 
@@ -540,6 +542,7 @@ public class PaletteBitmap {
         allocationNew.destroy();
         allocationDiff.destroy();
         allocation_rate.destroy();
+        allocation_max.destroy();
         allocationGrid.destroy();
         allocationTempGrid.destroy();
         allocation_weights.destroy();

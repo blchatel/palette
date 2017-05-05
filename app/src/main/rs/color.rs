@@ -168,6 +168,7 @@ int paletteSize;
 rs_allocation old_palette, new_palette;
 rs_allocation diff;
 rs_allocation c_rate;
+rs_allocation c_max;
 rs_allocation palette_distance;
 rs_allocation palette_weights;
 
@@ -237,7 +238,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
     float3 in_lab, res, res_rgb;
     float3 c_l, c_r, c_boundary, c_out, c_res, c_diff, c_new, c_c;
     int i, j;
-    float rate, d_now, d_target;
+    float rate, d_now, d_target, diff_max;
     bool out;
     float weight_sum, weight, dis, w;
     float3 c_old;
@@ -278,6 +279,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
 
         c_diff = rsGetElementAt_float3(diff, i);
         rate = rsGetElementAt_float(c_rate, i);
+        diff_max = rsGetElementAt_float(c_max, i);
         c_new = rsGetElementAt_float3(new_palette, i);
         c_out = c_diff + in_lab;
         c_r = find_out(in_lab, c_diff);
@@ -287,6 +289,8 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         c_boundary = find_boundary(c_l, c_r);
         d_target = lab_dis(in, c_boundary);
         d_target *= rate;
+        if (d_target > diff_max)
+            d_target = diff_max;
         c_r = c_boundary;
         c_l = in_lab;
         for (j = 0; j < 5; j++) {
@@ -321,6 +325,7 @@ void cal_palette_rate() {
 
         rsSetElementAt_float3(diff, c_diff, i);
         rsSetElementAt_float(c_rate, rate, i);
+        rsSetElementAt_float(c_max, d0, i);
     }
 }
 
