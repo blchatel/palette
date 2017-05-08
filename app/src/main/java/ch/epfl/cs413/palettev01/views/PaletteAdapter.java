@@ -3,14 +3,12 @@ package ch.epfl.cs413.palettev01.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.graphics.ColorUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import ch.epfl.cs413.palettev01.R;
-import ch.epfl.cs413.palettev01.processing.LabColor;
 
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
@@ -18,10 +16,14 @@ import static java.lang.Math.log;
 public class PaletteAdapter extends BaseAdapter{
 
     public static final int PALETTE_SIZE = 5;
+
     private Context mContext;
     private int[] colors;
+    private int[] tempColors;
     private int selectedBox = -1;
     private int size = 0;
+
+    private boolean isEditingMode = false;
 
 
     public PaletteAdapter(Context c, int size) {
@@ -33,10 +35,12 @@ public class PaletteAdapter extends BaseAdapter{
         }
         this.size = size;
         colors = new int[size];
+        tempColors = new int[size];
 
         // initialization of the palette color . For now simply grayscale value
         for (int i = 0; i<size; i++) {
             colors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
+            tempColors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
         }
     }
 
@@ -47,6 +51,7 @@ public class PaletteAdapter extends BaseAdapter{
     /**
      * Set the palette element on position with newColor
      * And notify the modification for display
+     * The modified element is the temporary one if the edit mode is enable
      * @param position
      * @param newColor
      */
@@ -55,10 +60,13 @@ public class PaletteAdapter extends BaseAdapter{
             throw new IllegalArgumentException("Position out of bounds");
         }
 
-        colors[position] = newColor;
+        if(isEditingMode){
+            tempColors[position] = newColor;
+        }else {
+            colors[position] = newColor;
+        }
         this.notifyDataSetChanged();
     }
-
 
     /**
      * Set color of the selected item of the palette with newColor
@@ -73,24 +81,23 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
 
-
-
     /**
      * Get the palette element Color on position
+     * The returned element is the temporary one if editing mode is enable
      * @param position
      * @return one integer representing the color of the position element of the palette
      */
     public int getColor(int position) {
 
-        if (position >= size){
+        if (position >= size) {
             throw new IllegalArgumentException("Position too big");
         }
-        return colors[position];
+        if (isEditingMode){
+            return tempColors[position];
+        }else {
+            return colors[position];
+        }
     }
-
-
-
-
 
 
     /**
@@ -110,6 +117,53 @@ public class PaletteAdapter extends BaseAdapter{
     public boolean isBoxSelected() {
         return selectedBox > -1;
     }
+
+
+    /**
+     *  Enable the palette editing mode
+     */
+    public void enableEditing(){
+        isEditingMode = true;
+        initTempColors();
+        this.notifyDataSetChanged();
+    }
+
+    /**
+     * Disable the palette editing mode
+     * And update the current color with temporary one if the user validate the temporary colors
+     * @param isValidated
+     */
+    public void disableEditing(boolean isValidated){
+        isEditingMode = false;
+        if(isValidated){
+            defineTempColors();
+        }
+        this.notifyDataSetChanged();
+    }
+    /**
+     * Init the temporary palette color with the current palette colors
+     */
+    private void initTempColors(){
+        for (int i = 0; i<size; i++) {
+            tempColors[i] = colors[i];
+        }
+    }
+    /**
+     * update the current color with temporary one
+     */
+    private void defineTempColors(){
+        for (int i = 0; i<size; i++) {
+            colors[i] = tempColors[i];
+        }
+    }
+
+    /**
+     * Check if the palette editing mode is enable
+     */
+    public boolean isEditing(){
+        return isEditingMode;
+    }
+
 
     @Override
     public int getCount() {
@@ -135,12 +189,20 @@ public class PaletteAdapter extends BaseAdapter{
 
         grid = inflater.inflate(R.layout.color_box, null);
         ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
-        button.setBackgroundColor(colors[position]);
+
 
         if(position == selectedBox){
             button.setSelected();
         } else {
             button.setNotSelected();
+        }
+
+        // If the palette is in editing mode, the temporary colors are shown
+        if(isEditingMode){
+            button.setColor(tempColors[position]);
+
+        }else {
+            button.setColor(colors[position]);
         }
 
         return grid;

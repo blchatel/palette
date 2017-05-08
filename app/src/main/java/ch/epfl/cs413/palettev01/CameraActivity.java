@@ -18,6 +18,7 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -42,10 +43,15 @@ public class CameraActivity extends AppCompatActivity {
 
     private static final int CAMERA_RESULT = 9;
     private static final int GALLERY_RESULT = 8;
+    private static final int MAIN_MENU = 0;
+    private static final int EDIT_MENU = 1;
 
     private PaletteBitmap mPicture;
     private Miniature mView;
     private Palette palette;
+
+    private Menu menu;
+    private int currentMenuMode;
 
 
     @Override
@@ -59,7 +65,6 @@ public class CameraActivity extends AppCompatActivity {
         ////////////////////////////////////////////////////////////////////////////////////////////
         /// INITIALISATION
         ////////////////////////////////////////////////////////////////////////////////////////////
-
         //Bitmap
         mPicture = new PaletteBitmap();
 
@@ -77,39 +82,47 @@ public class CameraActivity extends AppCompatActivity {
                 final PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
                 pA.setSelectedBox(position);
 
-                // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
-                // for example, 0xff000000 is black, 0xff0000ff is blue. Please be aware of the initial 0xff which is the alpha.
-                AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, ((PaletteAdapter)parent.getAdapter()).getColor(position),
-                        new AmbilWarnaDialog.OnAmbilWarnaListener(){
+                if(pA.isBoxSelected()) {
+                    // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
+                    // for example, 0xff000000 is black, 0xff0000ff is blue. Please be aware of the initial 0xff which is the alpha.
+                    AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, ((PaletteAdapter) parent.getAdapter()).getColor(position),
+                            new AmbilWarnaDialog.OnAmbilWarnaListener() {
 
-                            @Override
-                            public void onOk(AmbilWarnaDialog dialog, int color) {
-                                // color is the color selected by the user
+                                @Override
+                                public void onOk(AmbilWarnaDialog dialog, int color) {
+                                    // color is the color selected by the user
 
-                                /// TODO : Here we just changed a color in Palette !
-                                /// Transform the palette's colors
-                                ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
+                                    /// TODO : Here we just changed a color in Palette !
 
-                                /// TODO : Should apply transform to bitmap
-                                // If there is a picture to modify
-                                if(!mPicture.isFileNull()) {
-                                    // We transform the grid
-                                    mPicture.transGrid(palette, position);
+                                    /// Transform the palette's colors
+                                    if(currentMenuMode != EDIT_MENU) {
+                                        // In transformation mode we want to adjust all color
+                                        ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
+                                    }else{
+                                        // In edit mode we want to change only the selected color
+                                        ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
+                                    }
 
-                                    // And finally we can also transform the image
-                                    mPicture.transImage(mView);
+                                    /// TODO : Should apply transform to bitmap
+                                    // If there is a picture to modify
+                                    if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
+                                        // We transform the grid
+                                        mPicture.transGrid(palette, position);
+
+                                        // And finally we can also transform the image
+                                        mPicture.transImage(mView);
+                                    }
+                                    pA.setSelectedBox(-1);
                                 }
 
-                                pA.setSelectedBox(-1);
-                            }
-
-                            @Override
-                            public void onCancel(AmbilWarnaDialog dialog) {
-                                // cancel was selected by the user
-                                pA.setSelectedBox(-1);
-                            }
-                        });
-                dialog.show();
+                                @Override
+                                public void onCancel(AmbilWarnaDialog dialog) {
+                                    // cancel was selected by the user
+                                    pA.setSelectedBox(-1);
+                                }
+                            });
+                    dialog.show();
+                }
             }
         });
 
@@ -244,11 +257,33 @@ public class CameraActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
 
         Log.e( "EUREKA", "ON CREATE OPTION MENU" );
-
+        this.menu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_camera, menu);
+        return setMenuMode(MAIN_MENU);
+    }
+
+
+    private boolean setMenuMode(int mode){
+
+        Log.e( "EUREKA", "SET MENU" );
+
+        menu.clear(); //Clear view of previous menu
+        MenuInflater inflater = getMenuInflater();
+        if(mode == EDIT_MENU) {
+            inflater.inflate(R.menu.menu_edit, menu);
+            setTitle(R.string.edit_title);
+        }
+        else if (mode == MAIN_MENU) {
+            inflater.inflate(R.menu.menu_camera, menu);
+            setTitle(R.string.main_title);
+        }
+        else {
+            return false;
+        }
+        currentMenuMode = mode;
         return true;
     }
+
 
     /**
      *
@@ -259,6 +294,7 @@ public class CameraActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         Log.e( "EUREKA", "ON OPTION ITEM SELECTED" );
+        PaletteAdapter a = ((PaletteAdapter) palette.getAdapter());
 
         switch (item.getItemId()) {
 
@@ -287,6 +323,11 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 return false;
 
+            case R.id.edit_palette_item:
+                setMenuMode(EDIT_MENU);
+                a.enableEditing();
+                return true;
+
             case R.id.open_camera_item:
                 takePicture();
                 return true;
@@ -308,6 +349,17 @@ public class CameraActivity extends AppCompatActivity {
                     return true;
                 }
                 return false;
+
+            case R.id.validate_item:
+                setMenuMode(MAIN_MENU);
+                a.disableEditing(true);
+                return true;
+
+            case R.id.cancel_item:
+                setMenuMode(MAIN_MENU);
+                a.disableEditing(false);
+                return true;
+
             default:
                 return super.onOptionsItemSelected(item);
         }
@@ -331,10 +383,8 @@ public class CameraActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         Log.e( "EUREKA", "ON RESULT" );
 
-
         // if results comes from the camera activity
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
-            //TODO not working as expected. GALLERY RESULT WORKS
 
             Uri selectedImage = galleryAddPic();
 
@@ -348,7 +398,6 @@ public class CameraActivity extends AppCompatActivity {
         }
         // if result comes from the gallery
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
-
             Uri selectedImage = data == null ? null : data.getData();
             String selectedImagePath = getPath(this, selectedImage);
 
@@ -358,7 +407,7 @@ public class CameraActivity extends AppCompatActivity {
             launchAsyncPaletteExtract();
         }
 
-        if (mPicture != null) {
+        if (resultCode == RESULT_OK && !mPicture.isFileNull()) {
             try {
                 mPicture.rsClose();
             } catch (Exception e) {

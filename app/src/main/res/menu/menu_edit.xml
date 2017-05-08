@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:app="http://schemas.android.com/apk/res-auto"
+xmlns:tools="http://schemas.android.com/tools"
+tools:context="ch.epfl.cs413.palettev01.MainActivity" >
+
+    <item
+        android:id="@+id/validate_item"
+        android:icon="@android:drawable/ic_menu_save"
+        android:title="Validate"
+        app:showAsAction="always">
+    </item>
+    <item
+        android:id="@+id/cancel_item"
+        android:icon="@android:drawable/ic_menu_close_clear_cancel"
+        android:title="Cancel"
+        app:showAsAction="always">
+    </item>
+</menu>

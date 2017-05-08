@@ -3,6 +3,11 @@
 xmlns:app="http://schemas.android.com/apk/res-auto"
 xmlns:tools="http://schemas.android.com/tools"
 tools:context="ch.epfl.cs413.palettev01.MainActivity" >
+    <item
+        android:id="@+id/edit_palette_item"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Edit"
+        app:showAsAction="always"></item>
 <item android:title="Camera"
     android:icon="@android:drawable/ic_menu_camera"
     android:id="@+id/open_camera_item"
