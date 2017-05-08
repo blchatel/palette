@@ -51,8 +51,10 @@ public class CameraActivity extends AppCompatActivity {
     private Palette palette;
 
     private Menu menu;
+    /**
+     * Contains either MAIN_MENU or EDIT_MENU value
+     */
     private int currentMenuMode;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,7 +132,11 @@ public class CameraActivity extends AppCompatActivity {
 
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
-                ((PaletteAdapter) parent.getAdapter()).setSelectedBox(position);
+
+                // Allow to select pixel from the picture only if the user is in edit palette mode
+                if(currentMenuMode == EDIT_MENU) {
+                    ((PaletteAdapter) parent.getAdapter()).setSelectedBox(position);
+                }
                 return true;
             }
         });
@@ -263,6 +269,11 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Set the menu given a mode parameter
+     * @param mode
+     * @return if the menu has been set or not
+     */
     private boolean setMenuMode(int mode){
 
         Log.e( "EUREKA", "SET MENU" );
@@ -323,6 +334,7 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 return false;
 
+            // Enter in the edit palette mode
             case R.id.edit_palette_item:
                 setMenuMode(EDIT_MENU);
                 a.enableEditing();
@@ -350,11 +362,13 @@ public class CameraActivity extends AppCompatActivity {
                 }
                 return false;
 
+            // Validate the edited palette and return to main transformation mode
             case R.id.validate_item:
                 setMenuMode(MAIN_MENU);
                 a.disableEditing(true);
                 return true;
 
+            // Cancel the edited palette and return to main transformation mode
             case R.id.cancel_item:
                 setMenuMode(MAIN_MENU);
                 a.disableEditing(false);
@@ -487,8 +501,6 @@ public class CameraActivity extends AppCompatActivity {
 
         this.sendBroadcast(mediaScanIntent);
         return mediaScanIntent.getData();
-
-//        return contentUri;
     }
 
 

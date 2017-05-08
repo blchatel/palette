@@ -41,6 +41,7 @@ public class ColorBox extends AppCompatImageView {
         ViewGroup.LayoutParams params = getLayoutParams();
         params.height = size;
         params.width = size;
+        // Don't forget to set the radius
         radius = size;
         setLayoutParams(params);
     }
@@ -50,6 +51,7 @@ public class ColorBox extends AppCompatImageView {
         ViewGroup.LayoutParams params = getLayoutParams();
         params.height = size;
         params.width = size;
+        // Don't forget to set the radius
         radius = size;
         setLayoutParams(params);
     }
@@ -59,6 +61,10 @@ public class ColorBox extends AppCompatImageView {
     }
 
 
+    /**
+     * Override onDraw to round bitmap before render it
+     * @param canvas
+     */
     @Override
     protected void onDraw(Canvas canvas) {
         Bitmap roundBitmap = getCroppedBitmap(this.bitmap, this.radius);
@@ -69,6 +75,7 @@ public class ColorBox extends AppCompatImageView {
     /**
      * Methode from
      * http://stackoverflow.com/questions/16208365/how-to-create-a-circular-imageview-in-android
+     * That make a round bitmap from a square one
      * @param bmp
      * @param radius
      * @return
@@ -106,6 +113,10 @@ public class ColorBox extends AppCompatImageView {
         return output;
     }
 
+    /**
+     * Set the color of the Color box using a uniform bitmap
+     * @param color
+     */
     public void setColor(int color) {
 
         int R = (color >> 16) & 0xff;
