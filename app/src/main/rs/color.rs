@@ -117,7 +117,7 @@ static float3 find_out(float3 c0, float3 diff) {
     int i;
     bool out;
     new_diff = diff;
-    res = c0;
+    res = c0 + diff;
     for (i = 0; i < 10; i++) {
         out = out_boundary(res);
         new_diff = out? new_diff : new_diff * 2.0f;
@@ -171,6 +171,7 @@ rs_allocation c_rate;
 rs_allocation c_max;
 rs_allocation palette_distance;
 rs_allocation palette_weights;
+int RBF_param_coff;
 
 void calculate_distance(int palette_size) {
     int i, j;
@@ -190,7 +191,7 @@ void calculate_distance(int palette_size) {
     for (i = 0; i < palette_size; i++)
         for (j = 0; j < palette_size; j++){
             dis = rsGetElementAt_float(palette_distance, i * palette_size + j);
-            dis = exp( - dis * dis / 2.0f / palette_mean_distance / palette_mean_distance);
+            dis = exp( - dis * dis * RBF_param_coff / palette_mean_distance / palette_mean_distance);
             rsSetElementAt_float(palette_distance, dis, i * palette_size + j);
         }
 }
@@ -220,13 +221,13 @@ uchar4 __attribute__((kernel)) image_transfer(uchar4 in, uint32_t x, uint32_t y)
         ix = (i >> 2);
         iy = (i >> 1) & 1;
         iz = i & 1;
-        index = (gx + ix) * g1 * g1 + (gy + iy) * g1 + gz;
+        index = (gx + ix) * g1 * g1 + (gy + iy) * g1 + gz + iz;
         new_color = rsGetElementAt_float3(grid, index);
         // new_color = LAB2RGB(new_color);
         new_color = fmin(fmax(new_color, 0.0f), 1.0f);
-        new_color *= fabs(gx + 1 - ix - rgb.r);
-        new_color *= fabs(gy + 1 - iy - rgb.g);
-        new_color *= fabs(gz + 1 - iz - rgb.b);
+        new_color *= fabs(1.0f + gx - ix - rgb.r);
+        new_color *= fabs(1.0f + gy - iy - rgb.g);
+        new_color *= fabs(1.0f + gz - iz - rgb.b);
         res += new_color;
     }
 
@@ -256,8 +257,8 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         for (j = 0; j < paletteSize; j++) {
             c_old = rsGetElementAt_float3(old_palette, j);
             w = rsGetElementAt_float(palette_weights, i * paletteSize + j);
-            dis = lab_dis(c_old, in_lab);
-            weight += w * exp( - dis * dis / 2.0f / mean_dis / mean_dis);
+            dis = lab_dis(in_lab, c_old);
+            weight += w * exp( - dis * dis * RBF_param_coff / mean_dis / mean_dis);
         }
         if (weight > 0.0f)
             weight_sum += weight;
@@ -269,8 +270,8 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         for (j = 0; j < paletteSize; j++) {
             c_old = rsGetElementAt_float3(old_palette, j);
             w = rsGetElementAt_float(palette_weights, i * paletteSize + j);
-            dis = lab_dis(c_old, in_lab);
-            weight += w * exp( - dis * dis / 2.0f / mean_dis / mean_dis);
+            dis = lab_dis(in_lab, c_old);
+            weight += w * exp( - dis * dis * RBF_param_coff / mean_dis / mean_dis);
         }
         if (weight > 0.0f)
             weight /= weight_sum;
@@ -287,13 +288,13 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         c_r = out? c_out : c_r;
         c_l = out? c_new : in;
         c_boundary = find_boundary(c_l, c_r);
-        d_target = lab_dis(in, c_boundary);
+        d_target = lab_dis(in_lab, c_boundary);
         d_target *= rate;
         if (d_target > diff_max)
             d_target = diff_max;
         c_r = c_boundary;
         c_l = in_lab;
-        for (j = 0; j < 5; j++) {
+        for (j = 0; j < 10; j++) {
             c_c = (c_l + c_r) / 2.0f;
             d_now = lab_dis(in_lab, c_c);
             c_l = (d_now > d_target) ? c_l : c_c;
@@ -302,6 +303,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         c_res = (rate < 0.000001f) ? in_lab : c_l;
         if (weight > 0.0f)
             res += c_res * weight;
+
     }
 
     res_rgb = LAB2RGB(res);
@@ -387,6 +389,7 @@ void init() {
 	white_z = 108.883f;
 	XYZEpsilon = 216.0f/24389.0f;
 	XYZKappa = 24389.0f/27.0f;
+	RBF_param_coff = 5.0f;
 }
 
 /// -- Tests --

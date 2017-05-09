@@ -497,6 +497,7 @@ public class PaletteBitmap {
         allocationNew.setAutoPadding(true);
         allocationNew.copyFrom(new_palette);
         Allocation allocationDiff = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
+        allocationDiff.setAutoPadding(true);
         Allocation allocation_rate = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
         Allocation allocation_max = Allocation.createSized(rs, Element.F32(rs), paletteSize, Allocation.USAGE_SCRIPT);
         Allocation allocation_weights = Allocation.createSized(rs, Element.F32(rs), paletteSize * paletteSize + 1, Allocation.USAGE_SCRIPT);
@@ -521,22 +522,57 @@ public class PaletteBitmap {
         colorScript.set_i(changedIndex);
         colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
         allocationTempGrid.copyTo(temp_grid);
-        int test_i = 0;
+
+        /*
+        float[] diff_value = new float[paletteSize * 3];
+        float[] rate_value = new float[paletteSize];
+        float[] max_value = new float[paletteSize];
+        allocationDiff.copyTo(diff_value);
+        allocation_rate.copyTo(rate_value);
+        allocation_max.copyTo(max_value);
+        for (int i=0; i<paletteSize; i++) {
+            Log.d("info0 " + Integer.toString(i), Float.toString(old_palette[i * 3 + 0]) + " " +
+                    Float.toString(old_palette[i * 3 + 1]) + " " +
+                    Float.toString(old_palette[i * 3 + 2]) + " " +
+                    Float.toString(new_palette[i * 3 + 0]) + " " +
+                    Float.toString(new_palette[i * 3 + 1]) + " " +
+                    Float.toString(new_palette[i * 3 + 2]));
+            Log.d("info1 " + Integer.toString(i), Float.toString(diff_value[i * 3 + 0]) + " " +
+                    Float.toString(diff_value[i * 3 + 1]) + " " +
+                    Float.toString(diff_value[i * 3 + 2]) + " " +
+                    Float.toString(rate_value[i]) + " " +
+                    Float.toString(max_value[i]));
+        }
+        int test_i;
+        test_i = 0;
+        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
+                Float.toString(grid[test_i * 3 + 1]) + " " +
+                Float.toString(grid[test_i * 3 + 2]));
         Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
                    Float.toString(temp_grid[test_i * 3 + 1]) + " " +
                    Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 100;
+        test_i = 8;
+        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
+                Float.toString(grid[test_i * 3 + 1]) + " " +
+                Float.toString(grid[test_i * 3 + 2]));
         Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
                 Float.toString(temp_grid[test_i * 3 + 1]) + " " +
                 Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 200;
+        test_i = 13;
+        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
+                Float.toString(grid[test_i * 3 + 1]) + " " +
+                Float.toString(grid[test_i * 3 + 2]));
         Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
                 Float.toString(temp_grid[test_i * 3 + 1]) + " " +
                 Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 300;
+        test_i = 26;
+        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
+                Float.toString(grid[test_i * 3 + 1]) + " " +
+                Float.toString(grid[test_i * 3 + 2]));
         Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
                 Float.toString(temp_grid[test_i * 3 + 1]) + " " +
                 Float.toString(temp_grid[test_i * 3 + 2]));
+        */
 
         allocationOld.destroy();
         allocationNew.destroy();
