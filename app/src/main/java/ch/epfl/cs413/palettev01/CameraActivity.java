@@ -317,8 +317,8 @@ public class CameraActivity extends AppCompatActivity {
 //                    consumingTime = System.nanoTime() - startTime;
 //                    Log.d("time", Long.toString(consumingTime));
                     mPicture.initGrid();
-                    mPicture.testInitTransPalette(palette);
-                    mPicture.testTransGrid(palette);
+                    // mPicture.testInitTransPalette(palette);
+                    // mPicture.testTransGrid(palette);
 //                    consumingTime = System.nanoTime() - startTime;
 //                    Log.d("time", Long.toString(consumingTime));
                     mPicture.transImage(mView);

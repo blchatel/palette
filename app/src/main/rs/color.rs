@@ -11,11 +11,11 @@ static float bound (float val) {
 }
 
 static float PivotRgb(float n) {
-	return (n > 0.04045f)? 100.0f*native_powr((n + 0.055f)/1.055f, 2.4f) : 100.0f*n/12.92f;
+	return (n > 0.04045f)? 100.0f*powr((n + 0.055f)/1.055f, 2.4f) : 100.0f*n/12.92f;
 }
 
 static float PivotXYZ(float n) {
-	return (n > XYZEpsilon)? native_powr(n, 1.0f/3.0f) : (XYZKappa*n + 16.0f)/116.0f;
+	return (n > XYZEpsilon)? powr(n, 1.0f/3.0f) : (XYZKappa*n + 16.0f)/116.0f;
 }
 
 /// Convert RGB color to Lab color
@@ -78,17 +78,17 @@ static float3 LAB2RGB(float3 lab_color) {
   g = tx*(-0.9689f) + ty*1.8758f + tz*0.0415f;
   b = tx*0.0557f + ty*(-0.2040f) + tz*1.0570f;
   if (r > 0.0031308f){
-    r = 1.055f * native_powr(r, 1.0f/2.4f) - 0.055f;
+    r = 1.055f * powr(r, 1.0f/2.4f) - 0.055f;
   } else {
     r = 12.92f * r;
   }
   if (g > 0.0031308f) {
-    g = 1.055f * native_powr(g, 1.0f/2.4f) - 0.055f;
+    g = 1.055f * powr(g, 1.0f/2.4f) - 0.055f;
   } else {
     g = 12.92f * g;
   }
   if (b > 0.0031308f){
-    b = 1.055f * native_powr(b, 1.0f / 2.4f) - 0.055f;
+    b = 1.055f * powr(b, 1.0f / 2.4f) - 0.055f;
   } else {
     b = 12.92f * b;
   }
@@ -113,16 +113,9 @@ static bool out_boundary(float3 color_lab) {
 
 
 static float3 find_out(float3 c0, float3 diff) {
-    float3 res, new_diff;
-    int i;
-    bool out;
-    new_diff = diff;
-    res = c0 + diff;
-    for (i = 0; i < 10; i++) {
-        out = out_boundary(res);
-        new_diff = out? new_diff : new_diff * 2.0f;
-        res = out? res : res + new_diff;
-    }
+    float3 res;
+    res = diff * 300.0f;
+    res += c0;
     return res;
 }
 
@@ -162,13 +155,22 @@ static float lab_dis(float3 c0, float3 c1) {
     return dis;
 }
 
+static float lab_dis2(float3 c0, float3 c1) {
+    float res;
+    float3 cd;
+    cd = c1 - c0;
+    res = cd.r * cd.r + cd.g * cd.g + cd.b * cd.b;
+    res = sqrt(res);
+    return res;
+}
+
 rs_allocation grid;
 int grid_g;
 int paletteSize;
 rs_allocation old_palette, new_palette;
 rs_allocation diff;
-rs_allocation c_rate;
-rs_allocation c_max;
+rs_allocation ccb_l;
+rs_allocation cc_l;
 rs_allocation palette_distance;
 rs_allocation palette_weights;
 int RBF_param_coff;
@@ -239,16 +241,14 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
     float3 in_lab, res, res_rgb;
     float3 c_l, c_r, c_boundary, c_out, c_res, c_diff, c_new, c_c;
     int i, j;
-    float rate, d_now, d_target, diff_max;
+    float c_c_l, d_now, d_target, c_cb_l, tmp0;
     bool out;
     float weight_sum, weight, dis, w;
     float3 c_old;
     float mean_dis;
 
-    res.r = 0;
-    res.g = 0;
-    res.b = 0;
     in_lab = RGB2LAB(in);
+    res = in_lab;
 
     weight_sum = 0.0f;
     mean_dis = rsGetElementAt_float(palette_weights, paletteSize * paletteSize);
@@ -279,8 +279,8 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
             weight = 0.0f;
 
         c_diff = rsGetElementAt_float3(diff, i);
-        rate = rsGetElementAt_float(c_rate, i);
-        diff_max = rsGetElementAt_float(c_max, i);
+        c_cb_l = rsGetElementAt_float(ccb_l, i);
+        c_c_l = rsGetElementAt_float(cc_l, i);
         c_new = rsGetElementAt_float3(new_palette, i);
         c_out = c_diff + in_lab;
         c_r = find_out(in_lab, c_diff);
@@ -288,26 +288,26 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         c_r = out? c_out : c_r;
         c_l = out? c_new : in;
         c_boundary = find_boundary(c_l, c_r);
-        d_target = lab_dis(in_lab, c_boundary);
-        d_target *= rate;
-        if (d_target > diff_max)
-            d_target = diff_max;
-        c_r = c_boundary;
-        c_l = in_lab;
-        for (j = 0; j < 10; j++) {
-            c_c = (c_l + c_r) / 2.0f;
-            d_now = lab_dis(in_lab, c_c);
-            c_l = (d_now > d_target) ? c_l : c_c;
-            c_r = (d_now > d_target) ? c_c : c_r;
-        }
-        c_res = (rate < 0.000001f) ? in_lab : c_l;
+
+        tmp0 = lab_dis2(in_lab, c_boundary);
+
+        d_target = tmp0;
+        d_target = c_c_l < 0.00001f? d_target: d_target / c_cb_l;
+        d_target = fmin(d_target, 1.0f);
+        d_target *= c_c_l;
+        d_target = c_c_l < 0.00001f? 0.0f: d_target / tmp0;
+
+        c_res = c_boundary - in_lab;
+        c_res.r = out? c_res.r: c_diff.r;
+        c_res.g *= d_target;
+        c_res.b *= d_target;
+
         if (weight > 0.0f)
             res += c_res * weight;
-
     }
 
     res_rgb = LAB2RGB(res);
-
+    res_rgb = fmin(fmax(res_rgb, 0.0f), 1.0f);
     return res_rgb;
 }
 
@@ -321,13 +321,13 @@ void cal_palette_rate() {
         c_diff = c_new - c_old;
         c_out = find_out(c_old, c_diff);
         c_boundary = find_boundary(c_old, c_out);
-        d0 = lab_dis(c_old, c_new);
-        d1 = lab_dis(c_old, c_boundary);
-        rate = (d0 < 0.000001f) ? 0.0f : d0 / d1;
+        d0 = lab_dis2(c_old, c_new);
+        d1 = lab_dis2(c_old, c_boundary);
+        d0 = (d0 < 0.000001f) ? 0.0f : d0;
 
         rsSetElementAt_float3(diff, c_diff, i);
-        rsSetElementAt_float(c_rate, rate, i);
-        rsSetElementAt_float(c_max, d0, i);
+        rsSetElementAt_float(ccb_l, rate, i);
+        rsSetElementAt_float(cc_l, d0, i);
     }
 }
 
@@ -390,43 +390,4 @@ void init() {
 	XYZEpsilon = 216.0f/24389.0f;
 	XYZKappa = 24389.0f/27.0f;
 	RBF_param_coff = 5.0f;
-}
-
-/// -- Tests --
-int i;
-
-float3 __attribute__((kernel)) grid_transfer_i(float3 in, uint32_t x) {
-    float3 res;
-    float3 c_l, c_r, c_boundary, c_out, c_res, c_diff, c_new, c_c;
-    int j;
-    float rate, d_now, d_target;
-    bool out;
-
-    res.r = 0;
-    res.g = 0;
-    res.b = 0;
-
-    c_diff = rsGetElementAt_float3(diff, i);
-    rate = rsGetElementAt_float(c_rate, i);
-    c_new = rsGetElementAt_float3(new_palette, i);
-    c_out = c_diff + in;
-    c_r = find_out(in, c_diff);
-    out = out_boundary(c_out);
-    c_r = out? c_out : c_r;
-    c_l = out? c_new : in;
-    c_boundary = find_boundary(c_l, c_r);
-    d_target = lab_dis(in, c_boundary);
-    d_target *= rate;
-    c_r = c_boundary;
-    c_l = in;
-    for (j = 0; j < 5; j++) {
-        c_c = (c_l + c_r) / 2.0f;
-        d_now = lab_dis(in, c_c);
-        c_l = (d_now > d_target) ? c_l : c_c;
-        c_r = (d_now > d_target) ? c_c : c_r;
-    }
-    c_res = (rate < 0.000001f) ? in : c_l;
-    res += c_res;
-
-    return res;
 }
