@@ -380,7 +380,9 @@ public class CameraActivity extends AppCompatActivity {
                 setMenuMode(MAIN_MENU);
                 a.disableEditing(false);
                 // The initial palette will be updated
+                // TODO ! Change input image
                 mPicture.initTransPalette(ourPalette);
+
                 return true;
 
             default:
