@@ -16,6 +16,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.graphics.Palette;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -34,7 +35,7 @@ import ch.epfl.cs413.palettev01.processing.Kmeans;
 import ch.epfl.cs413.palettev01.processing.LabColor;
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
 import ch.epfl.cs413.palettev01.views.Miniature;
-import ch.epfl.cs413.palettev01.views.Palette;
+import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
@@ -48,7 +49,7 @@ public class CameraActivity extends AppCompatActivity {
 
     private PaletteBitmap mPicture;
     private Miniature mView;
-    private Palette palette;
+    private OurPalette ourPalette;
 
     private Menu menu;
     /**
@@ -74,10 +75,10 @@ public class CameraActivity extends AppCompatActivity {
         mView = (Miniature) findViewById(R.id.MAIN_image);
 
         //Pallette
-        palette = (Palette) findViewById(R.id.MAIN_paletteGrid);
+        ourPalette = (OurPalette) findViewById(R.id.MAIN_paletteGrid);
         PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
-        palette.setAdapter(adapter);
-        palette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        ourPalette.setAdapter(adapter);
+        ourPalette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(final AdapterView<?> parent, View view, final int position, long id) {
@@ -109,7 +110,7 @@ public class CameraActivity extends AppCompatActivity {
                                     // If there is a picture to modify
                                     if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
                                         // We transform the grid
-                                        mPicture.transGrid(palette, position);
+                                        mPicture.transGrid(ourPalette, position);
 
                                         // And finally we can also transform the image
                                         mPicture.transImage(mView);
@@ -128,7 +129,7 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-        palette.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+        ourPalette.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
             @Override
             public boolean onItemLongClick(final AdapterView<?> parent, View view, final int position, long id) {
@@ -146,7 +147,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                PaletteAdapter a = ((PaletteAdapter) palette.getAdapter());
+                PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
                 if(!mPicture.isFileNull() && a.isBoxSelected()) {
                     int[] viewCorrs = new int[2];
@@ -197,7 +198,7 @@ public class CameraActivity extends AppCompatActivity {
         if (!mPicture.isEmpty()) {
             final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
             paletteProgressBar.setVisibility(View.VISIBLE);
-            palette.setVisibility(View.GONE);
+            ourPalette.setVisibility(View.GONE);
             AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
 
                 @Override
@@ -213,6 +214,11 @@ public class CameraActivity extends AppCompatActivity {
                             return (o1.getL() > o2.getL()) ? 1 : (o1.getL() < o2.getL()) ? -1 : 0;
                         }
                     });
+//                    Palette.Builder builder = new Palette.Builder(mPicture.getScaled());
+//                    builder.maximumColorCount(paletteSize);
+//
+//                    Palette p = builder.generate();
+//                    List<Palette.Swatch> paletteColors = p.getSwatches();
                     return paletteColors;
                 }
 
@@ -220,12 +226,13 @@ public class CameraActivity extends AppCompatActivity {
                 protected void onPostExecute(List<LabColor> labColors) {
                     for (int i = 1; i < labColors.size(); i++) {
                         LabColor Lab = labColors.get(i);
-                        ((PaletteAdapter)palette.getAdapter()).setColor(i-1, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
+                        ((PaletteAdapter) ourPalette.getAdapter()).setColor(i-1, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
+//                        ((PaletteAdapter) ourPalette.getAdapter()).setColor(i-1, Lab.getRgb());
                     }
 
                     // Init the palette
-                    mPicture.initTransPalette(palette);
-                    palette.setVisibility(View.VISIBLE);
+                    mPicture.initTransPalette(ourPalette);
+                    ourPalette.setVisibility(View.VISIBLE);
                     paletteProgressBar.setVisibility(View.GONE);
                 }
             };
@@ -305,7 +312,7 @@ public class CameraActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
 
         Log.e( "EUREKA", "ON OPTION ITEM SELECTED" );
-        PaletteAdapter a = ((PaletteAdapter) palette.getAdapter());
+        PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
         switch (item.getItemId()) {
 
@@ -357,7 +364,7 @@ public class CameraActivity extends AppCompatActivity {
 
             case R.id.extract_palette:
                 if(!mPicture.isFileNull()) {
-                    mPicture.extractPalette(palette);
+                    mPicture.extractPalette(ourPalette);
                     return true;
                 }
                 return false;
@@ -372,6 +379,8 @@ public class CameraActivity extends AppCompatActivity {
             case R.id.cancel_item:
                 setMenuMode(MAIN_MENU);
                 a.disableEditing(false);
+                // The initial palette will be updated
+                mPicture.initTransPalette(ourPalette);
                 return true;
 
             default:

@@ -7,18 +7,18 @@ import android.widget.GridView;
 
 
 
-public class Palette extends GridView{
+public class OurPalette extends GridView{
 
 
-    public Palette(Context context) {
+    public OurPalette(Context context) {
         super(context);
     }
 
-    public Palette(Context context, AttributeSet attrs) {
+    public OurPalette(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public Palette(Context context, AttributeSet attrs, int defStyle) {
+    public OurPalette(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
 

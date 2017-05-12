@@ -19,6 +19,7 @@ public class LabColor {
         a = Lab[1];
         b = Lab[2];
     }
+
     LabColor (double L, double a, double b) {
         this.L = L;
         this.a = a;
@@ -77,21 +78,6 @@ public class LabColor {
     /// ---             Static functions                --- ///
     /// --------------------------------------------------- ///
 
-    /**
-     * Random color generator
-     *
-     * @return a random color
-     */
-    final static LabColor generateRandom() {
-        float rL, rA, rB;
-        Random r = new Random();
-        rL = r.nextFloat() * 100;
-        rA = r.nextFloat() * 256 - 128;
-        rB = r.nextFloat() * 256 - 128;
-
-        return new LabColor(rL, rA, rB);
-    }
-
     public LabColor addColor(LabColor c) {
         return new LabColor(L+c.L, a+c.a, b+c.b);
     }
@@ -114,8 +100,6 @@ public class LabColor {
 
         if ((int)(labColor.L*precision) != (int)(L*precision)) return false;
         if ((int)(labColor.a*precision) != (int)(a*precision)) return false;
-
-//        Log.d("EQUALITY ?", "For now they are equal.");
         return (int)(labColor.b*precision) == (int)(b*precision);
 
     }

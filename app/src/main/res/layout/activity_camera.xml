@@ -34,7 +34,7 @@
                 <!--android:layout_gravity="center" />-->
 
 
-            <ch.epfl.cs413.palettev01.views.Palette
+            <ch.epfl.cs413.palettev01.views.OurPalette
                 android:id="@+id/MAIN_paletteGrid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

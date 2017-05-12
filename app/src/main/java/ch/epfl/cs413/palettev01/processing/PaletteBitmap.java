@@ -21,10 +21,10 @@ import java.util.Date;
 import java.util.List;
 
 import ch.epfl.cs413.palettev01.views.Miniature;
-import ch.epfl.cs413.palettev01.views.Palette;
+import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 import android.support.v8.renderscript.Element;
-import android.support.v8.renderscript.Type;
+
 import ch.epfl.cs413.palettev01.ScriptC_color;
 
 /**
@@ -301,7 +301,7 @@ public class PaletteBitmap {
         v.setImageBitmap(scaled);
     }
 
-    public void extractPalette(Palette palette) {
+    public void extractPalette(OurPalette ourPalette) {
         int paletteSize = PaletteAdapter.PALETTE_SIZE;
         Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, false);
         Kmeans kmeans = new Kmeans(paletteSize, smallImage);
@@ -316,7 +316,7 @@ public class PaletteBitmap {
         for (int i = 0; i < paletteSize; i++) {
             LabColor Lab = paletteColors.get(i);
             Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
-            ((PaletteAdapter)palette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
+            ((PaletteAdapter) ourPalette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
         }
     }
 
@@ -405,10 +405,10 @@ public class PaletteBitmap {
     /**
      * Create old_palette with the given palette
      *
-     * @param palette
+     * @param ourPalette
      */
-    public void initTransPalette(Palette palette) {
-        int paletteSize = ((PaletteAdapter)palette.getAdapter()).getSize();
+    public void initTransPalette(OurPalette ourPalette) {
+        int paletteSize = ((PaletteAdapter) ourPalette.getAdapter()).getSize();
 //        oldPalette = new LabColor[paletteSize];
 //        for (int i=0; i < paletteSize; i++) {
 //            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
@@ -419,7 +419,7 @@ public class PaletteBitmap {
 
         old_palette = new float[3 * paletteSize];
         for (int i=0; i<paletteSize; i++) {
-            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
+            int color = ((PaletteAdapter) ourPalette.getAdapter()).getColor(i);
             double [] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
             for (int j=0; j<3; j++)
@@ -470,8 +470,8 @@ public class PaletteBitmap {
         */
     }
 
-    public void transGrid(Palette palette, int changedIndex) {
-        PaletteAdapter paletteAdapter = ((PaletteAdapter)palette.getAdapter());
+    public void transGrid(OurPalette ourPalette, int changedIndex) {
+        PaletteAdapter paletteAdapter = ((PaletteAdapter) ourPalette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
 
         // We create the new palette
@@ -639,7 +639,7 @@ public class PaletteBitmap {
      * Test functions
      */
 
-    public void testInitTransPalette(Palette palette) {
+    public void testInitTransPalette(OurPalette ourPalette) {
         old_palette = new float[3];
         double [] lab_color = new double[3];
         // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2);
