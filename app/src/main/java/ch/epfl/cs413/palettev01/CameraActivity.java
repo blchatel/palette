@@ -316,51 +316,61 @@ public class CameraActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
 
-            case R.id.my_function:
-                if(!mPicture.isFileNull()) {
-//                    long startTime = System.nanoTime();
-//                    long consumingTime;
-                    mPicture.rsInit(this);
-//                    consumingTime = System.nanoTime() - startTime;
-//                    Log.d("time", Long.toString(consumingTime));
-                    mPicture.initGrid();
-                    // mPicture.testInitTransPalette(palette);
-                    // mPicture.testTransGrid(palette);
-//                    consumingTime = System.nanoTime() - startTime;
-//                    Log.d("time", Long.toString(consumingTime));
-                    mPicture.transImage(mView);
-//                    consumingTime = System.nanoTime() - startTime;
-//                    Log.d("time", Long.toString(consumingTime));
-                    // mPicture.initTransPalette(palette);
-//                     mPicture.myFunction(mView);
-//                    mPicture.rsClose();
-//                    consumingTime = System.nanoTime() - startTime;
-//                    Log.d("time", Long.toString(consumingTime));
+//            case R.id.my_function:
+//                if(!mPicture.isFileNull()) {
+////                    long startTime = System.nanoTime();
+////                    long consumingTime;
+//                    mPicture.rsInit(this);
+////                    consumingTime = System.nanoTime() - startTime;
+////                    Log.d("time", Long.toString(consumingTime));
+//                    mPicture.initGrid();
+//                    // mPicture.testInitTransPalette(palette);
+//                    // mPicture.testTransGrid(palette);
+////                    consumingTime = System.nanoTime() - startTime;
+////                    Log.d("time", Long.toString(consumingTime));
+//                    mPicture.transImage(mView);
+////                    consumingTime = System.nanoTime() - startTime;
+////                    Log.d("time", Long.toString(consumingTime));
+//                    // mPicture.initTransPalette(palette);
+////                     mPicture.myFunction(mView);
+////                    mPicture.rsClose();
+////                    consumingTime = System.nanoTime() - startTime;
+////                    Log.d("time", Long.toString(consumingTime));
+//
+//                    return true;
+//                }
+//                return false;
 
-                    return true;
-                }
-                return false;
+//            case R.id.black_and_white:
+//                if(!mPicture.isFileNull()) {
+//                    mPicture.transformBlackAndWhite(mView);
+//                    return true;
+//                }
+//                return false;
 
             // Enter in the edit palette mode
             case R.id.edit_palette_item:
-                setMenuMode(EDIT_MENU);
-                a.enableEditing();
-                return true;
+            setMenuMode(EDIT_MENU);
+            a.enableEditing();
+            return true;
 
             case R.id.open_camera_item:
-                takePicture();
-                return true;
+            takePicture();
+            return true;
 
             case R.id.open_gallery_item:
-                selectPicture();
-                return true;
+            selectPicture();
+            return true;
 
-            case R.id.black_and_white:
-                if(!mPicture.isFileNull()) {
-                    mPicture.transformBlackAndWhite(mView);
+            case R.id.reinit:
+            if(!mPicture.isFileNull()) {
+                    mPicture.restoreFile(initialImagePath);
+                    mPicture.setPicture(mView);
+                    // We launch the extraction of the palette here in async
+                    launchAsyncPaletteExtract();
                     return true;
                 }
-                return false;
+            return false;
 
             case R.id.extract_palette:
                 if(!mPicture.isFileNull()) {
@@ -373,15 +383,19 @@ public class CameraActivity extends AppCompatActivity {
             case R.id.validate_item:
                 setMenuMode(MAIN_MENU);
                 a.disableEditing(true);
+
+                // The initial palette will be updated
+                // TODO ! Change input image
+                if (!mPicture.isFileNull()) {
+                    mPicture.initTransPalette(ourPalette);
+                }
+
                 return true;
 
             // Cancel the edited palette and return to main transformation mode
             case R.id.cancel_item:
                 setMenuMode(MAIN_MENU);
                 a.disableEditing(false);
-                // The initial palette will be updated
-                // TODO ! Change input image
-                mPicture.initTransPalette(ourPalette);
 
                 return true;
 
@@ -395,6 +409,9 @@ public class CameraActivity extends AppCompatActivity {
         super.onDestroy();
         mPicture.recycle();
     }
+
+
+    private String initialImagePath = "";
 
     /**
      *
@@ -413,9 +430,9 @@ public class CameraActivity extends AppCompatActivity {
 
             Uri selectedImage = galleryAddPic();
 
-            String selectedImagePath = getPath(this, selectedImage);
+            initialImagePath = getPath(this, selectedImage);
 
-            mPicture.restoreFile(selectedImagePath);
+            mPicture.restoreFile(initialImagePath);
             mPicture.setPicture(mView);
             // We launch the extraction of the palette here in async
             launchAsyncPaletteExtract();
@@ -424,9 +441,9 @@ public class CameraActivity extends AppCompatActivity {
         // if result comes from the gallery
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
             Uri selectedImage = data == null ? null : data.getData();
-            String selectedImagePath = getPath(this, selectedImage);
+            initialImagePath = getPath(this, selectedImage);
 
-            mPicture.restoreFile(selectedImagePath);
+            mPicture.restoreFile(initialImagePath);
             mPicture.setPicture(mView);
             // We launch the extraction of the palette here in async
             launchAsyncPaletteExtract();

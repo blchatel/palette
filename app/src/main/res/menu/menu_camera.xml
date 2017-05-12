@@ -19,13 +19,16 @@ tools:context="ch.epfl.cs413.palettev01.MainActivity" >
     android:visible="true"
     app:showAsAction="always">
 </item>
-<item android:title="Black and White"
-    android:icon="@android:drawable/ic_menu_camera"
-    android:id="@+id/black_and_white">
-</item>
-<item android:title="Mfunction"
-    android:icon="@android:drawable/ic_menu_camera"
-    android:id="@+id/my_function">
+<!--<item android:title="Black and White"-->
+    <!--android:icon="@android:drawable/ic_menu_camera"-->
+    <!--android:id="@+id/black_and_white">-->
+<!--</item>-->
+<!--<item android:title="Mfunction"-->
+    <!--android:icon="@android:drawable/ic_menu_camera"-->
+    <!--android:id="@+id/my_function">-->
+<!--</item>-->
+<item android:title="Reset Image"
+    android:id="@+id/reinit">
 </item>
 <item android:title="Extract Palette"
     android:id="@+id/extract_palette">
