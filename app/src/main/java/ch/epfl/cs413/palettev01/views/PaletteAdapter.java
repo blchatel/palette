@@ -3,6 +3,7 @@ package ch.epfl.cs413.palettev01.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.graphics.ColorUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,42 +14,105 @@ import ch.epfl.cs413.palettev01.R;
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
 
+/**
+ *
+ *
+ */
 public class PaletteAdapter extends BaseAdapter{
 
+    /**
+     * Maximum amount of color in a palette
+     * paper talk 6 or 7 is a maximum to deal with correctly
+     */
     public static final int PALETTE_MAX_SIZE = 6;
+
+    /**
+     * Minimum amount of color in a palette
+     * paper talk 3 is a minimum to get something interesting
+     */
     public static final int PALETTE_MIN_SIZE = 3;
+
+    /**
+     * Default number of colors in a palette when init
+     */
     public static final int PALETTE_SIZE = 4;
 
+    /**
+     * Context of the palette
+     */
     private Context mContext;
+
+    /**
+     * Array of the palette colors as integer.
+     * Color used in the main mode
+     */
     private int[] colors;
+
+    /**
+     * Array of the palette temporary colors as integer
+     * These colors are used in edit mode
+     */
     private int[] tempColors;
+
+    /**
+     * Index of the selected color box for different drawing
+     * and know where redirect palette modification
+     * value -1 if no color is selected
+     */
     private int selectedBox = -1;
+
+    /**
+     * Size of the main palette. Should by between PALETTE_MIN_SIZE and PALETTE_MAX_SIZE
+     */
     private int size = 0;
+
+    /**
+     * Size of the temporary palette. Should by between PALETTE_MIN_SIZE and PALETTE_MAX_SIZE
+     */
     private int tempsize = 0;
 
 
+    /**
+     * Boolean flag indicating if the editing palette mode is enable or not
+     * true : edit mode enabled
+     * false : main mode enabled
+     */
     private boolean isEditingMode = false;
 
 
+    /**
+     * Palette adapter constructor
+     * @param c
+     * @param size
+     */
     public PaletteAdapter(Context c, int size) {
 
         mContext = c;
 
-        if(size > PALETTE_MAX_SIZE){
-            throw new IllegalArgumentException("Size argument must be integer smaller than 7");
+        // Check whether the init palette size is correct. If not write an error message
+        // and set the size value with the default size
+        if(size > PALETTE_MAX_SIZE || size < PALETTE_MIN_SIZE){
+            Log.d("ERROR", "Palette size must be between "+PALETTE_MIN_SIZE+ " and "+PALETTE_MAX_SIZE+" size will be set to "+PALETTE_SIZE);
+            size = PALETTE_SIZE;
         }
         this.size = size;
         this.tempsize = size;
+
+        // Init array with maximum color size. It doesnt take too much place...only a few integers.
         colors = new int[PALETTE_MAX_SIZE];
         tempColors = new int[PALETTE_MAX_SIZE];
 
-        // initialization of the palette color . For now simply grayscale value
+        // initialization of the palette color . For now simply grayscale value : waiting for image
         for (int i = 0; i<size; i++) {
             colors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
             tempColors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
         }
     }
 
+    /**
+     * Get the palette size
+     * @return the size of the palette of the current mode
+     */
     public int getSize() {
         return isEditingMode ? tempsize : size;
     }
@@ -95,7 +159,7 @@ public class PaletteAdapter extends BaseAdapter{
     public int getColor(int position) {
 
         if (position >= size) {
-            throw new IllegalArgumentException("Position too big");
+            throw new IllegalArgumentException("Position too big for getting color");
         }
         if (isEditingMode){
             return tempColors[position];
@@ -107,6 +171,8 @@ public class PaletteAdapter extends BaseAdapter{
 
     /**
      * Set the selected box
+     * Because you cannot select twice the same box. if the current selected box and the
+     * new one are the same, it simply deselect it.
      * @param position
      */
     public void setSelectedBox(int position){
@@ -116,7 +182,7 @@ public class PaletteAdapter extends BaseAdapter{
 
 
     /**
-     * Test if a box is selected
+     * Test if one box is selected
      * @return boolean
      */
     public boolean isBoxSelected() {
@@ -125,7 +191,9 @@ public class PaletteAdapter extends BaseAdapter{
 
 
     /**
-     *  Enable the palette editing mode
+     *  Enable the palette editing mode by init temporary palette color with the current one
+     *  and deselecting all element
+     *  notify the modification for display
      */
     public void enableEditing(){
         isEditingMode = true;
@@ -137,6 +205,8 @@ public class PaletteAdapter extends BaseAdapter{
     /**
      * Disable the palette editing mode
      * And update the current color with temporary one if the user validate the temporary colors
+     * changes.
+     * notify the modification for display
      * @param isValidated
      */
     public void disableEditing(boolean isValidated){
@@ -147,6 +217,8 @@ public class PaletteAdapter extends BaseAdapter{
         }
         this.notifyDataSetChanged();
     }
+
+
     /**
      * Init the temporary palette color with the current palette colors
      */
@@ -156,6 +228,8 @@ public class PaletteAdapter extends BaseAdapter{
             tempsize = size;
         }
     }
+
+
     /**
      * update the current color with temporary one
      */
@@ -168,23 +242,35 @@ public class PaletteAdapter extends BaseAdapter{
 
     /**
      * Check if the palette editing mode is enable
+     * @return true if the editing mode is enabled and false otherwise
      */
     public boolean isEditing(){
         return isEditingMode;
     }
 
+
+    /**
+     * Add a new palette color if the current size allows it
+     * You must be in edit mode to perform this action
+     * @param color the color to add
+     */
     public void addColor(int color){
 
-        if(tempsize < PALETTE_MAX_SIZE) {
+        if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
             tempColors[tempsize] = color;
             tempsize++;
             this.notifyDataSetChanged();
         }
     }
 
+    /**
+     * Remove the palette color at position if the current size allow it
+     * You must be in edit mode to perform this action
+     * @param position
+     */
     public void removeColor(int position){
 
-        if(tempsize > PALETTE_MIN_SIZE) {
+        if(isEditingMode && tempsize > PALETTE_MIN_SIZE) {
 
             for (int i = position; i < tempsize-1; i++){
                 tempColors[i] = tempColors[i+1];
@@ -200,6 +286,7 @@ public class PaletteAdapter extends BaseAdapter{
     public int getCount() {
 
         if(isEditingMode){
+            // Add 2 because of the two tools (add color button and magic extraction button)
             return tempsize+2;
         }
         return size;
@@ -228,6 +315,7 @@ public class PaletteAdapter extends BaseAdapter{
         View grid = new View(mContext);
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+
 
         int size = isEditingMode ? this.tempsize : this.size;
 

@@ -38,35 +38,59 @@ import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
-
+/**
+ * The activity is the main and only one of the palette application.
+ * It is divided into a menu bar, a minature picture and a palette of color
+ *
+ * This activity can be into two modes : Main mode and Edit mode
+ * This activity support indent of camera and gallery
+ *
+ */
 public class CameraActivity extends AppCompatActivity {
 
+    // Definition of Static constant for tests
     private static final int CAMERA_RESULT = 9;
     private static final int GALLERY_RESULT = 8;
     private static final int MAIN_MENU = 0;
     private static final int EDIT_MENU = 1;
 
+    /**
+     *  The palette bitmap contains all needed information to work with the selected picture
+     *  @see PaletteBitmap
+     */
     private PaletteBitmap mPicture;
+
+    /**
+     * Miniature is an ImageView containing the display of the picture we working on
+     * @see Miniature
+     */
     private Miniature mView;
 
+    /**
+     * Our palette is a grid view containing the palette elements and in edit mode some tools
+     * @see OurPalette
+     */
     private OurPalette ourPalette;
-    // Used for the animation of the color boxes
+    // Used for the touching interaction with the color boxes
     private float historicX = Float.NaN;
     private float historicY = Float.NaN;
     private static final int DELTA = 50;
 
-
+    /**
+     * The activity menu which is different for the two mode
+     */
     private Menu menu;
     /**
      * Contains either MAIN_MENU or EDIT_MENU value
      */
     private int currentMenuMode;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.e( "EUREKA", "ON CREATE" );
+        Log.e( "CYCLE", "ON CREATE" );
 
         setContentView(R.layout.activity_camera);
 
@@ -82,20 +106,29 @@ public class CameraActivity extends AppCompatActivity {
         //Pallette
         ourPalette = (OurPalette) findViewById(R.id.MAIN_paletteGrid);
         PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
-//        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
         ourPalette.setAdapter(adapter);
 
+
+        // Add a listener on the item simple click.
+        // Warning : we must deal with both edit and main mode
         ourPalette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(final AdapterView<?> parent, View view, final int position, long id) {
+
+                // Get the adapter
                 final PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
 
+                // If the item is a palette color
                 if(position < pA.getSize()) {
 
+                    // change the select status of the current box
                     pA.setSelectedBox(position);
 
+                    // if there is one box selected (previous step select and not deselect)
                     if (pA.isBoxSelected()) {
+                        // Create a Dialog using the AmbilWarnaDialog library
+                        // https://github.com/yukuku/ambilwarna
                         // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
                         // for example, 0xff000000 is black, 0xff0000ff is blue. Please be aware of the initial 0xff which is the alpha.
                         AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, ((PaletteAdapter) parent.getAdapter()).getColor(position),
@@ -104,8 +137,6 @@ public class CameraActivity extends AppCompatActivity {
                                     @Override
                                     public void onOk(AmbilWarnaDialog dialog, int color) {
                                         // color is the color selected by the user
-
-                                        /// TODO : Here we just changed a color in Palette !
 
                                         /// Transform the palette's colors
                                         if (currentMenuMode != EDIT_MENU) {
@@ -116,8 +147,8 @@ public class CameraActivity extends AppCompatActivity {
                                             ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
                                         }
 
-                                        /// TODO : Should apply transform to bitmap
-                                        // If there is a picture to modify
+                                        /// TODO : Should apply transform to bitmap still needed ??
+                                        // If there is a picture to modify and the palette is not in edit mode
                                         if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
                                             // We transform the grid
                                             mPicture.transGrid(ourPalette, position);
@@ -125,6 +156,7 @@ public class CameraActivity extends AppCompatActivity {
                                             // And finally we can also transform the image
                                             mPicture.transImage(mView);
                                         }
+                                        // Deselect the modified color box
                                         pA.setSelectedBox(-1);
                                     }
 
@@ -137,35 +169,44 @@ public class CameraActivity extends AppCompatActivity {
                         dialog.show();
                     }
                 }
+                // If the selection is the ADD color button
+                // must be in edit mode to perform this action
                 else if (position == pA.getSize() && pA.isEditing()){
 
+                    // first deselect any selected color box
                     pA.setSelectedBox(-1);
-                    // add a palette color
+                    // add a palette color using a selection dialog of AmbilWarnaDialog
+                    // TODO chose a default value for the new color. For now its Color.BLUE
                     AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, Color.BLUE,
                             new AmbilWarnaDialog.OnAmbilWarnaListener() {
                                 @Override
                                 public void onOk(AmbilWarnaDialog dialog, int color) {
-                                    // color is the color selected by the user
+                                    // color is the color selected by the user so we add it to the palette
                                     ((PaletteAdapter) parent.getAdapter()).addColor(color);
                                 }
                                 @Override
                                 public void onCancel(AmbilWarnaDialog dialog) {
                                     // cancel was selected by the user
+                                    // do nothing
                                 }
                             });
                     dialog.show();
 
-                }else if(position == pA.getSize()+1 && pA.isEditing()){
-                    // Extract palette
+                }
+                // if the selected item is the magic extraction palette button -> extract the palette
+                // Must be in edit mode to perform this action
+                else if(position == pA.getSize()+1 && pA.isEditing()){
+                    // Extract palette if image exists
                     if(!mPicture.isFileNull()) {
                         mPicture.extractPalette(ourPalette);
                     }
                 }
                 //else do nothing
-
             }
         });
 
+        // Add a listener on long click on item.
+        // This action is performed only in EDIT mode because it does not make really sense in main mode
         ourPalette.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
 
             @Override
@@ -179,6 +220,8 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        // Add a listener on touch item
+        // This is used to remove items in edit mode.
         ourPalette.setOnTouchListener(new View.OnTouchListener() {
 
             @Override
@@ -186,21 +229,22 @@ public class CameraActivity extends AppCompatActivity {
 
                 PaletteAdapter pA = (PaletteAdapter) ourPalette.getAdapter();
 
-                // Get touched box position
+                // If the palette is in edit mode and if it is allowed to remove an item
                 if(pA.isEditing() && pA.getSize() > PaletteAdapter.PALETTE_MIN_SIZE) {
 
                     switch (event.getAction()) {
+                        // On down touch set the position of the touch (use to find the corresponding color)
                         case MotionEvent.ACTION_DOWN:
                             historicX = event.getX();
                             historicY = event.getY();
                             break;
 
+                        // when release (up action) check if the swipe right on the item is
+                        // large enough to remove the item
                         case MotionEvent.ACTION_UP:
                             if (event.getX() - historicX > DELTA) {
                                 int position = ourPalette.pointToPosition((int) historicX, (int) historicY);
-                                Log.d("TOUCH", "Remove Box : " + position);
                                 ((PaletteAdapter) ourPalette.getAdapter()).removeColor(position);
-                                ;
                                 return true;
                             }
                             break;
@@ -212,24 +256,23 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
-
+        // set a on touch listener on the Miniature image. This is use to get a miniature
+        // pixel color in edit mode when a box has been long click selected
+        // We must be in edit mode to perform this action, and the picture must be non null
         mView.setOnTouchListener(new View.OnTouchListener() {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                Log.d("TOUCH", "MINIATURE");
-
                 PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
-                if(!mPicture.isFileNull() && a.isBoxSelected()) {
+                if(!mPicture.isFileNull() && a.isEditing() && a.isBoxSelected()) {
                     int[] viewCorrs = new int[2];
                     //x = 0; y = 213
                     mView.getLocationOnScreen(viewCorrs);
 
                     int touchX = (int) event.getX();
                     int touchY = (int) event.getY();
-                    Log.d("TOUCH", "MINIATURE x="+touchX+", y="+touchY);
                     int color = mPicture.getColor(touchX, touchY);
 
                     if (color != Color.TRANSPARENT)
@@ -247,7 +290,7 @@ public class CameraActivity extends AppCompatActivity {
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         if (savedInstanceState != null) {
-            Log.e( "EUREKA", "ON RESTORE" );
+            Log.e( "CYCLE", "ON RESTORE" );
             mPicture.restoreFile(savedInstanceState.getString("FILE_KEY"));
 
             launchAsyncPaletteExtract();
@@ -321,7 +364,7 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     public void onSaveInstanceState(Bundle outState) {
 
-        Log.e( "EUREKA", "ON SAVE" );
+        Log.e( "CYCLE", "ON SAVE" );
 
         if(! mPicture.isFileNull())
             outState.putString("FILE_KEY", mPicture.fileAbsolutePath());
@@ -342,7 +385,7 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        Log.e( "EUREKA", "ON CREATE OPTION MENU" );
+        Log.e( "CYCLE", "ON CREATE OPTION MENU" );
         this.menu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         return setMenuMode(MAIN_MENU);
@@ -351,12 +394,13 @@ public class CameraActivity extends AppCompatActivity {
 
     /**
      * Set the menu given a mode parameter
+     * Allow to switch between edit menu mode and main menu mode
      * @param mode
      * @return if the menu has been set or not
      */
     private boolean setMenuMode(int mode){
 
-        Log.e( "EUREKA", "SET MENU" );
+        Log.e( "CYCLE", "SET MENU" );
 
         menu.clear(); //Clear view of previous menu
         MenuInflater inflater = getMenuInflater();
@@ -377,14 +421,14 @@ public class CameraActivity extends AppCompatActivity {
 
 
     /**
-     *
+     * Perform action when an menu item is selected
      * @param item
      * @return
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        Log.e( "EUREKA", "ON OPTION ITEM SELECTED" );
+        Log.e( "CYCLE", "ON OPTION ITEM SELECTED" );
         PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
         switch (item.getItemId()) {
@@ -423,27 +467,30 @@ public class CameraActivity extends AppCompatActivity {
 
             // Enter in the edit palette mode
             case R.id.edit_palette_item:
-            setMenuMode(EDIT_MENU);
-            a.enableEditing();
-            return true;
+                setMenuMode(EDIT_MENU);
+                a.enableEditing();
+                return true;
 
+            // Launch the camera to take a new picture
             case R.id.open_camera_item:
-            takePicture();
-            return true;
+                takePicture();
+                return true;
 
+            // Open the gallery to select a new picture
             case R.id.open_gallery_item:
-            selectPicture();
-            return true;
+                selectPicture();
+                return true;
 
+            // Reset the previous imported picture with the first extracted palette before any change
             case R.id.reinit:
-            if(!mPicture.isFileNull()) {
+                if(!mPicture.isFileNull()) {
                     mPicture.restoreFile(initialImagePath);
                     mPicture.setPicture(mView);
                     // We launch the extraction of the palette here in async
                     launchAsyncPaletteExtract();
                     return true;
                 }
-            return false;
+                return false;
 
             // Validate the edited palette and return to main transformation mode
             case R.id.validate_item:
@@ -455,7 +502,6 @@ public class CameraActivity extends AppCompatActivity {
                 if (!mPicture.isFileNull()) {
                     mPicture.initTransPalette(ourPalette);
                 }
-
                 return true;
 
             // Cancel the edited palette and return to main transformation mode
@@ -465,22 +511,25 @@ public class CameraActivity extends AppCompatActivity {
 
                 return true;
 
+
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
+
     public void onDestroy() {
-        Log.e( "EUREKA", "ON DESTROY" );
+        Log.e( "CYCLE", "ON DESTROY" );
         super.onDestroy();
         mPicture.recycle();
     }
 
 
+    // TODO IT IS THE CORRECT PLACE FOR THAT ?
     private String initialImagePath = "";
 
     /**
-     *
+     * Perform action when returning from another activity (i.e camera gallery)
      * @param requestCode
      * @param resultCode
      * @param data
@@ -489,22 +538,21 @@ public class CameraActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 
         super.onActivityResult(requestCode, resultCode, data);
-        Log.e( "EUREKA", "ON RESULT" );
+        Log.e( "CYCLE", "ON RESULT" );
 
-        // if results comes from the camera activity
+        // if results comes from the camera activity and is valid
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
 
             Uri selectedImage = galleryAddPic();
-
             initialImagePath = getPath(this, selectedImage);
 
             mPicture.restoreFile(initialImagePath);
             mPicture.setPicture(mView);
             // We launch the extraction of the palette here in async
             launchAsyncPaletteExtract();
-
         }
-        // if result comes from the gallery
+
+        // if result comes from the gallery and is valid
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
             Uri selectedImage = data == null ? null : data.getData();
             initialImagePath = getPath(this, selectedImage);
@@ -514,6 +562,7 @@ public class CameraActivity extends AppCompatActivity {
             // We launch the extraction of the palette here in async
             launchAsyncPaletteExtract();
         }
+
 
         if (resultCode == RESULT_OK && !mPicture.isFileNull()) {
             try {
@@ -557,9 +606,6 @@ public class CameraActivity extends AppCompatActivity {
             }
         }
     }
-
-
-
 
     /**
      * Prepare and Use the Gallery Intent to select an existing picture
