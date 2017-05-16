@@ -7,7 +7,8 @@ tools:context="ch.epfl.cs413.palettev01.MainActivity" >
     <item android:id="@+id/edit_palette_item"
         android:icon="@android:drawable/ic_menu_edit"
         android:title="@string/action_edit"
-        app:showAsAction="always">
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction">
     </item>
 
     <item android:title="@string/action_camera"

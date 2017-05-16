@@ -7,13 +7,18 @@ tools:context="ch.epfl.cs413.palettev01.MainActivity" >
     <item
         android:id="@+id/validate_item"
         android:icon="@android:drawable/ic_menu_save"
-        android:title="Validate"
-        app:showAsAction="always">
+        android:title="@string/action_validate"
+        app:showAsAction="always"
+        tools:ignore="AlwaysShowAction">
     </item>
     <item
         android:id="@+id/cancel_item"
         android:icon="@android:drawable/ic_menu_close_clear_cancel"
-        android:title="Cancel"
+        android:title="@string/action_cancel"
         app:showAsAction="always">
     </item>
+    <item android:id="@+id/help_item"
+        android:title="@string/action_help"
+        android:orderInCategory="90"
+        app:showAsAction="never" />
 </menu>

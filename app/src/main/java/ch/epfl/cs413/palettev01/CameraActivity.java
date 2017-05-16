@@ -1,8 +1,10 @@
 package ch.epfl.cs413.palettev01;
 
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -84,6 +86,9 @@ public class CameraActivity extends AppCompatActivity {
      * Contains either MAIN_MENU or EDIT_MENU value
      */
     private int currentMenuMode;
+
+
+    private AlertDialog helpDialog;
 
 
     @Override
@@ -283,6 +288,25 @@ public class CameraActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+
+        // help dialog window
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage(R.string.dialog_help_message)
+               .setTitle(R.string.dialog_help_title);
+
+        // Add the buttons
+        builder.setPositiveButton(R.string.dialog_help_close, new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                // User clicked OK button
+            }
+        });
+
+
+// 3. Get the AlertDialog from create()
+        helpDialog = builder.create();
+
+
 
 
         ////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,7 +537,7 @@ public class CameraActivity extends AppCompatActivity {
                 return true;
 
             case R.id.help_item:
-
+                helpDialog.show();
                 return true;
 
             case R.id.export_image_item:

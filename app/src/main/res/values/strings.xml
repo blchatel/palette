@@ -3,11 +3,29 @@
     <string name="action_edit">Edit</string>
     <string name="action_camera">Camera</string>
     <string name="action_gallery">Gallery</string>
-    <string name="action_cancel">Help</string>
-    <string name="action_validate">Help</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_validate">Validate</string>
     <string name="action_reset">Reset</string>
     <string name="action_export">Export</string>
     <string name="action_help">Help</string>
+    <string name="dialog_help_title">Help</string>
+    <string name="dialog_help_message">
+        Welcome in our application !\n
+        Palette v2.1\n\n
+        TRANSFORMATION MODE\n
+        - Use the camera or take directly a picture from gallery to modify it.\n
+        - The app will extract for you a good starting palette of color.\n
+        - You can now change one color to another by clicking on it and observe the whole transformation\n
+        - If the palette is not good enough for you, you can edit it using the pen.\n\n
+        EDIT MODE\n
+        - Edit a color by clicking on it\n
+        - Select a color in the picture with a long click on it\n
+        - add a new color with +\n
+        - remove a color by sweeping it right\n
+        - the magic want will extract a palette for you\n
+        - validate or cancel you modification to switch back in transformation mode
+    </string>
+    <string name="dialog_help_close">Close</string>
     <string name="main_title">Image Palette</string>
     <string name="edit_title">Edit your palette !</string>
     <string name="switchtransform">Select / Transform</string>
