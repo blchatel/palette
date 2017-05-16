@@ -433,6 +433,7 @@ public class CameraActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
 
+            // TODO CLEAN THIS COMMENTED CODE
 //            case R.id.my_function:
 //                if(!mPicture.isFileNull()) {
 ////                    long startTime = System.nanoTime();
@@ -482,7 +483,7 @@ public class CameraActivity extends AppCompatActivity {
                 return true;
 
             // Reset the previous imported picture with the first extracted palette before any change
-            case R.id.reinit:
+            case R.id.reset_image_item:
                 if(!mPicture.isFileNull()) {
                     mPicture.restoreFile(initialImagePath);
                     mPicture.setPicture(mView);
@@ -510,6 +511,19 @@ public class CameraActivity extends AppCompatActivity {
                 a.disableEditing(false);
 
                 return true;
+
+            case R.id.help_item:
+
+                return true;
+
+            case R.id.export_image_item:
+
+                if(mPicture != null && !mPicture.isFileNull())
+                    mPicture.exportImage();
+
+                return true;
+
+
 
 
             default:
@@ -642,7 +656,6 @@ public class CameraActivity extends AppCompatActivity {
         this.sendBroadcast(mediaScanIntent);
         return mediaScanIntent.getData();
     }
-
 
 
     /**
@@ -785,6 +798,4 @@ public class CameraActivity extends AppCompatActivity {
     public static boolean isGooglePhotosUri(Uri uri) {
         return "com.google.android.apps.photos.content".equals(uri.getAuthority());
     }
-
-
 }

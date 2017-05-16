@@ -9,10 +9,12 @@ import android.net.Uri;
 import android.os.Environment;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v8.renderscript.Allocation;
+import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -20,12 +22,10 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import ch.epfl.cs413.palettev01.ScriptC_color;
 import ch.epfl.cs413.palettev01.views.Miniature;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
-import android.support.v8.renderscript.Element;
-
-import ch.epfl.cs413.palettev01.ScriptC_color;
 
 /**
  * Created by bastien on 21.03.17.
@@ -241,6 +241,51 @@ public class PaletteBitmap {
         return Uri.fromFile(file);
     }
 
+
+    /**
+     * Export the bitmap in JPEG format into the gallery
+     * at the same emplacement (with other timestamp) of the camera taken pictures
+     */
+    public void exportImage() {
+
+        if (file != null) {
+
+            final File root = new File(Environment.getExternalStorageDirectory() + File.separator + "palette" + File.separator);
+            root.mkdirs();
+            String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+            String imageFileName = "JPEG_" + timeStamp + ".jpg";
+
+            File exportFile = new File(root, imageFileName);
+
+            FileOutputStream out = null;
+            try {
+
+                // TODO APPLY THE TRANSFORM TO THE FULL SIZE BITMAPP TO USE IT HERE
+                //Bitmap bmp = bitmap.copy(bitmap.getConfig(), true);
+                Bitmap bmp = scaled.copy(scaled.getConfig(), true);
+                out = new FileOutputStream(exportFile);
+
+                bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                //bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+                // PNG is a lossless format, the compression factor (100) is ignored
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (out != null) {
+                        out.close();
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+
+
+
+
     /**
      * Rotate a source bitmap to angle degree
      * @param source
@@ -275,6 +320,9 @@ public class PaletteBitmap {
             return Color.TRANSPARENT;
         }
     }
+
+    // TODO PUT JAVA DOC AND COMMENT FROM HERE IN THIS CLASS
+
 
     public void transformBlackAndWhite(Miniature v){
 
@@ -409,6 +457,7 @@ public class PaletteBitmap {
      */
     public void initTransPalette(OurPalette ourPalette) {
         int paletteSize = ((PaletteAdapter) ourPalette.getAdapter()).getSize();
+        //TODO CLEAN THIS COMMENTED CODE
 //        oldPalette = new LabColor[paletteSize];
 //        for (int i=0; i < paletteSize; i++) {
 //            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
@@ -453,6 +502,7 @@ public class PaletteBitmap {
             for (int j=0; j<paletteSize; j++)
                 palette_weights[i * paletteSize + j] = (float)(palette_distance_2D[i][j]);
         palette_weights[paletteSize * paletteSize] = palette_mean_distance;
+        //TODO CLEAN THIS COMMENTED CODE
         /*
         Log.d("dis mean", Float.toString(palette_mean_distance));
         for (int i=0; i<paletteSize; i++)
@@ -480,6 +530,7 @@ public class PaletteBitmap {
             int color = paletteAdapter.getColor(i);
             double[] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
+            // TODO CLEAN THIS COMMENTED CODE
 //            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
 //            LabColor newC = new LabColor(lab_color);
 //            if (!oldC.equals(newC)) {
@@ -522,6 +573,7 @@ public class PaletteBitmap {
         colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
         allocationTempGrid.copyTo(temp_grid);
 
+        // TODO CLEAN THIS COMMENTED CODE
         /*
         float[] diff_value = new float[paletteSize * 3];
         float[] rate_value = new float[paletteSize];

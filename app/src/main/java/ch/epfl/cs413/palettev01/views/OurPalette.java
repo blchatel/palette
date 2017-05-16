@@ -21,9 +21,4 @@ public class OurPalette extends GridView{
     public OurPalette(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
     }
-
-
-
-
-
 }
