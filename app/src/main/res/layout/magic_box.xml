@@ -5,7 +5,7 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <ch.epfl.cs413.palettev01.views.PlusBox
+    <ImageView
         android:id="@+id/grid_plus_color_box"
         android:layout_width="50dp"
         android:layout_height="50dp"

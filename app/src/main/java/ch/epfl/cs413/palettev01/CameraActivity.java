@@ -48,7 +48,13 @@ public class CameraActivity extends AppCompatActivity {
 
     private PaletteBitmap mPicture;
     private Miniature mView;
+
     private OurPalette ourPalette;
+    // Used for the animation of the color boxes
+    private float historicX = Float.NaN;
+    private float historicY = Float.NaN;
+    private static final int DELTA = 50;
+
 
     private Menu menu;
     /**
@@ -78,6 +84,7 @@ public class CameraActivity extends AppCompatActivity {
         PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
 //        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
         ourPalette.setAdapter(adapter);
+
         ourPalette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
@@ -172,10 +179,46 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
 
+        ourPalette.setOnTouchListener(new View.OnTouchListener() {
+
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+
+                PaletteAdapter pA = (PaletteAdapter) ourPalette.getAdapter();
+
+                // Get touched box position
+                if(pA.isEditing() && pA.getSize() > PaletteAdapter.PALETTE_MIN_SIZE) {
+
+                    switch (event.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            historicX = event.getX();
+                            historicY = event.getY();
+                            break;
+
+                        case MotionEvent.ACTION_UP:
+                            if (event.getX() - historicX > DELTA) {
+                                int position = ourPalette.pointToPosition((int) historicX, (int) historicY);
+                                Log.d("TOUCH", "Remove Box : " + position);
+                                ((PaletteAdapter) ourPalette.getAdapter()).removeColor(position);
+                                ;
+                                return true;
+                            }
+                            break;
+                        default:
+                            return false;
+                    }
+                }
+                return false;
+            }
+        });
+
+
         mView.setOnTouchListener(new View.OnTouchListener() {
 
             @Override
             public boolean onTouch(View v, MotionEvent event) {
+
+                Log.d("TOUCH", "MINIATURE");
 
                 PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
@@ -186,7 +229,7 @@ public class CameraActivity extends AppCompatActivity {
 
                     int touchX = (int) event.getX();
                     int touchY = (int) event.getY();
-
+                    Log.d("TOUCH", "MINIATURE x="+touchX+", y="+touchY);
                     int color = mPicture.getColor(touchX, touchY);
 
                     if (color != Color.TRANSPARENT)

@@ -3,7 +3,6 @@ package ch.epfl.cs413.palettev01.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.graphics.ColorUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +16,7 @@ import static java.lang.Math.log;
 public class PaletteAdapter extends BaseAdapter{
 
     public static final int PALETTE_MAX_SIZE = 6;
+    public static final int PALETTE_MIN_SIZE = 3;
     public static final int PALETTE_SIZE = 4;
 
     private Context mContext;
@@ -129,6 +129,7 @@ public class PaletteAdapter extends BaseAdapter{
      */
     public void enableEditing(){
         isEditingMode = true;
+        setSelectedBox(-1);
         initTempColors();
         this.notifyDataSetChanged();
     }
@@ -140,6 +141,7 @@ public class PaletteAdapter extends BaseAdapter{
      */
     public void disableEditing(boolean isValidated){
         isEditingMode = false;
+        setSelectedBox(-1);
         if(isValidated){
             defineTempColors();
         }
@@ -180,6 +182,19 @@ public class PaletteAdapter extends BaseAdapter{
         }
     }
 
+    public void removeColor(int position){
+
+        if(tempsize > PALETTE_MIN_SIZE) {
+
+            for (int i = position; i < tempsize-1; i++){
+                tempColors[i] = tempColors[i+1];
+            }
+            tempsize--;
+            this.notifyDataSetChanged();
+        }
+    }
+
+
 
     @Override
     public int getCount() {
@@ -210,12 +225,9 @@ public class PaletteAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        Log.d("VIEW", "Set GridViewA "+position );
-
         View grid = new View(mContext);
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
 
         int size = isEditingMode ? this.tempsize : this.size;
 
