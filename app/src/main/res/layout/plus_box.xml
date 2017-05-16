@@ -5,12 +5,13 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <ch.epfl.cs413.palettev01.views.ColorBox
-        android:id="@+id/grid_color_box"
+    <ch.epfl.cs413.palettev01.views.PlusBox
+        android:id="@+id/grid_plus_color_box"
         android:layout_width="50dp"
         android:layout_height="50dp"
         android:layout_gravity="center"
+        android:layout_marginBottom="5dp"
         android:layout_marginTop="5dp"
-        android:layout_marginBottom="5dp"/>
+        android:background="@android:drawable/ic_menu_add" />
 
 </LinearLayout>

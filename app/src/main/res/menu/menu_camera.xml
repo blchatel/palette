@@ -30,9 +30,7 @@ tools:context="ch.epfl.cs413.palettev01.MainActivity" >
 <item android:title="Reset Image"
     android:id="@+id/reinit">
 </item>
-<item android:title="Extract Palette"
-    android:id="@+id/extract_palette">
-</item>
+
 <item android:id="@+id/action_settings"
     android:title="@string/action_settings"
     android:orderInCategory="100"

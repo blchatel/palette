@@ -3,6 +3,7 @@ package ch.epfl.cs413.palettev01.views;
 import android.content.Context;
 import android.graphics.Color;
 import android.support.v4.graphics.ColorUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,13 +16,16 @@ import static java.lang.Math.log;
 
 public class PaletteAdapter extends BaseAdapter{
 
-    public static final int PALETTE_SIZE = 5;
+    public static final int PALETTE_MAX_SIZE = 6;
+    public static final int PALETTE_SIZE = 4;
 
     private Context mContext;
     private int[] colors;
     private int[] tempColors;
     private int selectedBox = -1;
     private int size = 0;
+    private int tempsize = 0;
+
 
     private boolean isEditingMode = false;
 
@@ -30,12 +34,13 @@ public class PaletteAdapter extends BaseAdapter{
 
         mContext = c;
 
-        if(size > 7){
-            throw new IllegalArgumentException("Size argument must be integer smaller than 8");
+        if(size > PALETTE_MAX_SIZE){
+            throw new IllegalArgumentException("Size argument must be integer smaller than 7");
         }
         this.size = size;
-        colors = new int[size];
-        tempColors = new int[size];
+        this.tempsize = size;
+        colors = new int[PALETTE_MAX_SIZE];
+        tempColors = new int[PALETTE_MAX_SIZE];
 
         // initialization of the palette color . For now simply grayscale value
         for (int i = 0; i<size; i++) {
@@ -45,7 +50,7 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
     public int getSize() {
-        return size;
+        return isEditingMode ? tempsize : size;
     }
 
     /**
@@ -146,14 +151,16 @@ public class PaletteAdapter extends BaseAdapter{
     private void initTempColors(){
         for (int i = 0; i<size; i++) {
             tempColors[i] = colors[i];
+            tempsize = size;
         }
     }
     /**
      * update the current color with temporary one
      */
     private void defineTempColors(){
-        for (int i = 0; i<size; i++) {
+        for (int i = 0; i<tempsize; i++) {
             colors[i] = tempColors[i];
+            size = tempsize;
         }
     }
 
@@ -164,15 +171,35 @@ public class PaletteAdapter extends BaseAdapter{
         return isEditingMode;
     }
 
+    public void addColor(int color){
+
+        if(tempsize < PALETTE_MAX_SIZE) {
+            tempColors[tempsize] = color;
+            tempsize++;
+            this.notifyDataSetChanged();
+        }
+    }
+
 
     @Override
     public int getCount() {
+
+        if(isEditingMode){
+            return tempsize+2;
+        }
         return size;
     }
 
     @Override
     public Object getItem(int position) {
-        return colors[position];
+
+        if(isEditingMode && position < tempsize){
+            return tempColors[position];
+        }
+        else if(!isEditingMode && position < size )
+            return colors[position];
+        else
+            return 0;
     }
 
     @Override
@@ -183,30 +210,45 @@ public class PaletteAdapter extends BaseAdapter{
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        View grid;
+        Log.d("VIEW", "Set GridViewA "+position );
+
+        View grid = new View(mContext);
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
-        grid = inflater.inflate(R.layout.color_box, null);
-        ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
 
+        int size = isEditingMode ? this.tempsize : this.size;
 
-        if(position == selectedBox){
-            button.setSelected();
-        } else {
-            button.setNotSelected();
+        if(position < size) {
+
+            grid = inflater.inflate(R.layout.color_box, null);
+
+            ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
+
+            if (position == selectedBox) {
+                button.setSelected();
+            } else {
+                button.setNotSelected();
+            }
+
+            // If the palette is in editing mode, the temporary colors are shown
+            if (isEditingMode) {
+                button.setColor(tempColors[position]);
+
+            } else {
+                button.setColor(colors[position]);
+            }
         }
-
-        // If the palette is in editing mode, the temporary colors are shown
-        if(isEditingMode){
-            button.setColor(tempColors[position]);
-
-        }else {
-            button.setColor(colors[position]);
+        else if (position == size && isEditingMode && size < PALETTE_MAX_SIZE){
+            grid = inflater.inflate(R.layout.plus_box, null);
+        }
+        else if (position == size+1 && isEditingMode){
+            grid = inflater.inflate(R.layout.magic_box, null);
         }
 
         return grid;
     }
+
 
     private double smoothL (double x, double d) {
         double lambda = 0.2 * log(2);

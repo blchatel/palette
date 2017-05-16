@@ -16,7 +16,6 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v4.graphics.ColorUtils;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.graphics.Palette;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -77,55 +76,86 @@ public class CameraActivity extends AppCompatActivity {
         //Pallette
         ourPalette = (OurPalette) findViewById(R.id.MAIN_paletteGrid);
         PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
+//        PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
         ourPalette.setAdapter(adapter);
         ourPalette.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
             @Override
             public void onItemClick(final AdapterView<?> parent, View view, final int position, long id) {
                 final PaletteAdapter pA = (PaletteAdapter) parent.getAdapter();
-                pA.setSelectedBox(position);
 
-                if(pA.isBoxSelected()) {
-                    // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
-                    // for example, 0xff000000 is black, 0xff0000ff is blue. Please be aware of the initial 0xff which is the alpha.
-                    AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, ((PaletteAdapter) parent.getAdapter()).getColor(position),
+                if(position < pA.getSize()) {
+
+                    pA.setSelectedBox(position);
+
+                    if (pA.isBoxSelected()) {
+                        // initialColor is the initially-selected color to be shown in the rectangle on the left of the arrow.
+                        // for example, 0xff000000 is black, 0xff0000ff is blue. Please be aware of the initial 0xff which is the alpha.
+                        AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, ((PaletteAdapter) parent.getAdapter()).getColor(position),
+                                new AmbilWarnaDialog.OnAmbilWarnaListener() {
+
+                                    @Override
+                                    public void onOk(AmbilWarnaDialog dialog, int color) {
+                                        // color is the color selected by the user
+
+                                        /// TODO : Here we just changed a color in Palette !
+
+                                        /// Transform the palette's colors
+                                        if (currentMenuMode != EDIT_MENU) {
+                                            // In transformation mode we want to adjust all color
+                                            ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
+                                        } else {
+                                            // In edit mode we want to change only the selected color
+                                            ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
+                                        }
+
+                                        /// TODO : Should apply transform to bitmap
+                                        // If there is a picture to modify
+                                        if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
+                                            // We transform the grid
+                                            mPicture.transGrid(ourPalette, position);
+
+                                            // And finally we can also transform the image
+                                            mPicture.transImage(mView);
+                                        }
+                                        pA.setSelectedBox(-1);
+                                    }
+
+                                    @Override
+                                    public void onCancel(AmbilWarnaDialog dialog) {
+                                        // cancel was selected by the user
+                                        pA.setSelectedBox(-1);
+                                    }
+                                });
+                        dialog.show();
+                    }
+                }
+                else if (position == pA.getSize() && pA.isEditing()){
+
+                    pA.setSelectedBox(-1);
+                    // add a palette color
+                    AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, Color.BLUE,
                             new AmbilWarnaDialog.OnAmbilWarnaListener() {
-
                                 @Override
                                 public void onOk(AmbilWarnaDialog dialog, int color) {
                                     // color is the color selected by the user
-
-                                    /// TODO : Here we just changed a color in Palette !
-
-                                    /// Transform the palette's colors
-                                    if(currentMenuMode != EDIT_MENU) {
-                                        // In transformation mode we want to adjust all color
-                                        ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
-                                    }else{
-                                        // In edit mode we want to change only the selected color
-                                        ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
-                                    }
-
-                                    /// TODO : Should apply transform to bitmap
-                                    // If there is a picture to modify
-                                    if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
-                                        // We transform the grid
-                                        mPicture.transGrid(ourPalette, position);
-
-                                        // And finally we can also transform the image
-                                        mPicture.transImage(mView);
-                                    }
-                                    pA.setSelectedBox(-1);
+                                    ((PaletteAdapter) parent.getAdapter()).addColor(color);
                                 }
-
                                 @Override
                                 public void onCancel(AmbilWarnaDialog dialog) {
                                     // cancel was selected by the user
-                                    pA.setSelectedBox(-1);
                                 }
                             });
                     dialog.show();
+
+                }else if(position == pA.getSize()+1 && pA.isEditing()){
+                    // Extract palette
+                    if(!mPicture.isFileNull()) {
+                        mPicture.extractPalette(ourPalette);
+                    }
                 }
+                //else do nothing
+
             }
         });
 
@@ -371,13 +401,6 @@ public class CameraActivity extends AppCompatActivity {
                     return true;
                 }
             return false;
-
-            case R.id.extract_palette:
-                if(!mPicture.isFileNull()) {
-                    mPicture.extractPalette(ourPalette);
-                    return true;
-                }
-                return false;
 
             // Validate the edited palette and return to main transformation mode
             case R.id.validate_item:
