@@ -38,6 +38,7 @@ import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
 import ch.epfl.cs413.palettev01.views.Miniature;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
+import ch.epfl.cs413.palettev01.processing.RSProcessing;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 /**
@@ -67,6 +68,12 @@ public class CameraActivity extends AppCompatActivity {
      * @see Miniature
      */
     private Miniature mView;
+
+    /**
+     * RSProcessing is a wrapper for renderscript parts.
+     * @see RSProcessing
+     */
+    private RSProcessing rsProcessing;
 
     /**
      * Our palette is a grid view containing the palette elements and in edit mode some tools
@@ -107,6 +114,9 @@ public class CameraActivity extends AppCompatActivity {
 
         //Miniature
         mView = (Miniature) findViewById(R.id.MAIN_image);
+
+        //RSProcessing
+        rsProcessing = new RSProcessing();
 
         //Pallette
         ourPalette = (OurPalette) findViewById(R.id.MAIN_paletteGrid);
@@ -156,10 +166,11 @@ public class CameraActivity extends AppCompatActivity {
                                         // If there is a picture to modify and the palette is not in edit mode
                                         if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
                                             // We transform the grid
-                                            mPicture.transGrid(ourPalette, position);
+                                            rsProcessing.transGrid(ourPalette, position);
 
                                             // And finally we can also transform the image
-                                            mPicture.transImage(mView);
+                                            rsProcessing.transImage(mPicture.getScaled());
+                                            mPicture.setBitmap(mView);
                                         }
                                         // Deselect the modified color box
                                         pA.setSelectedBox(-1);
@@ -371,7 +382,7 @@ public class CameraActivity extends AppCompatActivity {
                     }
 
                     // Init the palette
-                    mPicture.initTransPalette(ourPalette);
+                    rsProcessing.initTransPalette(ourPalette);
                     ourPalette.setVisibility(View.VISIBLE);
                     paletteProgressBar.setVisibility(View.GONE);
                 }
@@ -462,30 +473,9 @@ public class CameraActivity extends AppCompatActivity {
 //                if(!mPicture.isFileNull()) {
 ////                    long startTime = System.nanoTime();
 ////                    long consumingTime;
-//                    mPicture.rsInit(this);
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//                    mPicture.initGrid();
-//                    // mPicture.testInitTransPalette(palette);
-//                    // mPicture.testTransGrid(palette);
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//                    mPicture.transImage(mView);
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//                    // mPicture.initTransPalette(palette);
-////                     mPicture.myFunction(mView);
-////                    mPicture.rsClose();
 ////                    consumingTime = System.nanoTime() - startTime;
 ////                    Log.d("time", Long.toString(consumingTime));
 //
-//                    return true;
-//                }
-//                return false;
-
-//            case R.id.black_and_white:
-//                if(!mPicture.isFileNull()) {
-//                    mPicture.transformBlackAndWhite(mView);
 //                    return true;
 //                }
 //                return false;
@@ -525,7 +515,7 @@ public class CameraActivity extends AppCompatActivity {
                 // The initial palette will be updated
                 // TODO ! Change input image
                 if (!mPicture.isFileNull()) {
-                    mPicture.initTransPalette(ourPalette);
+                    rsProcessing.initTransPalette(ourPalette);
                 }
                 return true;
 
@@ -604,15 +594,15 @@ public class CameraActivity extends AppCompatActivity {
 
         if (resultCode == RESULT_OK && !mPicture.isFileNull()) {
             try {
-                mPicture.rsClose();
+                rsProcessing.rsClose();
             } catch (Exception e) {
                 // To avoid closing a non existing element
             }
 
             // We initialise the render script
-            mPicture.rsInit(getApplicationContext());
+            rsProcessing.rsInit(getApplicationContext());
             // Init the grid
-            mPicture.initGrid();
+            rsProcessing.initGrid(mPicture.getScaled());
         }
     }
 
