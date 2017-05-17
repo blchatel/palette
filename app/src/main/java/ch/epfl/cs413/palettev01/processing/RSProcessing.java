@@ -7,6 +7,11 @@ import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 
+import java.util.Map;
+import java.util.HashMap;
+import android.util.Log;
+import android.util.Pair;
+
 import ch.epfl.cs413.palettev01.ScriptC_color;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
@@ -263,6 +268,86 @@ public class RSProcessing {
         allocationGrid.destroy();
         allocationTempGrid.destroy();
         allocation_weights.destroy();
+    }
+
+    private static final int b = 16;
+    public Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> generateBins(int k, Bitmap img) {
+        Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> res = new HashMap<Kmeans.BinsTriplet, Pair<LabColor, Integer>>();
+        int img_size = img.getWidth() * img.getHeight();
+        int[] pixels = new int[img_size];
+        img.getPixels(pixels, 0, img.getWidth(), 0, 0, img.getWidth(), img.getHeight());
+
+        Allocation allocationInput = Allocation.createSized(rs, Element.I32(rs), img_size, Allocation.USAGE_SCRIPT);
+        allocationInput.copyFrom(pixels);
+        Allocation allocationBinIndex = Allocation.createSized(rs, Element.I32_3(rs), img_size, Allocation.USAGE_SCRIPT);
+        Allocation allocationLab = Allocation.createSized(rs, Element.F32_3(rs), img_size, Allocation.USAGE_SCRIPT);
+        Allocation allocationBinLab = Allocation.createSized(rs, Element.F32_3(rs), b * b * b, Allocation.USAGE_SCRIPT);
+        Allocation allocationBinNum = Allocation.createSized(rs, Element.I32(rs), b * b * b, Allocation.USAGE_SCRIPT);
+
+        allocationBinIndex.setAutoPadding(true);
+        allocationLab.setAutoPadding(true);
+        allocationBinLab.setAutoPadding(true);
+
+        colorScript.forEach_image_to_lab(allocationInput, allocationLab);
+        colorScript.set_bin_b(b);
+        colorScript.forEach_image_to_binIndex(allocationInput, allocationBinIndex);
+        colorScript.set_image_size(img_size);
+        colorScript.invoke_image_to_bins(allocationLab, allocationBinIndex,
+                allocationBinLab, allocationBinNum);
+        float[] bin_lab = new float[b * b * b * 3];
+        int[] bin_num = new int[b * b * b];
+        allocationBinNum.copyTo(bin_num);
+        allocationBinLab.copyTo(bin_lab);
+        for (int ir=0; ir<b; ir++)
+            for (int ig=0; ig<b; ig++)
+                for (int ib = 0; ib < b; ib++) {
+                    int index = ir * b * b + ig * b + ib;
+                    if (bin_num[index] > 0) {
+                        Kmeans.BinsTriplet triplet = new Kmeans.BinsTriplet(ir, ig, ib);
+                        int num = bin_num[index];
+                        LabColor lab = new LabColor(bin_lab[index * 3 + 0] / num,
+                                bin_lab[index * 3 + 1] / num,
+                                bin_lab[index * 3 + 2] / num);
+                        res.put(triplet, Pair.create(lab, num));
+                    }
+                }
+
+
+        /*
+        float[] pixel_lab = new float[img_size * 3];
+        int[] pixel_bin = new int[img_size * 3];
+        allocationBinIndex.copyTo(pixel_bin);
+        allocationLab.copyTo(pixel_lab);
+        int invB = (int)(Math.ceil(256.0/b));
+        for (int i=0; i<5; i++) {
+            int index = i * 50;
+            RGBColor rgb = RGBColor.intToRGB(pixels[index]);
+            double[] Lab = new double[3];
+            ColorUtils.RGBToLAB(rgb.r, rgb.g, rgb.b, Lab);
+            Log.d(Integer.toString(index), Integer.toString(rgb.r) + " " +
+                    Integer.toString(rgb.g) + " " +
+                    Integer.toString(rgb.b));
+            Log.d(Integer.toString(index), Integer.toString(rgb.r / invB) + " " +
+                    Integer.toString(rgb.g / invB) + " " +
+                    Integer.toString(rgb.b / invB));
+            Log.d(Integer.toString(index), Double.toString(Lab[0]) + " " +
+                    Double.toString(Lab[1]) + " " +
+                    Double.toString(Lab[2]));
+            Log.d(Integer.toString(index), Integer.toString(pixel_bin[index * 3 + 0]) + " " +
+                    Integer.toString(pixel_bin[index * 3 + 1]) + " " +
+                    Integer.toString(pixel_bin[index * 3 + 2]));
+            Log.d(Integer.toString(index), Float.toString(pixel_lab[index * 3 + 0]) + " " +
+                    Float.toString(pixel_lab[index * 3 + 1]) + " " +
+                    Float.toString(pixel_lab[index * 3 + 2]));
+        }
+        */
+
+        allocationInput.destroy();
+        allocationBinIndex.destroy();
+        allocationLab.destroy();
+        allocationBinLab.destroy();
+        allocationBinNum.destroy();
+        return res;
     }
 
     public void rsClose() {

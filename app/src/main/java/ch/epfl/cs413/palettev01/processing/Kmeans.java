@@ -51,15 +51,17 @@ public class Kmeans {
      * The wanted palette size, number of clusters
      * @param k
      */
-    public Kmeans (int k, Bitmap img) {
+    public Kmeans (int k, Bitmap img, RSProcessing rsProcessing) {
         this.K = k;
+        long t1, t2;
+        /*
         /// We first add the black cluster in order to avoid a dark palette
         mPaletteClusters = new ArrayList<>();
         mPaletteClusters.add(new LabColor(0,0,0));
 
-        long t1 = System.nanoTime();
+        t1 = System.nanoTime();
         mBinPixelsMap = createBinPixelMap(img);
-        long t2 = System.nanoTime();
+        t2 = System.nanoTime();
         Log.d("TIME_ACCESS", "Pixel Map creation takes " + ( (t2 - t1) / 1000000 ) + " ms");
 
 
@@ -69,8 +71,86 @@ public class Kmeans {
         this.bins = new Bins(mBinPixelsMap);
         t2 = System.nanoTime();
         Log.d("TIME_ACCESS", "Bins creation takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        */
+
+        t1 = System.nanoTime();
+        rsTest(k, img, rsProcessing);
+        t2 = System.nanoTime();
+        Log.d("TIME_ACCESS", "RS takes " + ( (t2 - t1) / 1000000 ) + " ms");
 
         moves = 1;
+    }
+
+    private void rsTest(int k, Bitmap img, RSProcessing rsProcessing) {
+        mPaletteClusters = new ArrayList<>();
+        mPaletteClusters.add(new LabColor(0,0,0));
+        Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> res = rsProcessing.generateBins(k, img);
+        /*
+        for (Map.Entry<BinsTriplet, Pair<LabColor, Integer>> entry : res.entrySet()) {
+            Pair<LabColor, Integer> eL = entry.getValue();
+            BinsTriplet binTriplet = entry.getKey();
+            Pair<LabColor, Integer> bL = bins.bins.get(binTriplet);
+            Log.d("key", Integer.toString(binTriplet.l) + " " +
+                    Integer.toString(binTriplet.m) + " " +
+                    Integer.toString(binTriplet.n));
+            Log.d("res", Double.toString(eL.first.getL()) + " " +
+                    Double.toString(eL.first.getA()) + " " +
+                    Double.toString(eL.first.getB()) + " " +
+                    Integer.toString(eL.second));
+            Log.d("bin", Double.toString(bL.first.getL()) + " " +
+                    Double.toString(bL.first.getA()) + " " +
+                    Double.toString(bL.first.getB()) + " " +
+                    Integer.toString(bL.second));
+        }
+        */
+        bins = new Bins();
+        bins.bins = res;
+        List<Pair<Integer, LabColor>> indexes = new ArrayList<>();
+        List<LabColor> stored = new ArrayList<>();
+        for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
+            indexes.add(Pair.create(-1, new LabColor(0, 0, 0)));
+        }
+
+        for (Map.Entry<BinsTriplet, Pair<LabColor, Integer>> entry : res.entrySet()) {
+            // Compute mean for each triplet
+            int count = entry.getValue().second;
+
+            LabColor c = entry.getValue().first;
+
+            double distanceMin = 1000;
+            boolean okay = true;
+            if (count > indexes.get(0).first) {
+                for (int i = 0; i < indexes.size(); i++) {
+                    if (indexes.get(i).first != -1) {
+                        double squareDist = c.squareDistanceTo(indexes.get(i).second);
+                        if (squareDist < distanceMin) {
+                            okay = false;
+                            break;
+                        }
+                    }
+                }
+                if (c.squareDistanceTo(mPaletteClusters.get(0)) > distanceMin && okay) {
+                    indexes.set(0, Pair.create(count, c));
+                    Collections.sort(indexes, new Comparator<Pair<Integer, LabColor>>() {
+                        @Override
+                        public int compare(Pair<Integer, LabColor> o1, Pair<Integer, LabColor> o2) {
+                            return (o1.first < o2.first) ? -1 : 1;
+                        }
+                    });
+                } else {
+                    stored.add(c);
+                }
+            }
+
+        }
+
+        for (int i = 0; i < indexes.size(); i++) {
+            if (indexes.get(i).first == -1) {
+                mPaletteClusters.add(stored.remove(stored.size() - 1));
+            } else {
+                mPaletteClusters.add(indexes.get(i).second);
+            }
+        }
     }
 
     public List<LabColor> run () {
@@ -172,7 +252,7 @@ public class Kmeans {
     /**
      * Saving the location in the bins
      */
-    private class BinsTriplet {
+    static public class BinsTriplet {
         int l;
         int m;
         int n;
@@ -220,11 +300,16 @@ public class Kmeans {
          * Contains the bins indexes and then a pair for the corresponding mean lab color and the number of items in the bin
          */
         Map<BinsTriplet, Pair<LabColor, Integer>> bins;
-        Map<BinsTriplet, List<LabColor>> binsContent;
+        // TODO: should we remove binsContent?
+        // Map<BinsTriplet, List<LabColor>> binsContent;
+
+        Bins () {
+
+        }
 
         Bins(Map<BinsTriplet, List<RGBColor>> binPixelMap) {
             bins = new HashMap<>();
-            binsContent = new HashMap<>();
+            // binsContent = new HashMap<>();
             createBins(binPixelMap);
         }
 

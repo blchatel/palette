@@ -391,3 +391,58 @@ void init() {
 	XYZKappa = 24389.0f/27.0f;
 	RBF_param_coff = 5.0f;
 }
+
+float3 __attribute__((kernel)) image_to_lab(int in) {
+    float3 res;
+    float3 rgb;
+    rgb.r = (in >> 16) & 0xff;
+    rgb.g = (in >> 8) & 0xff;
+    rgb.b = in & 0xff;
+    rgb /= 256.0f;
+    res = RGB2LAB(rgb);
+    return res;
+}
+
+int bin_b;
+int3 __attribute__((kernel)) image_to_binIndex(int in) {
+    int3 res;
+    int r,g,b;
+    int inv_b;
+    r = (in >> 16) & 0xff;
+    g = (in >> 8) & 0xff;
+    b = in & 0xff;
+    res.r = r * bin_b / 256;
+    res.g = g * bin_b / 256;
+    res.b = b * bin_b / 256;
+    res = max(min(res, bin_b), 0);
+    return res;
+}
+
+int image_size;
+void image_to_bins(rs_allocation image_lab, rs_allocation image_binIndex,
+                    rs_allocation bin_lab, rs_allocation bin_num) {
+    int b3, i, index;
+    int bNum;
+    float3 bLab;
+    float3 iLab;
+    int3 iBin;
+    b3 = bin_b * bin_b * bin_b;
+    bLab.r = 0.0f;
+    bLab.g = 0.0f;
+    bLab.b = 0.0f;
+    for (i = 0; i < b3; i++) {
+        rsSetElementAt_float3(bin_lab, bLab, i);
+        rsSetElementAt_int(bin_num, 0, i);
+    }
+    for (i = 0; i < image_size; i++) {
+        iLab = rsGetElementAt_float3(image_lab, i);
+        iBin = rsGetElementAt_int3(image_binIndex, i);
+        index = iBin.r * bin_b * bin_b + iBin.g * bin_b + iBin.b;
+        bLab = rsGetElementAt_float3(bin_lab, index);
+        bNum = rsGetElementAt_int(bin_num, index);
+        bNum += 1;
+        bLab += iLab;
+        rsSetElementAt_float3(bin_lab, bLab, index);
+        rsSetElementAt_int(bin_num, bNum, index);
+    }
+}

@@ -117,6 +117,8 @@ public class CameraActivity extends AppCompatActivity {
 
         //RSProcessing
         rsProcessing = new RSProcessing();
+        // We initialise the render script to make sure it's usable
+        rsProcessing.rsInit(getApplicationContext());
 
         //Pallette
         ourPalette = (OurPalette) findViewById(R.id.MAIN_paletteGrid);
@@ -214,7 +216,7 @@ public class CameraActivity extends AppCompatActivity {
                 else if(position == pA.getSize()+1 && pA.isEditing()){
                     // Extract palette if image exists
                     if(!mPicture.isFileNull()) {
-                        mPicture.extractPalette(ourPalette);
+                        mPicture.extractPalette(ourPalette, rsProcessing);
                     }
                 }
                 //else do nothing
@@ -357,7 +359,7 @@ public class CameraActivity extends AppCompatActivity {
                     int paletteSize = PaletteAdapter.PALETTE_SIZE;
                     double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
                     Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
-                    Kmeans kmeans = new Kmeans(paletteSize, smallImage);
+                    Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
                     List<LabColor> paletteColors = kmeans.run();
                     Collections.sort(paletteColors, new Comparator<LabColor>() {
                         @Override
