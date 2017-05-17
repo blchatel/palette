@@ -353,7 +353,7 @@ public class PaletteBitmap {
         int paletteSize = PaletteAdapter.PALETTE_SIZE;
         Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, false);
         Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
-        List<LabColor> paletteColors = kmeans.run();
+        List<LabColor> paletteColors = kmeans.run(rsProcessing);
         Collections.sort(paletteColors, new Comparator<LabColor>() {
             @Override
             public int compare(LabColor o1, LabColor o2) {

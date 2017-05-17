@@ -54,6 +54,7 @@ public class Kmeans {
     public Kmeans (int k, Bitmap img, RSProcessing rsProcessing) {
         this.K = k;
         long t1, t2;
+
         /*
         /// We first add the black cluster in order to avoid a dark palette
         mPaletteClusters = new ArrayList<>();
@@ -76,7 +77,7 @@ public class Kmeans {
         t1 = System.nanoTime();
         rsTest(k, img, rsProcessing);
         t2 = System.nanoTime();
-        Log.d("TIME_ACCESS", "RS takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        Log.d("TIME_ACCESS", "RS bins takes " + ( (t2 - t1) / 1000000 ) + " ms");
 
         moves = 1;
     }
@@ -85,6 +86,7 @@ public class Kmeans {
         mPaletteClusters = new ArrayList<>();
         mPaletteClusters.add(new LabColor(0,0,0));
         Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> res = rsProcessing.generateBins(k, img);
+
         /*
         for (Map.Entry<BinsTriplet, Pair<LabColor, Integer>> entry : res.entrySet()) {
             Pair<LabColor, Integer> eL = entry.getValue();
@@ -103,6 +105,7 @@ public class Kmeans {
                     Integer.toString(bL.second));
         }
         */
+
         bins = new Bins();
         bins.bins = res;
         List<Pair<Integer, LabColor>> indexes = new ArrayList<>();
@@ -153,8 +156,12 @@ public class Kmeans {
         }
     }
 
-    public List<LabColor> run () {
-        long t1 = System.nanoTime();
+    public List<LabColor> run (RSProcessing rsProcessing) {
+        long t1, t2;
+
+        /*
+        List<LabColor> mPaletteClusters_back = new ArrayList<LabColor>(mPaletteClusters);
+        t1 = System.nanoTime();
         int it = 0;
 
         while (it < maxIt || moves == 0) {
@@ -163,8 +170,24 @@ public class Kmeans {
             it++;
         }
 
-        long t2 = System.nanoTime();
+        t2 = System.nanoTime();
         Log.d("TIME_ACCESS", "Kmeans Process takes " + ( (t2 - t1) / 1000000 ) + " ms");
+
+        for (int i=0; i<K+1; i++) {
+            LabColor lab = mPaletteClusters.get(i);
+            Log.d("old " + Integer.toString(i), lab.toString());
+        }
+        mPaletteClusters = new ArrayList<LabColor>(mPaletteClusters_back);
+        */
+
+        t1 = System.nanoTime();
+        rsProcessing.KMean_cluster(mPaletteClusters, bins.bins, K);
+        t2 = System.nanoTime();
+        Log.d("TIME_ACCESS", "RS Kmeans Process takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        for (int i=0; i<K+1; i++) {
+            LabColor lab = mPaletteClusters.get(i);
+            Log.d("new " + Integer.toString(i), lab.toString());
+        }
 
         return mPaletteClusters;
     }

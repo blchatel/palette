@@ -360,7 +360,7 @@ public class CameraActivity extends AppCompatActivity {
                     double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
                     Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
-                    List<LabColor> paletteColors = kmeans.run();
+                    List<LabColor> paletteColors = kmeans.run(rsProcessing);
                     Collections.sort(paletteColors, new Comparator<LabColor>() {
                         @Override
                         public int compare(LabColor o1, LabColor o2) {

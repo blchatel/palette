@@ -445,4 +445,57 @@ void image_to_bins(rs_allocation image_lab, rs_allocation image_binIndex,
         rsSetElementAt_float3(bin_lab, bLab, index);
         rsSetElementAt_int(bin_num, bNum, index);
     }
+
+    for (i = 0; i < b3; i++) {
+        bLab = rsGetElementAt_float3(bin_lab, i);
+        bNum = rsGetElementAt_int(bin_num, i);
+        bLab = (bNum > 0)? bLab / bNum: bLab;
+        rsSetElementAt_float3(bin_lab, bLab, i);
+    }
+}
+
+void kmean_cluster(rs_allocation bin_lab, rs_allocation bin_num,
+                    rs_allocation palette, rs_allocation color_sum,
+                    rs_allocation color_num, int k, int bin_size) {
+    int k1;
+    int i, j, i2;
+    float3 lab_c, lab_p;
+    int num_c, num_p;
+    float best_dis, now_dis;
+    int best_index;
+
+    k1 = k + 1;
+
+    for (i2 = 0; i2 < 50; i2++) {
+        for (i = 0; i < k1; i++) {
+            lab_p = rsGetElementAt_float3(palette, i);
+            rsSetElementAt_float3(color_sum, lab_p, i);
+            rsSetElementAt_int(color_num, 1, i);
+        }
+        for (i = 0; i < bin_size; i++) {
+            lab_c = rsGetElementAt_float3(bin_lab, i);
+            num_c = rsGetElementAt_int(bin_num, i);
+            lab_p = rsGetElementAt_float3(palette, 0);
+            best_dis = lab_dis2(lab_c, lab_p);
+            best_index = 0;
+            for (j = 1; j < k1; j++) {
+                lab_p = rsGetElementAt_float3(palette, j);
+                now_dis = lab_dis2(lab_c, lab_p);
+                best_index = (now_dis < best_dis)? j : best_index;
+                best_dis = fmin(now_dis, best_dis);
+            }
+            num_p = rsGetElementAt_int(color_num, best_index);
+            lab_p = rsGetElementAt_float3(color_sum, best_index);
+            lab_p += lab_c * num_c;
+            num_p += num_c;
+            rsSetElementAt_int(color_num, num_p, best_index);
+            rsSetElementAt_float3(color_sum, lab_p, best_index);
+        }
+        for (i = 1; i < k1; i++) {
+            num_p = rsGetElementAt_int(color_num, i);
+            lab_p = rsGetElementAt_float3(color_sum, i);
+            lab_p /= num_p;
+            rsSetElementAt_float3(palette, lab_p, i);
+        }
+    }
 }

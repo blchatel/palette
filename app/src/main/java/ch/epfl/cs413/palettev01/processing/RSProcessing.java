@@ -7,6 +7,9 @@ import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import android.util.Log;
@@ -305,13 +308,12 @@ public class RSProcessing {
                     if (bin_num[index] > 0) {
                         Kmeans.BinsTriplet triplet = new Kmeans.BinsTriplet(ir, ig, ib);
                         int num = bin_num[index];
-                        LabColor lab = new LabColor(bin_lab[index * 3 + 0] / num,
-                                bin_lab[index * 3 + 1] / num,
-                                bin_lab[index * 3 + 2] / num);
+                        LabColor lab = new LabColor(bin_lab[index * 3 + 0],
+                                bin_lab[index * 3 + 1],
+                                bin_lab[index * 3 + 2]);
                         res.put(triplet, Pair.create(lab, num));
                     }
                 }
-
 
         /*
         float[] pixel_lab = new float[img_size * 3];
@@ -348,6 +350,59 @@ public class RSProcessing {
         allocationBinLab.destroy();
         allocationBinNum.destroy();
         return res;
+    }
+
+    public List<LabColor> KMean_cluster(List<LabColor> paletteClusters,
+                                Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> bins,
+                                int K) {
+        List<Pair<LabColor, Integer>> binsList = new ArrayList<Pair<LabColor, Integer>>(bins.values());
+
+        int binNum = binsList.size();
+        Allocation allocationBinLab = Allocation.createSized(rs, Element.F32_3(rs), binNum, Allocation.USAGE_SCRIPT);
+        Allocation allocationBinNum = Allocation.createSized(rs, Element.I32(rs), binNum, Allocation.USAGE_SCRIPT);
+        Allocation allocationPalette = Allocation.createSized(rs, Element.F32_3(rs), K + 1, Allocation.USAGE_SCRIPT);
+        Allocation allocationColorSum = Allocation.createSized(rs, Element.F32_3(rs), K + 1, Allocation.USAGE_SCRIPT);
+        Allocation allocationColorNum = Allocation.createSized(rs, Element.I32(rs), K + 1, Allocation.USAGE_SCRIPT);
+
+        allocationBinLab.setAutoPadding(true);
+        allocationPalette.setAutoPadding(true);
+        allocationColorSum.setAutoPadding(true);
+        float[] palette = new float[(K + 1) * 3];
+        for (int i=0; i<K+1; i++) {
+            LabColor color = paletteClusters.get(i);
+            palette[i * 3 + 0] = (float)(color.getL());
+            palette[i * 3 + 1] = (float)(color.getA());
+            palette[i * 3 + 2] = (float)(color.getB());
+        }
+        allocationPalette.copyFrom(palette);
+        float[] binsColor = new float[binNum * 3];
+        int[] binsNum = new int[binNum];
+        for (int i=0; i<binNum; i++) {
+            Pair<LabColor, Integer> pair = binsList.get(i);
+            binsNum[i] = pair.second;
+            binsColor[i * 3 + 0] = (float)(pair.first.getL());
+            binsColor[i * 3 + 1] = (float)(pair.first.getA());
+            binsColor[i * 3 + 2] = (float)(pair.first.getB());
+        }
+        allocationBinLab.copyFrom(binsColor);
+        allocationBinNum.copyFrom(binsNum);
+
+        colorScript.invoke_kmean_cluster(allocationBinLab, allocationBinNum, allocationPalette,
+                allocationColorSum, allocationColorNum, K, binNum);
+        allocationPalette.copyTo(palette);
+
+        for (int i=0; i<K+1; i++) {
+            LabColor color = new LabColor(palette[i * 3 + 0],
+                    palette[i * 3 + 1],
+                    palette[i * 3 + 2]);
+            paletteClusters.set(i, color);
+        }
+        allocationBinLab.destroy();
+        allocationBinNum.destroy();
+        allocationPalette.destroy();
+        allocationColorSum.destroy();
+        allocationColorNum.destroy();
+        return null;
     }
 
     public void rsClose() {
