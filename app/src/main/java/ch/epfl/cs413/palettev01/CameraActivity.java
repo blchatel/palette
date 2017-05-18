@@ -28,6 +28,7 @@ import android.widget.AdapterView;
 import android.widget.ProgressBar;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -173,7 +174,7 @@ public class CameraActivity extends AppCompatActivity {
                                         // If there is a picture to modify and the palette is not in edit mode
                                         if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
                                             // We transform the grid
-                                            rsProcessing.transGrid(ourPalette, position);
+                                            rsProcessing.transGrid(ourPalette);
 
                                             // And finally we can also transform the image
                                             rsProcessing.transImage(mPicture.getScaled());
@@ -361,8 +362,7 @@ public class CameraActivity extends AppCompatActivity {
                 @Override
                 protected List<LabColor> doInBackground(Integer... size) {
                     int paletteSize = size[0];
-                    double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
-                    Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
+                    Bitmap smallImage = mPicture.getScaled(); // Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
                     List<LabColor> paletteColors = kmeans.run(rsProcessing);
                     Collections.sort(paletteColors, new Comparator<LabColor>() {
@@ -504,6 +504,7 @@ public class CameraActivity extends AppCompatActivity {
                 // The initial palette will be updated
                 // TODO ! Change input image
                 if (!mPicture.isFileNull()) {
+                    // We create the new palette
                     rsProcessing.initTransPalette(ourPalette);
                 }
                 return true;

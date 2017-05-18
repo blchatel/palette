@@ -1,9 +1,7 @@
 package ch.epfl.cs413.palettev01.processing;
 
-import android.util.Log;
 import android.util.Pair;
 
-import java.util.Random;
 
 public class LabColor {
 
@@ -11,7 +9,7 @@ public class LabColor {
     double a;
     double b;
 
-    LabColor(double[] Lab) {
+    public LabColor(double[] Lab) {
         if (Lab.length != 3) {
             throw new IllegalArgumentException("Lab color must have 3 float values");
         }
@@ -41,11 +39,11 @@ public class LabColor {
     /// ---------  Getters and Setters functions  ---------- ///
     /// ---------------------------------------------------- ///
 
-    public float[] getLab() {
-        float[] lab = new float[3];
-        lab[0] = (float)L;
-        lab[1] = (float)a;
-        lab[2] = (float)b;
+    public double[] getLab() {
+        double[] lab = new double[3];
+        lab[0] = L;
+        lab[1] = a;
+        lab[2] = b;
         return lab;
     }
 

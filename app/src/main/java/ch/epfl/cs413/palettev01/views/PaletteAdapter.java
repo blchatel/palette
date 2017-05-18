@@ -9,7 +9,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import ch.epfl.cs413.palettev01.R;
+import ch.epfl.cs413.palettev01.processing.LabColor;
 
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
@@ -238,9 +245,28 @@ public class PaletteAdapter extends BaseAdapter{
      * update the current color with temporary one
      */
     private void defineTempColors(){
-        for (int i = 0; i<tempsize; i++) {
-            colors[i] = tempColors[i];
-            size = tempsize;
+        /// Sorting the palette by luminosity to be sure it is sorted as desired
+        List<LabColor> colorsList = new ArrayList<>();
+        for (int i = 0; i < tempsize; i++) {
+            int color = tempColors[i];
+            double[] lab_color = new double[3];
+            ColorUtils.colorToLAB(color, lab_color);
+            colorsList.add(new LabColor(lab_color));
+        }
+
+        // We sort the palette by luminance
+        Collections.sort(colorsList, new Comparator<LabColor>() {
+            @Override
+            public int compare(LabColor o1, LabColor o2) {
+                return (o1.getL() > o2.getL()) ? 1 : (o1.getL() < o2.getL()) ? -1 : 0;
+            }
+        });
+
+        size = tempsize;
+        for (int i = 0; i < tempsize; i++) {
+            double[] lab = colorsList.get(i).getLab();
+
+            colors[i] = ColorUtils.LABToColor(lab[0], lab[1], lab[2]);
         }
     }
 

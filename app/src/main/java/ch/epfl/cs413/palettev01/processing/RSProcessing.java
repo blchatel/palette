@@ -9,6 +9,8 @@ import android.support.v8.renderscript.RenderScript;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -37,10 +39,6 @@ public class RSProcessing {
     private int grid_g;
     private float[] old_palette;
     private float[] palette_weights;
-    // TODO: Refactoring for more readability
-//    private LabColor[][][] tempGrid;
-//    private LabColor[][][] newGrid;
-//    private LabColor[] oldPalette;
 
 
     public void rsInit(Context context) {
@@ -95,14 +93,6 @@ public class RSProcessing {
      */
     public void initTransPalette(OurPalette ourPalette) {
         int paletteSize = ((PaletteAdapter) ourPalette.getAdapter()).getSize();
-        //TODO CLEAN THIS COMMENTED CODE
-//        oldPalette = new LabColor[paletteSize];
-//        for (int i=0; i < paletteSize; i++) {
-//            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
-//            double [] labColor = new double[3];
-//            ColorUtils.colorToLAB(color, labColor);
-//            oldPalette[i] = new LabColor(labColor);
-//        }
 
         old_palette = new float[3 * paletteSize];
         for (int i=0; i<paletteSize; i++) {
@@ -140,27 +130,14 @@ public class RSProcessing {
             for (int j=0; j<paletteSize; j++)
                 palette_weights[i * paletteSize + j] = (float)(palette_distance_2D[i][j]);
         palette_weights[paletteSize * paletteSize] = palette_mean_distance;
-        //TODO CLEAN THIS COMMENTED CODE
-        /*
-        Log.d("dis mean", Float.toString(palette_mean_distance));
-        for (int i=0; i<paletteSize; i++)
-            Log.d("dis " + Integer.toString(i), Float.toString(palette_distance[i * paletteSize + 0]) + " "
-                    + Float.toString(palette_distance[i * paletteSize + 1]) + " "
-                    + Float.toString(palette_distance[i * paletteSize + 2]) + " "
-                    + Float.toString(palette_distance[i * paletteSize + 3]) + " "
-                    + Float.toString(palette_distance[i * paletteSize + 4]));
-        for (int i=0; i<paletteSize; i++)
-            Log.d(Integer.toString(i), Float.toString(palette_weights[i * paletteSize + 0]) + " "
-                                       + Float.toString(palette_weights[i * paletteSize + 1]) + " "
-                                       + Float.toString(palette_weights[i * paletteSize + 2]) + " "
-                                       + Float.toString(palette_weights[i * paletteSize + 3]) + " "
-                                       + Float.toString(palette_weights[i * paletteSize + 4]));
-        */
     }
 
-    public void transGrid(OurPalette ourPalette, int changedIndex) {
+    public void transGrid(OurPalette ourPalette) {
         PaletteAdapter paletteAdapter = ((PaletteAdapter) ourPalette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
+
+        /// Sorting the palette by luminosity to be sure it is sorted as desired
+//        List<LabColor> colorsList = new ArrayList<>();
 
         // We create the new palette
         float[] new_palette = new float[3 * paletteSize];
@@ -168,16 +145,24 @@ public class RSProcessing {
             int color = paletteAdapter.getColor(i);
             double[] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
-            // TODO CLEAN THIS COMMENTED CODE
-//            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
-//            LabColor newC = new LabColor(lab_color);
-//            if (!oldC.equals(newC)) {
-//                Log.d("PALETTE_COLOR", "Color changed from " + oldC + " to " + newC + " at position " + i);
-//                changedIndex =  i;
-//            }
-            for (int j=0; j<3; j++)
-                new_palette[3*i + j] = (float)lab_color[j];
+//            colorsList.add(new LabColor(lab_color));
+            for (int j = 0; j < 3; j++)
+                new_palette[3 * i + j] = (float) lab_color[j];
         }
+
+        // We sort the palette by luminance
+//        Collections.sort(colorsList, new Comparator<LabColor>() {
+//            @Override
+//            public int compare(LabColor o1, LabColor o2) {
+//                return (o1.getL() > o2.getL()) ? 1 : (o1.getL() < o2.getL()) ? -1 : 0;
+//            }
+//        });
+
+//        for (int i = 0; i < colorsList.size(); i++) {
+//            double[] lab_color = colorsList.get(i).getLab();
+//            for (int j = 0; j < 3; j++)
+//                new_palette[3 * i + j] = (float) lab_color[j];
+//        }
 
         Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         allocationOld.setAutoPadding(true);
@@ -210,58 +195,6 @@ public class RSProcessing {
         colorScript.invoke_cal_palette_rate();
         colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
         allocationTempGrid.copyTo(temp_grid);
-
-        // TODO CLEAN THIS COMMENTED CODE
-        /*
-        float[] diff_value = new float[paletteSize * 3];
-        float[] rate_value = new float[paletteSize];
-        float[] max_value = new float[paletteSize];
-        allocationDiff.copyTo(diff_value);
-        allocation_rate.copyTo(rate_value);
-        allocation_max.copyTo(max_value);
-        for (int i=0; i<paletteSize; i++) {
-            Log.d("info0 " + Integer.toString(i), Float.toString(old_palette[i * 3 + 0]) + " " +
-                    Float.toString(old_palette[i * 3 + 1]) + " " +
-                    Float.toString(old_palette[i * 3 + 2]) + " " +
-                    Float.toString(new_palette[i * 3 + 0]) + " " +
-                    Float.toString(new_palette[i * 3 + 1]) + " " +
-                    Float.toString(new_palette[i * 3 + 2]));
-            Log.d("info1 " + Integer.toString(i), Float.toString(diff_value[i * 3 + 0]) + " " +
-                    Float.toString(diff_value[i * 3 + 1]) + " " +
-                    Float.toString(diff_value[i * 3 + 2]) + " " +
-                    Float.toString(rate_value[i]) + " " +
-                    Float.toString(max_value[i]));
-        }
-        int test_i;
-        test_i = 0;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                   Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                   Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 8;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 13;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 26;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 2]));
-        */
 
         allocationOld.destroy();
         allocationNew.destroy();
@@ -314,35 +247,6 @@ public class RSProcessing {
                         res.put(triplet, Pair.create(lab, num));
                     }
                 }
-
-        /*
-        float[] pixel_lab = new float[img_size * 3];
-        int[] pixel_bin = new int[img_size * 3];
-        allocationBinIndex.copyTo(pixel_bin);
-        allocationLab.copyTo(pixel_lab);
-        int invB = (int)(Math.ceil(256.0/b));
-        for (int i=0; i<5; i++) {
-            int index = i * 50;
-            RGBColor rgb = RGBColor.intToRGB(pixels[index]);
-            double[] Lab = new double[3];
-            ColorUtils.RGBToLAB(rgb.r, rgb.g, rgb.b, Lab);
-            Log.d(Integer.toString(index), Integer.toString(rgb.r) + " " +
-                    Integer.toString(rgb.g) + " " +
-                    Integer.toString(rgb.b));
-            Log.d(Integer.toString(index), Integer.toString(rgb.r / invB) + " " +
-                    Integer.toString(rgb.g / invB) + " " +
-                    Integer.toString(rgb.b / invB));
-            Log.d(Integer.toString(index), Double.toString(Lab[0]) + " " +
-                    Double.toString(Lab[1]) + " " +
-                    Double.toString(Lab[2]));
-            Log.d(Integer.toString(index), Integer.toString(pixel_bin[index * 3 + 0]) + " " +
-                    Integer.toString(pixel_bin[index * 3 + 1]) + " " +
-                    Integer.toString(pixel_bin[index * 3 + 2]));
-            Log.d(Integer.toString(index), Float.toString(pixel_lab[index * 3 + 0]) + " " +
-                    Float.toString(pixel_lab[index * 3 + 1]) + " " +
-                    Float.toString(pixel_lab[index * 3 + 2]));
-        }
-        */
 
         allocationInput.destroy();
         allocationBinIndex.destroy();
