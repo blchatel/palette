@@ -31,6 +31,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal|center_vertical"
                 android:animationCache="false"
+                android:layout_marginTop="20dp"
                 android:columnWidth="90dp"
                 android:horizontalSpacing="10dp"
                 android:numColumns="auto_fit"

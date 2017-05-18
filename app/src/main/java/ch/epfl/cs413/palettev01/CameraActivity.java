@@ -84,7 +84,7 @@ public class CameraActivity extends AppCompatActivity {
     // Used for the touching interaction with the color boxes
     private float historicX = Float.NaN;
     private float historicY = Float.NaN;
-    private static final int DELTA = 50;
+    private static final int DELTA = 75;
 
     /**
      * The activity menu which is different for the two mode
@@ -199,22 +199,29 @@ public class CameraActivity extends AppCompatActivity {
 
                     // first deselect any selected color box
                     pA.setSelectedBox(-1);
-                    // add a palette color using a selection dialog of AmbilWarnaDialog
+
+                    // We had a color in palette
+                    ((PaletteAdapter) parent.getAdapter()).addColorContainer();
+                    // And we extract the palette with kmeans
+                    launchAsyncPaletteExtract();
+
                     // TODO chose a default value for the new color. For now its Color.BLUE
-                    AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, Color.BLUE,
-                            new AmbilWarnaDialog.OnAmbilWarnaListener() {
-                                @Override
-                                public void onOk(AmbilWarnaDialog dialog, int color) {
-                                    // color is the color selected by the user so we add it to the palette
-                                    ((PaletteAdapter) parent.getAdapter()).addColor(color);
-                                }
-                                @Override
-                                public void onCancel(AmbilWarnaDialog dialog) {
-                                    // cancel was selected by the user
-                                    // do nothing
-                                }
-                            });
-                    dialog.show();
+                    // TODO: Uncomment to have the choice of color on creation
+                    // add a palette color using a selection dialog of AmbilWarnaDialog
+//                    AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, Color.BLUE,
+//                            new AmbilWarnaDialog.OnAmbilWarnaListener() {
+//                                @Override
+//                                public void onOk(AmbilWarnaDialog dialog, int color) {
+//                                    // color is the color selected by the user so we add it to the palette
+//                                    ((PaletteAdapter) parent.getAdapter()).addColor(color);
+//                                }
+//                                @Override
+//                                public void onCancel(AmbilWarnaDialog dialog) {
+//                                    // cancel was selected by the user
+//                                    // do nothing
+//                                }
+//                            });
+//                    dialog.show();
 
                 }
                 // if the selected item is the magic extraction palette button -> extract the palette
@@ -268,7 +275,13 @@ public class CameraActivity extends AppCompatActivity {
                         case MotionEvent.ACTION_UP:
                             if (event.getX() - historicX > DELTA) {
                                 int position = ourPalette.pointToPosition((int) historicX, (int) historicY);
-                                ((PaletteAdapter) ourPalette.getAdapter()).removeColor(position);
+                                // TODO : Uncomment to use last remove color without extracting palette again
+//                                ((PaletteAdapter) ourPalette.getAdapter()).removeColor(position);
+
+                                ((PaletteAdapter) ourPalette.getAdapter()).removeColorContainer(position);
+
+                                // We recompute the palette with the new palette size
+                                launchAsyncPaletteExtract();
                                 return true;
                             }
                             break;
@@ -353,10 +366,13 @@ public class CameraActivity extends AppCompatActivity {
      * It will simply launch a palette extraction in background
      */
     private void launchAsyncPaletteExtract() {
+
+        /// TODO : Speak about the presence of the loading progress bar now that it's fast enough
+
         if (!mPicture.isEmpty()) {
             final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
-            paletteProgressBar.setVisibility(View.VISIBLE);
-            ourPalette.setVisibility(View.GONE);
+//            paletteProgressBar.setVisibility(View.VISIBLE);
+//            ourPalette.setVisibility(View.GONE);
             AsyncTask<Integer, Object, List<LabColor>> extractPalette = new AsyncTask<Integer, Object, List<LabColor>>(){
 
                 @Override
@@ -384,8 +400,8 @@ public class CameraActivity extends AppCompatActivity {
 
                     // Init the palette
                     rsProcessing.initTransPalette(ourPalette);
-                    ourPalette.setVisibility(View.VISIBLE);
-                    paletteProgressBar.setVisibility(View.GONE);
+//                    ourPalette.setVisibility(View.VISIBLE);
+//                    paletteProgressBar.setVisibility(View.GONE);
                 }
             };
 

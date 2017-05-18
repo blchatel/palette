@@ -293,6 +293,12 @@ public class PaletteAdapter extends BaseAdapter{
         }
     }
 
+    public void addColorContainer(){
+        if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
+            tempsize++;
+        }
+    }
+
     /**
      * Remove the palette color at position if the current size allow it
      * You must be in edit mode to perform this action
@@ -310,6 +316,14 @@ public class PaletteAdapter extends BaseAdapter{
         }
     }
 
+    public void removeColorContainer(int position){
+        if (position != tempsize) {
+            if (isEditingMode && tempsize > PALETTE_MIN_SIZE) {
+                tempsize--;
+            }
+        }
+    }
+
 
 
     @Override
@@ -317,7 +331,9 @@ public class PaletteAdapter extends BaseAdapter{
 
         if(isEditingMode){
             // Add 2 because of the two tools (add color button and magic extraction button)
-            return tempsize+2;
+            return tempsize + 1;
+            // TODO: Uncomment if you want the magic button
+//            return tempsize+2;
         }
         return size;
     }
@@ -364,7 +380,6 @@ public class PaletteAdapter extends BaseAdapter{
             // If the palette is in editing mode, the temporary colors are shown
             if (isEditingMode) {
                 button.setColor(tempColors[position]);
-
             } else {
                 button.setColor(colors[position]);
             }
@@ -372,9 +387,10 @@ public class PaletteAdapter extends BaseAdapter{
         else if (position == size && isEditingMode && size < PALETTE_MAX_SIZE){
             grid = inflater.inflate(R.layout.plus_box, null);
         }
-        else if (position == size+1 && isEditingMode){
-            grid = inflater.inflate(R.layout.magic_box, null);
-        }
+        // TODO: Uncomment if you want magic button
+//        else if (position == size+1 && isEditingMode){
+//            grid = inflater.inflate(R.layout.magic_box, null);
+//        }
 
         return grid;
     }
