@@ -391,3 +391,111 @@ void init() {
 	XYZKappa = 24389.0f/27.0f;
 	RBF_param_coff = 5.0f;
 }
+
+float3 __attribute__((kernel)) image_to_lab(int in) {
+    float3 res;
+    float3 rgb;
+    rgb.r = (in >> 16) & 0xff;
+    rgb.g = (in >> 8) & 0xff;
+    rgb.b = in & 0xff;
+    rgb /= 256.0f;
+    res = RGB2LAB(rgb);
+    return res;
+}
+
+int bin_b;
+int3 __attribute__((kernel)) image_to_binIndex(int in) {
+    int3 res;
+    int r,g,b;
+    int inv_b;
+    r = (in >> 16) & 0xff;
+    g = (in >> 8) & 0xff;
+    b = in & 0xff;
+    res.r = r * bin_b / 256;
+    res.g = g * bin_b / 256;
+    res.b = b * bin_b / 256;
+    res = max(min(res, bin_b), 0);
+    return res;
+}
+
+int image_size;
+void image_to_bins(rs_allocation image_lab, rs_allocation image_binIndex,
+                    rs_allocation bin_lab, rs_allocation bin_num) {
+    int b3, i, index;
+    int bNum;
+    float3 bLab;
+    float3 iLab;
+    int3 iBin;
+    b3 = bin_b * bin_b * bin_b;
+    bLab.r = 0.0f;
+    bLab.g = 0.0f;
+    bLab.b = 0.0f;
+    for (i = 0; i < b3; i++) {
+        rsSetElementAt_float3(bin_lab, bLab, i);
+        rsSetElementAt_int(bin_num, 0, i);
+    }
+    for (i = 0; i < image_size; i++) {
+        iLab = rsGetElementAt_float3(image_lab, i);
+        iBin = rsGetElementAt_int3(image_binIndex, i);
+        index = iBin.r * bin_b * bin_b + iBin.g * bin_b + iBin.b;
+        bLab = rsGetElementAt_float3(bin_lab, index);
+        bNum = rsGetElementAt_int(bin_num, index);
+        bNum += 1;
+        bLab += iLab;
+        rsSetElementAt_float3(bin_lab, bLab, index);
+        rsSetElementAt_int(bin_num, bNum, index);
+    }
+
+    for (i = 0; i < b3; i++) {
+        bLab = rsGetElementAt_float3(bin_lab, i);
+        bNum = rsGetElementAt_int(bin_num, i);
+        bLab = (bNum > 0)? bLab / bNum: bLab;
+        rsSetElementAt_float3(bin_lab, bLab, i);
+    }
+}
+
+void kmean_cluster(rs_allocation bin_lab, rs_allocation bin_num,
+                    rs_allocation palette, rs_allocation color_sum,
+                    rs_allocation color_num, int k, int bin_size) {
+    int k1;
+    int i, j, i2;
+    float3 lab_c, lab_p;
+    int num_c, num_p;
+    float best_dis, now_dis;
+    int best_index;
+
+    k1 = k + 1;
+
+    for (i2 = 0; i2 < 50; i2++) {
+        for (i = 0; i < k1; i++) {
+            lab_p = rsGetElementAt_float3(palette, i);
+            rsSetElementAt_float3(color_sum, lab_p, i);
+            rsSetElementAt_int(color_num, 1, i);
+        }
+        for (i = 0; i < bin_size; i++) {
+            lab_c = rsGetElementAt_float3(bin_lab, i);
+            num_c = rsGetElementAt_int(bin_num, i);
+            lab_p = rsGetElementAt_float3(palette, 0);
+            best_dis = lab_dis2(lab_c, lab_p);
+            best_index = 0;
+            for (j = 1; j < k1; j++) {
+                lab_p = rsGetElementAt_float3(palette, j);
+                now_dis = lab_dis2(lab_c, lab_p);
+                best_index = (now_dis < best_dis)? j : best_index;
+                best_dis = fmin(now_dis, best_dis);
+            }
+            num_p = rsGetElementAt_int(color_num, best_index);
+            lab_p = rsGetElementAt_float3(color_sum, best_index);
+            lab_p += lab_c * num_c;
+            num_p += num_c;
+            rsSetElementAt_int(color_num, num_p, best_index);
+            rsSetElementAt_float3(color_sum, lab_p, best_index);
+        }
+        for (i = 1; i < k1; i++) {
+            num_p = rsGetElementAt_int(color_num, i);
+            lab_p = rsGetElementAt_float3(color_sum, i);
+            lab_p /= num_p;
+            rsSetElementAt_float3(palette, lab_p, i);
+        }
+    }
+}
