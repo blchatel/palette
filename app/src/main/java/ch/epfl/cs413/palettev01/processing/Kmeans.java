@@ -30,7 +30,7 @@ public class Kmeans {
     /**
      * Number of clusters, Palette size
      */
-    private final int K;
+    private int K;
     /**
      * Simplification of colors to bins
      */
@@ -232,7 +232,7 @@ public class Kmeans {
             // In the same time we take the initial clusters
             List<Pair<Integer, LabColor>> indexes = new ArrayList<>();
             List<LabColor> stored = new ArrayList<>();
-            for (int i = 0; i < PaletteAdapter.PALETTE_SIZE; i++) {
+            for (int i = 0; i < K; i++) {
                 indexes.add(Pair.create(-1, new LabColor(0, 0, 0)));
             }
 

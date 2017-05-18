@@ -90,6 +90,11 @@ public class CameraActivity extends AppCompatActivity {
 
     private AlertDialog helpDialog;
 
+    /**
+     * The path of the image to which we want to reset
+     */
+    private String initialImagePath = "";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -203,7 +208,7 @@ public class CameraActivity extends AppCompatActivity {
                 else if(position == pA.getSize()+1 && pA.isEditing()){
                     // Extract palette if image exists
                     if(!mPicture.isFileNull()) {
-                        mPicture.extractPalette(ourPalette);
+                        launchAsyncPaletteExtract();
                     }
                 }
                 //else do nothing
@@ -334,16 +339,15 @@ public class CameraActivity extends AppCompatActivity {
      * It will simply launch a palette extraction in background
      */
     private void launchAsyncPaletteExtract() {
-        /// TODO : Put a charging indicator
         if (!mPicture.isEmpty()) {
             final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
             paletteProgressBar.setVisibility(View.VISIBLE);
             ourPalette.setVisibility(View.GONE);
-            AsyncTask<Object, Object, List<LabColor>> extractPalette = new AsyncTask<Object, Object, List<LabColor>>(){
+            AsyncTask<Integer, Object, List<LabColor>> extractPalette = new AsyncTask<Integer, Object, List<LabColor>>(){
 
                 @Override
-                protected List<LabColor> doInBackground(Object... params) {
-                    int paletteSize = PaletteAdapter.PALETTE_SIZE;
+                protected List<LabColor> doInBackground(Integer... size) {
+                    int paletteSize = size[0];
                     double scaleFactor = mPicture.getScaled().getWidth() / 200.0;
                     Bitmap smallImage = Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage);
@@ -354,11 +358,7 @@ public class CameraActivity extends AppCompatActivity {
                             return (o1.getL() > o2.getL()) ? 1 : (o1.getL() < o2.getL()) ? -1 : 0;
                         }
                     });
-//                    Palette.Builder builder = new Palette.Builder(mPicture.getScaled());
-//                    builder.maximumColorCount(paletteSize);
-//
-//                    Palette p = builder.generate();
-//                    List<Palette.Swatch> paletteColors = p.getSwatches();
+
                     return paletteColors;
                 }
 
@@ -367,7 +367,6 @@ public class CameraActivity extends AppCompatActivity {
                     for (int i = 1; i < labColors.size(); i++) {
                         LabColor Lab = labColors.get(i);
                         ((PaletteAdapter) ourPalette.getAdapter()).setColor(i-1, ColorUtils.LABToColor(Lab.getL(), Lab.getA(), Lab.getB()));
-//                        ((PaletteAdapter) ourPalette.getAdapter()).setColor(i-1, Lab.getRgb());
                     }
 
                     // Init the palette
@@ -377,7 +376,8 @@ public class CameraActivity extends AppCompatActivity {
                 }
             };
 
-            extractPalette.execute();
+            int paletteSize = ((PaletteAdapter) ourPalette.getAdapter()).getSize();
+            extractPalette.execute(paletteSize);
         }
     }
 
@@ -457,39 +457,6 @@ public class CameraActivity extends AppCompatActivity {
 
         switch (item.getItemId()) {
 
-            // TODO CLEAN THIS COMMENTED CODE
-//            case R.id.my_function:
-//                if(!mPicture.isFileNull()) {
-////                    long startTime = System.nanoTime();
-////                    long consumingTime;
-//                    mPicture.rsInit(this);
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//                    mPicture.initGrid();
-//                    // mPicture.testInitTransPalette(palette);
-//                    // mPicture.testTransGrid(palette);
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//                    mPicture.transImage(mView);
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//                    // mPicture.initTransPalette(palette);
-////                     mPicture.myFunction(mView);
-////                    mPicture.rsClose();
-////                    consumingTime = System.nanoTime() - startTime;
-////                    Log.d("time", Long.toString(consumingTime));
-//
-//                    return true;
-//                }
-//                return false;
-
-//            case R.id.black_and_white:
-//                if(!mPicture.isFileNull()) {
-//                    mPicture.transformBlackAndWhite(mView);
-//                    return true;
-//                }
-//                return false;
-
             // Enter in the edit palette mode
             case R.id.edit_palette_item:
                 setMenuMode(EDIT_MENU);
@@ -561,10 +528,6 @@ public class CameraActivity extends AppCompatActivity {
         super.onDestroy();
         mPicture.recycle();
     }
-
-
-    // TODO IT IS THE CORRECT PLACE FOR THAT ?
-    private String initialImagePath = "";
 
     /**
      * Perform action when returning from another activity (i.e camera gallery)
@@ -705,8 +668,6 @@ public class CameraActivity extends AppCompatActivity {
                 if ("primary".equalsIgnoreCase(type)) {
                     return Environment.getExternalStorageDirectory() + "/" + split[1];
                 }
-
-                // TODO handle non-primary volumes
             }
             // DownloadsProvider
             else if (isDownloadsDocument(uri)) {

@@ -98,7 +98,7 @@ public class PaletteAdapter extends BaseAdapter{
         this.size = size;
         this.tempsize = size;
 
-        // Init array with maximum color size. It doesnt take too much place...only a few integers.
+        // Init array with maximum color size. It does not take too much place...only a few integers.
         colors = new int[PALETTE_MAX_SIZE];
         tempColors = new int[PALETTE_MAX_SIZE];
 
@@ -125,13 +125,15 @@ public class PaletteAdapter extends BaseAdapter{
      * @param newColor
      */
     public void setColor(int position, int newColor){
-        if (position >= size || position < 0){
-            throw new IllegalArgumentException("Position out of bounds");
-        }
-
         if(isEditingMode){
+            if (position >= tempsize || position < 0){
+                throw new IllegalArgumentException("Position out of bounds");
+            }
             tempColors[position] = newColor;
-        }else {
+        } else {
+            if (position >= size || position < 0){
+                throw new IllegalArgumentException("Position out of bounds");
+            }
             colors[position] = newColor;
         }
         this.notifyDataSetChanged();
@@ -157,13 +159,15 @@ public class PaletteAdapter extends BaseAdapter{
      * @return one integer representing the color of the position element of the palette
      */
     public int getColor(int position) {
-
-        if (position >= size) {
-            throw new IllegalArgumentException("Position too big for getting color");
-        }
         if (isEditingMode){
+            if (position >= tempsize) {
+                throw new IllegalArgumentException("Position too big for getting color");
+            }
             return tempColors[position];
         }else {
+            if (position >= size) {
+                throw new IllegalArgumentException("Position too big for getting color");
+            }
             return colors[position];
         }
     }

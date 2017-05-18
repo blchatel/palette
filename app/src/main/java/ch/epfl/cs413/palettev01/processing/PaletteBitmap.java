@@ -46,7 +46,7 @@ public class PaletteBitmap {
     private Bitmap bitmap ;
 
     /**
-     * Scalled bitmap to reduce complexity
+     * Scaled bitmap to reduce complexity
      */
     private Bitmap scaled ;
 
@@ -79,13 +79,6 @@ public class PaletteBitmap {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///  SETTERS
     ////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Set the file to null
-     */
-    public void setFileToNull(){
-        file = null;
-    }
 
     /**
      * Setter for the file. This function is more meaningful with restore name
@@ -228,10 +221,8 @@ public class PaletteBitmap {
         root.mkdirs();
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + ".jpg";
-//        final File sdImageMainDirectory = new File(root, imageFileName);
 
         try {
-//            file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "Palette", imageFileName);
             file = new File(root, imageFileName);
         } catch (Exception e) {
             e.printStackTrace();
@@ -260,7 +251,7 @@ public class PaletteBitmap {
             FileOutputStream out = null;
             try {
 
-                // TODO APPLY THE TRANSFORM TO THE FULL SIZE BITMAPP TO USE IT HERE
+                // TODO APPLY THE TRANSFORM TO THE FULL SIZE BITMAP TO USE IT HERE
                 //Bitmap bmp = bitmap.copy(bitmap.getConfig(), true);
                 Bitmap bmp = scaled.copy(scaled.getConfig(), true);
                 out = new FileOutputStream(exportFile);
@@ -323,73 +314,6 @@ public class PaletteBitmap {
 
     // TODO PUT JAVA DOC AND COMMENT FROM HERE IN THIS CLASS
 
-
-    public void transformBlackAndWhite(Miniature v){
-
-        Log.d("BW", ""+bitmap.getWidth());
-        Log.d("BH", ""+bitmap.getHeight());
-        Log.d("H", ""+scaled.getHeight());
-        Log.d("W", ""+scaled.getWidth());
-
-        for(int x = 0; x < scaled.getWidth(); x++){
-            for(int y = 0; y < scaled.getHeight(); y++) {
-
-                int pixel = scaled.getPixel(x, y);
-
-                // Black = -16777216
-                // white = -1
-                if(pixel > -8388608){
-                    scaled.setPixel(x, y, Color.WHITE);
-                }else{
-                    scaled.setPixel(x, y, Color.BLACK);
-                }
-            }
-        }
-
-        v.setImageBitmap(scaled);
-    }
-
-    public void extractPalette(OurPalette ourPalette) {
-        int paletteSize = PaletteAdapter.PALETTE_SIZE;
-        Bitmap smallImage = Bitmap.createScaledBitmap(this.scaled, 200, 200, false);
-        Kmeans kmeans = new Kmeans(paletteSize, smallImage);
-        List<LabColor> paletteColors = kmeans.run();
-        Collections.sort(paletteColors, new Comparator<LabColor>() {
-            @Override
-            public int compare(LabColor o1, LabColor o2) {
-                return (o1.L < o2.L) ? 1 : (o1.L > o2.L) ? -1 : 0;
-            }
-        });
-        Log.d("<PaletteBitmap>", "Palette has been computed " + paletteColors.size());
-        for (int i = 0; i < paletteSize; i++) {
-            LabColor Lab = paletteColors.get(i);
-            Log.d("<<Sorted>>", "Luminosity is " + Lab.L);
-            ((PaletteAdapter) ourPalette.getAdapter()).setColor(i, ColorUtils.LABToColor(Lab.L, Lab.a, Lab.b));
-        }
-    }
-
-    public void myFunction(Miniature v){
-
-        long startTime = System.nanoTime();
-        int test;
-        int r,g,b,a;
-        Bitmap res = histogramEqualization(scaled);
-        scaled = res;
-        for (int i= 0; i < 2; i++)
-            for (int j=0; j<2; j++) {
-                test = scaled.getPixel(i * 100, j * 100);
-                a = (test >> 24) & 0xff;
-                r = (test >> 16) & 0xff;
-                g = (test >> 8) & 0xff;
-                b = test & 0xff;
-                Log.d(Integer.toString(i) + "," + Integer.toString(j), Integer.toHexString(test) + " " + Integer.toString(r) + " " + Integer.toString(g) + " " + Integer.toString(b) + " " + Integer.toString(a));
-            }
-        long consumingTime = System.nanoTime() - startTime;
-        Log.d("time", Long.toString(consumingTime));
-
-        v.setImageBitmap(scaled);
-    }
-
     private RenderScript rs;
     private ScriptC_color colorScript;
     private Bitmap input_pic;
@@ -398,11 +322,6 @@ public class PaletteBitmap {
     private int grid_g;
     private float[] old_palette;
     private float[] palette_weights;
-
-    // TODO: Refactoring for more readability
-//    private LabColor[][][] tempGrid;
-//    private LabColor[][][] newGrid;
-//    private LabColor[] oldPalette;
 
 
     public void rsInit(Context context) {
@@ -457,14 +376,6 @@ public class PaletteBitmap {
      */
     public void initTransPalette(OurPalette ourPalette) {
         int paletteSize = ((PaletteAdapter) ourPalette.getAdapter()).getSize();
-        //TODO CLEAN THIS COMMENTED CODE
-//        oldPalette = new LabColor[paletteSize];
-//        for (int i=0; i < paletteSize; i++) {
-//            int color = ((PaletteAdapter)palette.getAdapter()).getColor(i);
-//            double [] labColor = new double[3];
-//            ColorUtils.colorToLAB(color, labColor);
-//            oldPalette[i] = new LabColor(labColor);
-//        }
 
         old_palette = new float[3 * paletteSize];
         for (int i=0; i<paletteSize; i++) {
@@ -530,13 +441,7 @@ public class PaletteBitmap {
             int color = paletteAdapter.getColor(i);
             double[] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
-            // TODO CLEAN THIS COMMENTED CODE
-//            LabColor oldC = new LabColor(old_palette[i*3], old_palette[i*3+1], old_palette[i*3+2]);
-//            LabColor newC = new LabColor(lab_color);
-//            if (!oldC.equals(newC)) {
-//                Log.d("PALETTE_COLOR", "Color changed from " + oldC + " to " + newC + " at position " + i);
-//                changedIndex =  i;
-//            }
+
             for (int j=0; j<3; j++)
                 new_palette[3*i + j] = (float)lab_color[j];
         }
@@ -573,58 +478,6 @@ public class PaletteBitmap {
         colorScript.forEach_grid_transfer(allocationGrid, allocationTempGrid);
         allocationTempGrid.copyTo(temp_grid);
 
-        // TODO CLEAN THIS COMMENTED CODE
-        /*
-        float[] diff_value = new float[paletteSize * 3];
-        float[] rate_value = new float[paletteSize];
-        float[] max_value = new float[paletteSize];
-        allocationDiff.copyTo(diff_value);
-        allocation_rate.copyTo(rate_value);
-        allocation_max.copyTo(max_value);
-        for (int i=0; i<paletteSize; i++) {
-            Log.d("info0 " + Integer.toString(i), Float.toString(old_palette[i * 3 + 0]) + " " +
-                    Float.toString(old_palette[i * 3 + 1]) + " " +
-                    Float.toString(old_palette[i * 3 + 2]) + " " +
-                    Float.toString(new_palette[i * 3 + 0]) + " " +
-                    Float.toString(new_palette[i * 3 + 1]) + " " +
-                    Float.toString(new_palette[i * 3 + 2]));
-            Log.d("info1 " + Integer.toString(i), Float.toString(diff_value[i * 3 + 0]) + " " +
-                    Float.toString(diff_value[i * 3 + 1]) + " " +
-                    Float.toString(diff_value[i * 3 + 2]) + " " +
-                    Float.toString(rate_value[i]) + " " +
-                    Float.toString(max_value[i]));
-        }
-        int test_i;
-        test_i = 0;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                   Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                   Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 8;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 13;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 2]));
-        test_i = 26;
-        Log.d("old " + Integer.toString(test_i), Float.toString(grid[test_i * 3 + 0]) + " " +
-                Float.toString(grid[test_i * 3 + 1]) + " " +
-                Float.toString(grid[test_i * 3 + 2]));
-        Log.d(Integer.toString(test_i), Float.toString(temp_grid[test_i * 3 + 0]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 1]) + " " +
-                Float.toString(temp_grid[test_i * 3 + 2]));
-        */
-
         allocationOld.destroy();
         allocationNew.destroy();
         allocationDiff.destroy();
@@ -640,66 +493,10 @@ public class PaletteBitmap {
         rs.destroy();
     }
 
-    public Bitmap histogramEqualization(Bitmap image) {
-        //Get image size
-        int width = image.getWidth();
-        int height = image.getHeight();
-
-        //Create new bitmap
-        Bitmap res = image.copy(image.getConfig(), true);
-
-        //Create allocation from Bitmap
-        Allocation allocationA = Allocation.createFromBitmap(rs, res);
-
-        //Create allocation with same type
-        Allocation allocationB = Allocation.createTyped(rs, allocationA.getType());
-
-        float[] grid = new float[30];
-        Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), 10, Allocation.USAGE_SCRIPT);
-        allocationGrid.setAutoPadding(true);
-        allocationGrid.copyFrom(grid);
-        colorScript.set_grid(allocationGrid);
-        colorScript.invoke_initGrid2();
-
-        //Call the first kernel.
-        colorScript.forEach_test(allocationA, allocationA);
-
-        //Copy script result into bitmap
-        allocationA.copyTo(res);
-
-        for (int i=0; i<8; i++)
-            Log.d("test" + Integer.toString(i), Float.toString(grid[i]));
-
-        allocationGrid.copyTo(grid);
-        for (int i=0; i<8; i++)
-            Log.d("test" + Integer.toString(i), Float.toString(grid[i]));
-
-        //Destroy everything to free memory
-        allocationA.destroy();
-        allocationB.destroy();
-        allocationGrid.destroy();
-
-        return res;
-    }
-
     public Bitmap getScaled() {
         return scaled;
     }
 
-
-    /**
-     * Test functions
-     */
-
-    public void testInitTransPalette(OurPalette ourPalette) {
-        old_palette = new float[3];
-        double [] lab_color = new double[3];
-        // int color = ((PaletteAdapter)palette.getAdapter()).getColor(2);
-        int color = 0xff000000 + 158 * 0x10000 + 182 * 0x100 + 215;
-        ColorUtils.colorToLAB(color, lab_color);
-        for (int i=0; i<3; i++)
-            old_palette[i] = (float) lab_color[i];
-    }
 
 }
 
