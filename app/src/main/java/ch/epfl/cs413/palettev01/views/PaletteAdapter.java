@@ -78,6 +78,7 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private int tempsize = 0;
 
+    private boolean colorManuallyChanged;
 
     /**
      * Boolean flag indicating if the editing palette mode is enable or not
@@ -86,6 +87,13 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private boolean isEditingMode = false;
 
+    public void setColorManuallyChanged(boolean colorManuallyChanged) {
+        this.colorManuallyChanged = colorManuallyChanged;
+    }
+
+    public boolean isColorManuallyChanged () {
+        return colorManuallyChanged;
+    }
 
     /**
      * Palette adapter constructor
@@ -95,6 +103,7 @@ public class PaletteAdapter extends BaseAdapter{
     public PaletteAdapter(Context c, int size) {
 
         mContext = c;
+        colorManuallyChanged = false;
 
         // Check whether the init palette size is correct. If not write an error message
         // and set the size value with the default size
@@ -153,6 +162,7 @@ public class PaletteAdapter extends BaseAdapter{
      * @param newColor
      */
     public void setColor(int newColor){
+        colorManuallyChanged = true;
         if (selectedBox != -1){
             setColor(selectedBox, newColor);
         }
@@ -191,7 +201,6 @@ public class PaletteAdapter extends BaseAdapter{
         this.notifyDataSetChanged();
     }
 
-
     /**
      * Test if one box is selected
      * @return boolean
@@ -210,6 +219,7 @@ public class PaletteAdapter extends BaseAdapter{
         isEditingMode = true;
         setSelectedBox(-1);
         initTempColors();
+        colorManuallyChanged = false;
         this.notifyDataSetChanged();
     }
 
@@ -285,7 +295,6 @@ public class PaletteAdapter extends BaseAdapter{
      * @param color the color to add
      */
     public void addColor(int color){
-
         if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
             tempColors[tempsize] = color;
             tempsize++;
@@ -294,6 +303,7 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
     public void addColorContainer(){
+        colorManuallyChanged = false;
         if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
             tempsize++;
         }
@@ -307,7 +317,6 @@ public class PaletteAdapter extends BaseAdapter{
     public void removeColor(int position){
 
         if(isEditingMode && tempsize > PALETTE_MIN_SIZE) {
-
             for (int i = position; i < tempsize-1; i++){
                 tempColors[i] = tempColors[i+1];
             }
@@ -317,6 +326,7 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
     public void removeColorContainer(int position){
+        colorManuallyChanged = false;
         if (position < tempsize) {
             if (isEditingMode && tempsize > PALETTE_MIN_SIZE) {
                 tempsize--;
@@ -331,9 +341,13 @@ public class PaletteAdapter extends BaseAdapter{
 
         if(isEditingMode){
             // Add 2 because of the two tools (add color button and magic extraction button)
-//            return tempsize + 1;
-            // TODO: Uncomment if you want the magic button
-            return tempsize+2;
+            // TODO: Change if you want the magic button
+            if (colorManuallyChanged) {
+                return tempsize+2;
+            } else {
+                return tempsize + 1;
+            }
+
         }
         return size;
     }
@@ -387,8 +401,8 @@ public class PaletteAdapter extends BaseAdapter{
         else if (position == size && isEditingMode && size < PALETTE_MAX_SIZE){
             grid = inflater.inflate(R.layout.plus_box, null);
         }
-        // TODO: Uncomment if you want magic button
-        else if (position == size+1 && isEditingMode){
+        // TODO: Change if you want magic button
+        else if (position == size+1 && isEditingMode && colorManuallyChanged){
             grid = inflater.inflate(R.layout.magic_box, null);
         }
 

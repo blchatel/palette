@@ -26,6 +26,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -167,7 +168,7 @@ public class CameraActivity extends AppCompatActivity {
                                             ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
                                         } else {
                                             // In edit mode we want to change only the selected color
-                                            ((PaletteAdapter) parent.getAdapter()).setColor(position, color);
+                                            ((PaletteAdapter) parent.getAdapter()).setColor(color);
                                         }
 
                                         /// TODO : Should apply transform to bitmap still needed ??
@@ -200,28 +201,26 @@ public class CameraActivity extends AppCompatActivity {
                     // first deselect any selected color box
                     pA.setSelectedBox(-1);
 
-                    // We had a color in palette
-                    ((PaletteAdapter) parent.getAdapter()).addColorContainer();
-                    // And we extract the palette with kmeans
-                    launchAsyncPaletteExtract();
-
-                    // TODO chose a default value for the new color. For now its Color.BLUE
-                    // TODO: Uncomment to have the choice of color on creation
-                    // add a palette color using a selection dialog of AmbilWarnaDialog
-//                    AmbilWarnaDialog dialog = new AmbilWarnaDialog(CameraActivity.this, Color.BLUE,
-//                            new AmbilWarnaDialog.OnAmbilWarnaListener() {
-//                                @Override
-//                                public void onOk(AmbilWarnaDialog dialog, int color) {
-//                                    // color is the color selected by the user so we add it to the palette
-//                                    ((PaletteAdapter) parent.getAdapter()).addColor(color);
-//                                }
-//                                @Override
-//                                public void onCancel(AmbilWarnaDialog dialog) {
-//                                    // cancel was selected by the user
-//                                    // do nothing
-//                                }
-//                            });
-//                    dialog.show();
+                    if (pA.isColorManuallyChanged()) {
+                        new AlertDialog.Builder(CameraActivity.this)
+                                .setCancelable(true)
+                                .setTitle("Add new color ?")
+                                .setMessage("Doing so will reset the colors you manually changed !")
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int whichButton) {
+                                        // We had a color in palette
+                                        pA.addColorContainer();
+                                        // And we extract the palette with kmeans
+                                        launchAsyncPaletteExtract();
+                                    }})
+                                .setNegativeButton("Cancel", null).show();
+                    } else {
+                        // We had a color in palette
+                        pA.addColorContainer();
+                        // And we extract the palette with kmeans
+                        launchAsyncPaletteExtract();
+                    }
 
                 }
                 // if the selected item is the magic extraction palette button -> extract the palette
@@ -229,6 +228,7 @@ public class CameraActivity extends AppCompatActivity {
                 else if(position == pA.getSize()+1 && pA.isEditing()){
                     // Extract palette if image exists
                     if(!mPicture.isFileNull()) {
+                        pA.setColorManuallyChanged(false);
                         launchAsyncPaletteExtract();
                     }
                 }
@@ -258,7 +258,7 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                PaletteAdapter pA = (PaletteAdapter) ourPalette.getAdapter();
+                final PaletteAdapter pA = (PaletteAdapter) ourPalette.getAdapter();
 
                 // If the palette is in edit mode and if it is allowed to remove an item
                 if(pA.isEditing() && pA.getSize() > PaletteAdapter.PALETTE_MIN_SIZE) {
@@ -274,14 +274,29 @@ public class CameraActivity extends AppCompatActivity {
                         // large enough to remove the item
                         case MotionEvent.ACTION_UP:
                             if (event.getX() - historicX > DELTA) {
-                                int position = ourPalette.pointToPosition((int) historicX, (int) historicY);
+                                final int position = ourPalette.pointToPosition((int) historicX, (int) historicY);
                                 // TODO : Uncomment to use last remove color without extracting palette again
 //                                ((PaletteAdapter) ourPalette.getAdapter()).removeColor(position);
 
-                                ((PaletteAdapter) ourPalette.getAdapter()).removeColorContainer(position);
+                                if (pA.isColorManuallyChanged()) {
+                                    new AlertDialog.Builder(CameraActivity.this)
+                                            .setTitle("Remove this color ?")
+                                            .setMessage("Doing so will reset the others colors you manually changed !")
+                                            .setIcon(android.R.drawable.ic_dialog_alert)
+                                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
-                                // We recompute the palette with the new palette size
-                                launchAsyncPaletteExtract();
+                                                public void onClick(DialogInterface dialog, int whichButton) {
+                                                    pA.removeColorContainer(position);
+                                                    // We recompute the palette with the new palette size
+                                                    launchAsyncPaletteExtract();
+                                                }})
+                                            .setNegativeButton(android.R.string.no, null).show();
+                                } else {
+                                    pA.removeColorContainer(position);
+                                    // We recompute the palette with the new palette size
+                                    launchAsyncPaletteExtract();
+                                }
+
                                 return true;
                             }
                             break;
@@ -301,9 +316,9 @@ public class CameraActivity extends AppCompatActivity {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
 
-                PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
+                PaletteAdapter pA = ((PaletteAdapter) ourPalette.getAdapter());
 
-                if(!mPicture.isFileNull() && a.isEditing() && a.isBoxSelected()) {
+                if(!mPicture.isFileNull() && pA.isEditing() && pA.isBoxSelected()) {
                     int[] viewCorrs = new int[2];
                     //x = 0; y = 213
                     mView.getLocationOnScreen(viewCorrs);
@@ -313,7 +328,7 @@ public class CameraActivity extends AppCompatActivity {
                     int color = mPicture.getColor(touchX, touchY);
 
                     if (color != Color.TRANSPARENT)
-                        a.setColor(color);
+                        pA.setColor(color);
 
                     return true;
                 }
@@ -367,7 +382,7 @@ public class CameraActivity extends AppCompatActivity {
      */
     private void launchAsyncPaletteExtract() {
 
-        /// TODO : Speak about the presence of the loading progress bar now that it's fast enough
+        /// TODO : Use loading bar or not ?
 
         if (!mPicture.isEmpty()) {
 //            final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
@@ -538,8 +553,10 @@ public class CameraActivity extends AppCompatActivity {
 
             case R.id.export_image_item:
 
-                if(mPicture != null && !mPicture.isFileNull())
+                if(mPicture != null && !mPicture.isFileNull()) {
                     mPicture.exportImage();
+                    Toast.makeText(this, "Image exported", Toast.LENGTH_SHORT);
+                }
 
                 return true;
 
