@@ -317,7 +317,7 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
     public void removeColorContainer(int position){
-        if (position != tempsize) {
+        if (position < tempsize) {
             if (isEditingMode && tempsize > PALETTE_MIN_SIZE) {
                 tempsize--;
             }
@@ -331,9 +331,9 @@ public class PaletteAdapter extends BaseAdapter{
 
         if(isEditingMode){
             // Add 2 because of the two tools (add color button and magic extraction button)
-            return tempsize + 1;
+//            return tempsize + 1;
             // TODO: Uncomment if you want the magic button
-//            return tempsize+2;
+            return tempsize+2;
         }
         return size;
     }
@@ -388,9 +388,9 @@ public class PaletteAdapter extends BaseAdapter{
             grid = inflater.inflate(R.layout.plus_box, null);
         }
         // TODO: Uncomment if you want magic button
-//        else if (position == size+1 && isEditingMode){
-//            grid = inflater.inflate(R.layout.magic_box, null);
-//        }
+        else if (position == size+1 && isEditingMode){
+            grid = inflater.inflate(R.layout.magic_box, null);
+        }
 
         return grid;
     }

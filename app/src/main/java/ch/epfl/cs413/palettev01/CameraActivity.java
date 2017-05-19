@@ -371,8 +371,8 @@ public class CameraActivity extends AppCompatActivity {
 
         if (!mPicture.isEmpty()) {
             final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
-//            paletteProgressBar.setVisibility(View.VISIBLE);
-//            ourPalette.setVisibility(View.GONE);
+            paletteProgressBar.setVisibility(View.VISIBLE);
+            ourPalette.setVisibility(View.GONE);
             AsyncTask<Integer, Object, List<LabColor>> extractPalette = new AsyncTask<Integer, Object, List<LabColor>>(){
 
                 @Override
@@ -400,8 +400,8 @@ public class CameraActivity extends AppCompatActivity {
 
                     // Init the palette
                     rsProcessing.initTransPalette(ourPalette);
-//                    ourPalette.setVisibility(View.VISIBLE);
-//                    paletteProgressBar.setVisibility(View.GONE);
+                    ourPalette.setVisibility(View.VISIBLE);
+                    paletteProgressBar.setVisibility(View.GONE);
                 }
             };
 
