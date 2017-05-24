@@ -555,7 +555,7 @@ public class CameraActivity extends AppCompatActivity {
 
                 if(mPicture != null && !mPicture.isFileNull()) {
                     mPicture.exportImage();
-                    Toast.makeText(this, "Image exported", Toast.LENGTH_SHORT);
+                    Toast.makeText(this, "Image exported", Toast.LENGTH_SHORT).show();
                 }
 
                 return true;
