@@ -164,7 +164,7 @@ public class CameraActivity extends AppCompatActivity {
 
                                         /// Transform the palette's colors
                                         if (currentMenuMode != EDIT_MENU) {
-                                            // In transformation mode we want to adjust all color
+                                            // In transformation mode we want to adjust all color - If there is a problem we just relaunch kmeans
                                             ((PaletteAdapter) parent.getAdapter()).updateAll(position, color);
                                         } else {
                                             // In edit mode we want to change only the selected color

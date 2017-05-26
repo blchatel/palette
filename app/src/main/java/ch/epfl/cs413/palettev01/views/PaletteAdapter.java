@@ -20,6 +20,8 @@ import ch.epfl.cs413.palettev01.processing.LabColor;
 
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  *
@@ -411,8 +413,10 @@ public class PaletteAdapter extends BaseAdapter{
 
 
     private double smoothL (double x, double d) {
-        double lambda = 0.2 * log(2);
-        return log(exp(lambda*x) + exp(lambda*d) - 1) / lambda - x;
+        double lambda = 0.2 * log(2.0);
+        double toRet = (log(exp(lambda*x) + exp(lambda*d) - 1.0) / lambda);
+        Log.d("SMOOTH_VAL", "is " + toRet);
+        return toRet - x;
     }
 
     /**
@@ -421,7 +425,7 @@ public class PaletteAdapter extends BaseAdapter{
      * @param position
      * @param color
      */
-    public void updateAll(int position, int color) {
+    public boolean updateAll(int position, int color) {
         double[] new_lab = new double[3];
         ColorUtils.colorToLAB(color, new_lab);
         double[] old_lab_pos = new double[3];
@@ -429,17 +433,32 @@ public class PaletteAdapter extends BaseAdapter{
         double delta = old_lab_pos[0] - new_lab[0];
 
         for (int i = 0; i < size; i++) {
+            double[] old_lab = new double[3];
             int newColor = color;
-            if (i < position) { // Palette colors with higher luminance
-                double[] old_lab = new double[3];
+            if (i < position) { // Palette colors with smaller luminance - DARKER
                 ColorUtils.colorToLAB(getColor(i), old_lab);
-                old_lab[0] = new_lab[0] - smoothL(delta, old_lab_pos[0]-old_lab[0]);
-                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
+                old_lab[0] = ((int)((new_lab[0] - smoothL(delta, old_lab_pos[0]-old_lab[0]))*10))/10.0;
+//                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
+                Log.d("PaletteColor", "Dark Palette " + i + " luminance is : " + old_lab[0]);
             } else if (i > position) {
-                double[] old_lab = new double[3];
                 ColorUtils.colorToLAB(getColor(i), old_lab);
-                old_lab[0] = new_lab[0] + smoothL(-delta, old_lab[0]-old_lab_pos[0]);
-                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
+                old_lab[0] = ((int)((new_lab[0] + smoothL(-delta, old_lab[0]-old_lab_pos[0]))*10))/10.0;
+//                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
+                Log.d("PaletteColor", "Light Palette " + i + " luminance is : " + old_lab[0]);
+            }
+            else {
+                old_lab[0] = ((int)(new_lab[0]*10)) / 10.0;
+                old_lab[1] = new_lab[1];
+                old_lab[2] = new_lab[2];
+
+                Log.d("PaletteColor", "Same Palette " + i + " luminance is : " + old_lab[0]);
+            }
+
+
+            newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
+
+            if (Double.isNaN(old_lab[0])) {
+                return false;
             }
 
             /// TODO : We don't check if palette color goes out of bounds !
@@ -447,5 +466,7 @@ public class PaletteAdapter extends BaseAdapter{
             // If i==position we just want to return the color
             setColor(i, newColor);
         }
+
+        return true;
     }
 }
