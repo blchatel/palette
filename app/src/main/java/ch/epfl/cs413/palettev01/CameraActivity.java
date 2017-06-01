@@ -393,7 +393,8 @@ public class CameraActivity extends AppCompatActivity {
                 @Override
                 protected List<LabColor> doInBackground(Integer... size) {
                     int paletteSize = size[0];
-                    Bitmap smallImage = mPicture.getScaled(); // Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
+                    Bitmap smallImage = mPicture.getKmean(); // Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
+                    Log.d("resolution", Integer.toString(smallImage.getWidth()) + " " + Integer.toString(smallImage.getHeight()));
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
                     List<LabColor> paletteColors = kmeans.run(rsProcessing);
                     Collections.sort(paletteColors, new Comparator<LabColor>() {

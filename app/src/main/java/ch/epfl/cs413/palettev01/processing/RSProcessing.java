@@ -120,16 +120,21 @@ public class RSProcessing {
         allocationOld.destroy();
 
         for (int i=0; i<paletteSize; i++)
-            for (int j=0; j<paletteSize; j++)
+            for (int j=0; j<paletteSize; j++) {
                 palette_distance_2D[i][j] = palette_distance[i * paletteSize + j];
+            }
         Jama.Matrix A = new Jama.Matrix(palette_distance_2D);
         Jama.Matrix B = Jama.Matrix.identity(paletteSize, paletteSize);
         Jama.Matrix C = A.solve(B);
+        Jama.Matrix D = A.times(C);
         palette_distance_2D = C.getArray();
         for (int i=0; i<paletteSize; i++)
             for (int j=0; j<paletteSize; j++)
-                palette_weights[i * paletteSize + j] = (float)(palette_distance_2D[i][j]);
+                palette_weights[i * paletteSize + j] = (float) (palette_distance_2D[i][j]);
         palette_weights[paletteSize * paletteSize] = palette_mean_distance;
+        for (int i=0; i<paletteSize; i++)
+            for (int j=0; j<paletteSize; j++)
+                palette_distance_2D[i][j] = palette_distance[i * paletteSize + j];
     }
 
     public void transGrid(OurPalette ourPalette) {

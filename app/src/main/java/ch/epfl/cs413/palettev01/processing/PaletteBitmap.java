@@ -50,6 +50,8 @@ public class PaletteBitmap {
      */
     private Bitmap scaled ;
 
+    private Bitmap kmean;
+
     /**
      * The file connected with the bitmap. Useful for loading
      */
@@ -199,12 +201,15 @@ public class PaletteBitmap {
 
         // Determine how much to scale down the image
         float scaleFactor = Math.max(photoW/(float)width, photoH/(float)height);
-        Bitmap scaled = Bitmap.createScaledBitmap(bitmap, (int)(photoW/scaleFactor), (int)(photoH/scaleFactor), true);
+        this.scaled = Bitmap.createScaledBitmap(bitmap, (int)(photoW/scaleFactor), (int)(photoH/scaleFactor), true);
+
+        scaleFactor = Math.max(photoW/(float)1024, photoH/(float)1024);
+        this.kmean = Bitmap.createScaledBitmap(bitmap, (int)(photoW/scaleFactor), (int)(photoH/scaleFactor), true);
 
         // Make bitmap and scaled mutable
         // Avoid IllegalStateException with Immutable bitmap
         this.bitmap = bitmap.copy(bitmap.getConfig(), true);
-        this.scaled = scaled.copy(scaled.getConfig(), true);
+        // this.scaled = scaled.copy(scaled.getConfig(), true);
 
         //Set the view Miniature with this bitmap
         v.setImageBitmap(scaled);
@@ -320,6 +325,10 @@ public class PaletteBitmap {
 
     public Bitmap getScaled() {
         return scaled;
+    }
+
+    public Bitmap getKmean() {
+        return kmean;
     }
 }
 

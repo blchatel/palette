@@ -414,7 +414,7 @@ int3 __attribute__((kernel)) image_to_binIndex(int in) {
     res.r = r * bin_b / 256;
     res.g = g * bin_b / 256;
     res.b = b * bin_b / 256;
-    res = max(min(res, bin_b), 0);
+    res = max(min(res, bin_b - 1), 0);
     return res;
 }
 

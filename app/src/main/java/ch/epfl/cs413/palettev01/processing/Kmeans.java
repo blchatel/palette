@@ -107,6 +107,10 @@ public class Kmeans {
     public List<LabColor> run (RSProcessing rsProcessing) {
         long t1, t2;
 
+        for (int i=0; i<K+1; i++) {
+            LabColor lab = mPaletteClusters.get(i);
+            Log.d("old " + Integer.toString(i), lab.toString());
+        }
         t1 = System.nanoTime();
         rsProcessing.KMean_cluster(mPaletteClusters, bins.bins, K);
         t2 = System.nanoTime();
