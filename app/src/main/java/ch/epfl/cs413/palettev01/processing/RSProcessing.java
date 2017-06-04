@@ -6,24 +6,18 @@ import android.support.v4.graphics.ColorUtils;
 import android.support.v8.renderscript.Allocation;
 import android.support.v8.renderscript.Element;
 import android.support.v8.renderscript.RenderScript;
+import android.util.Pair;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import android.util.Log;
-import android.util.Pair;
 
 import ch.epfl.cs413.palettev01.ScriptC_color;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 
-/**
- * Created by darke on 5/17/2017.
- */
+// TODO: Comment this file
 
 public class RSProcessing {
     public RSProcessing() {
@@ -141,33 +135,16 @@ public class RSProcessing {
         PaletteAdapter paletteAdapter = ((PaletteAdapter) ourPalette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
 
-        /// Sorting the palette by luminosity to be sure it is sorted as desired
-//        List<LabColor> colorsList = new ArrayList<>();
-
         // We create the new palette
         float[] new_palette = new float[3 * paletteSize];
         for (int i = 0; i < paletteSize; i++) {
             int color = paletteAdapter.getColor(i);
             double[] lab_color = new double[3];
             ColorUtils.colorToLAB(color, lab_color);
-//            colorsList.add(new LabColor(lab_color));
             for (int j = 0; j < 3; j++)
                 new_palette[3 * i + j] = (float) lab_color[j];
         }
 
-        // We sort the palette by luminance
-//        Collections.sort(colorsList, new Comparator<LabColor>() {
-//            @Override
-//            public int compare(LabColor o1, LabColor o2) {
-//                return (o1.getL() > o2.getL()) ? 1 : (o1.getL() < o2.getL()) ? -1 : 0;
-//            }
-//        });
-
-//        for (int i = 0; i < colorsList.size(); i++) {
-//            double[] lab_color = colorsList.get(i).getLab();
-//            for (int j = 0; j < 3; j++)
-//                new_palette[3 * i + j] = (float) lab_color[j];
-//        }
 
         Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         allocationOld.setAutoPadding(true);

@@ -1,30 +1,24 @@
 package ch.epfl.cs413.palettev01.processing;
 
 import android.graphics.Bitmap;
-import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import ch.epfl.cs413.palettev01.views.PaletteAdapter;
-
 /**
- * Created by joachim on 3/25/17.
+ * Explicit name. This class computes a weighted K-means in order to extract the palette
  */
-
 public class Kmeans {
     /**
      * Number of clusters, Palette size
      */
     private int K;
+
     /**
      * Simplification of colors to bins
      */
@@ -41,35 +35,52 @@ public class Kmeans {
      */
     public Kmeans (int k, Bitmap img, RSProcessing rsProcessing) {
         this.K = k;
-        long t1, t2;
 
-        t1 = System.nanoTime();
-        rsTest(k, img, rsProcessing);
-        t2 = System.nanoTime();
-        Log.d("TIME_ACCESS", "RS bins takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        // Uncomment for time visualization
+//        long t1, t2;
+//        t1 = System.nanoTime();
+        init(k, img, rsProcessing);
+//        t2 = System.nanoTime();
+//        Log.d("TIME_ACCESS", "RS bins takes " + ( (t2 - t1) / 1000000 ) + " ms");
     }
 
-    private void rsTest(int k, Bitmap img, RSProcessing rsProcessing) {
+    /**
+     * This method will simply init the different clusters for kmeans processing
+     *
+     * @param k     the number of clusters
+     * @param img   the image on which computation is done
+     * @param rsProcessing  the renderscript with which computations are done
+     */
+    private void init(int k, Bitmap img, RSProcessing rsProcessing) {
         mPaletteClusters = new ArrayList<>();
-        mPaletteClusters.add(new LabColor(0,0,0));
-        Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> res = rsProcessing.generateBins(k, img);
 
+        // We add a black cluster to have lighter clusters at the end
+        mPaletteClusters.add(new LabColor(0,0,0));
+
+        // Create the bins with their mean values
+        Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> binsData = rsProcessing.generateBins(k, img);
         bins = new Bins();
-        bins.bins = res;
+        bins.bins = binsData;
+
+        // Initialize every clusters
         List<Pair<Integer, LabColor>> indexes = new ArrayList<>();
-        List<LabColor> stored = new ArrayList<>();
         for (int i = 0; i < k; i++) {
             indexes.add(Pair.create(-1, new LabColor(0, 0, 0)));
         }
 
-        for (Map.Entry<BinsTriplet, Pair<LabColor, Integer>> entry : res.entrySet()) {
+        // Extra choices saved
+        List<LabColor> stored = new ArrayList<>();
+
+        // Use the bins to choose the good centers and create the clusters
+        for (Map.Entry<BinsTriplet, Pair<LabColor, Integer>> entry : binsData.entrySet()) {
             // Compute mean for each triplet
             int count = entry.getValue().second;
 
             LabColor c = entry.getValue().first;
 
+            // We set a wanted min distance between two palette colors in order to avoid having too close colors
             double distanceMin = 1000;
-            boolean okay = true;
+            boolean okay = true;    // okay=true if the color can be added to the list
             if (count > indexes.get(0).first) {
                 for (int i = 0; i < indexes.size(); i++) {
                     if (indexes.get(i).first != -1) {
@@ -89,12 +100,15 @@ public class Kmeans {
                         }
                     });
                 } else {
+                    // We store thoses to be sure we have enough clusters center at the end
+                    // If it is not the case we will take these
                     stored.add(c);
                 }
             }
 
         }
 
+        // We add the chosen colors to define the palette clusters
         for (int i = 0; i < indexes.size(); i++) {
             if (indexes.get(i).first == -1) {
                 mPaletteClusters.add(stored.remove(stored.size() - 1));
@@ -104,21 +118,19 @@ public class Kmeans {
         }
     }
 
+    /**
+     * This method will execute the weighted kmeans algorithm
+     *
+     * @param rsProcessing the renderscript that will do the computations
+     * @return
+     */
     public List<LabColor> run (RSProcessing rsProcessing) {
-        long t1, t2;
-
-        for (int i=0; i<K+1; i++) {
-            LabColor lab = mPaletteClusters.get(i);
-            Log.d("old " + Integer.toString(i), lab.toString());
-        }
-        t1 = System.nanoTime();
+        // Uncomment the commented code to have time information
+//        long t1, t2;
+//        t1 = System.nanoTime();
         rsProcessing.KMean_cluster(mPaletteClusters, bins.bins, K);
-        t2 = System.nanoTime();
-        Log.d("TIME_ACCESS", "RS Kmeans Process takes " + ( (t2 - t1) / 1000000 ) + " ms");
-        for (int i=0; i<K+1; i++) {
-            LabColor lab = mPaletteClusters.get(i);
-            Log.d("new " + Integer.toString(i), lab.toString());
-        }
+//        t2 = System.nanoTime();
+//        Log.d("TIME_ACCESS", "RS Kmeans Process takes " + ( (t2 - t1) / 1000000 ) + " ms");
 
         return mPaletteClusters;
     }
@@ -136,6 +148,11 @@ public class Kmeans {
             this.n = n;
         }
 
+        /**
+         * Redefined equals function for bins triplet
+         * @param o
+         * @return
+         */
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
@@ -167,6 +184,9 @@ public class Kmeans {
          */
         Map<BinsTriplet, Pair<LabColor, Integer>> bins;
 
+        /**
+         * Empty constructor needed
+         */
         Bins () {}
 
     }

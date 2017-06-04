@@ -1,55 +1,43 @@
 package ch.epfl.cs413.palettev01.processing;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.net.Uri;
 import android.os.Environment;
-import android.support.v4.graphics.ColorUtils;
-import android.support.v8.renderscript.Allocation;
-import android.support.v8.renderscript.Element;
-import android.support.v8.renderscript.RenderScript;
 import android.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
 
-import ch.epfl.cs413.palettev01.ScriptC_color;
 import ch.epfl.cs413.palettev01.views.Miniature;
-import ch.epfl.cs413.palettev01.views.OurPalette;
-import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 
 /**
- * Created by bastien on 21.03.17.
+ * This class contains the different bitmap used by the application.
  */
-
-
-// The idea of this class is not providing any bitmap getter to control modification
-
-
 public class PaletteBitmap {
 
 
     /**
-     * Private bitmap attribute we can set mofify and transform inside this class
-     * The bitmap class is final and so cannot be extended. We need to have a bitmap because
-     * we cannot be one
+     * Private bitmap attribute we can set modify and transform inside this class
+     * This is the original image bitmap
      */
     private Bitmap bitmap ;
 
     /**
      * Scaled bitmap to reduce complexity
+     * Displayed bitmap
      */
     private Bitmap scaled ;
 
+    /**
+     * Bitmap scaled to a constant size of 1024px on the bigger side
+     * Used for the kmeans computation - To have the same palette extraction on every phones
+     */
     private Bitmap kmean;
 
     /**
@@ -72,7 +60,7 @@ public class PaletteBitmap {
 
 
     /**
-     * Constructor empty for now
+     * Default constructor
      */
     public PaletteBitmap(){
 
@@ -160,12 +148,28 @@ public class PaletteBitmap {
         return width;
     }
 
+    /**
+     * Getter for the scaled bitmap
+     */
+    public Bitmap getScaled() {
+        return scaled;
+    }
+
+    /**
+     * Getter for the kmean bitmap used for palette extraction
+     */
+    public Bitmap getKmean() {
+        return kmean;
+    }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    ///  Functionality
+    ///  Functionalities
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Recycle all the bitmaps
+     */
     public void recycle(){
 
         if(bitmap != null){
@@ -174,14 +178,17 @@ public class PaletteBitmap {
         if(scaled != null){
             scaled.recycle();
         }
+        if(kmean != null){
+            kmean.recycle();
+        }
 
     }
 
     /**
      * Set the picture and scale it if needed
-     * @param v
+     * @param view
      */
-    public void setPicture(Miniature v) {
+    public void setPicture(Miniature view) {
 
         // Free the data of the last picture
         recycle();
@@ -192,6 +199,7 @@ public class PaletteBitmap {
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
+        // We rotate the image for optimal occupancy on display space if the image is reversed
         if(photoW > photoH) {
             bitmap = rotateImage(bitmap, 90);
             int temp = photoH;
@@ -199,20 +207,20 @@ public class PaletteBitmap {
             photoW = temp;
         }
 
-        // Determine how much to scale down the image
+        // Determine how much to scale down the image for optimal display - Phone dependent
         float scaleFactor = Math.max(photoW/(float)width, photoH/(float)height);
         this.scaled = Bitmap.createScaledBitmap(bitmap, (int)(photoW/scaleFactor), (int)(photoH/scaleFactor), true);
 
+        // Scale the kmean's used bitmap to a limited size
         scaleFactor = Math.max(photoW/(float)1024, photoH/(float)1024);
         this.kmean = Bitmap.createScaledBitmap(bitmap, (int)(photoW/scaleFactor), (int)(photoH/scaleFactor), true);
 
         // Make bitmap and scaled mutable
         // Avoid IllegalStateException with Immutable bitmap
         this.bitmap = bitmap.copy(bitmap.getConfig(), true);
-        // this.scaled = scaled.copy(scaled.getConfig(), true);
 
-        //Set the view Miniature with this bitmap
-        v.setImageBitmap(scaled);
+        // Display the scaled image on the view
+        view.setImageBitmap(scaled);
     }
 
 
@@ -256,14 +264,15 @@ public class PaletteBitmap {
             FileOutputStream out = null;
             try {
 
-                // TODO APPLY THE TRANSFORM TO THE FULL SIZE BITMAP TO USE IT HERE
+                // TODO : If we want to export the full the higher resolution image should transform it here
                 //Bitmap bmp = bitmap.copy(bitmap.getConfig(), true);
+
+                // For now we export the scaled image
                 Bitmap bmp = scaled.copy(scaled.getConfig(), true);
                 out = new FileOutputStream(exportFile);
 
+                // Export to a jpeg image
                 bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
-                //bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-                // PNG is a lossless format, the compression factor (100) is ignored
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -317,18 +326,12 @@ public class PaletteBitmap {
         }
     }
 
-    // TODO PUT JAVA DOC AND COMMENT FROM HERE IN THIS CLASS
-
-    public void setBitmap(Miniature v) {
+    /**
+     * Display the scaled image in the given miniature view
+     * @param v
+     */
+    public void displayScaledImage(Miniature v) {
         v.setImageBitmap(scaled);
-    }
-
-    public Bitmap getScaled() {
-        return scaled;
-    }
-
-    public Bitmap getKmean() {
-        return kmean;
     }
 }
 

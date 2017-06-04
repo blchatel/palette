@@ -6,8 +6,12 @@ import android.util.AttributeSet;
 import android.widget.GridView;
 
 
-
-public class OurPalette extends GridView{
+/**
+ * This class represent our Palette structure class inheriting from a gridView
+ * to be able to display the different colors.
+ * More details and implementation in the adapter
+ */
+public class OurPalette extends GridView {
 
 
     public OurPalette(Context context) {

@@ -25,11 +25,9 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -37,10 +35,10 @@ import java.util.List;
 import ch.epfl.cs413.palettev01.processing.Kmeans;
 import ch.epfl.cs413.palettev01.processing.LabColor;
 import ch.epfl.cs413.palettev01.processing.PaletteBitmap;
+import ch.epfl.cs413.palettev01.processing.RSProcessing;
 import ch.epfl.cs413.palettev01.views.Miniature;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
-import ch.epfl.cs413.palettev01.processing.RSProcessing;
 import yuku.ambilwarna.AmbilWarnaDialog;
 
 /**
@@ -82,21 +80,25 @@ public class CameraActivity extends AppCompatActivity {
      * @see OurPalette
      */
     private OurPalette ourPalette;
+
     // Used for the touching interaction with the color boxes
     private float historicX = Float.NaN;
     private float historicY = Float.NaN;
-    private static final int DELTA = 75;
+    private static final int DELTA = 75;    // Distance needed to remove by sliding
 
     /**
      * The activity menu which is different for the two mode
      */
     private Menu menu;
+
     /**
      * Contains either MAIN_MENU or EDIT_MENU value
      */
     private int currentMenuMode;
 
-
+    /**
+     * Dialog containing the Help information
+     */
     private AlertDialog helpDialog;
 
     /**
@@ -108,8 +110,7 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Log.e( "CYCLE", "ON CREATE" );
+//        Log.e( "CYCLE", "ON CREATE" );
 
         setContentView(R.layout.activity_camera);
 
@@ -127,7 +128,7 @@ public class CameraActivity extends AppCompatActivity {
         // We initialise the render script to make sure it's usable
         rsProcessing.rsInit(getApplicationContext());
 
-        //Pallette
+        //Palette
         ourPalette = (OurPalette) findViewById(R.id.MAIN_paletteGrid);
         PaletteAdapter adapter = new PaletteAdapter(CameraActivity.this, PaletteAdapter.PALETTE_SIZE);
         ourPalette.setAdapter(adapter);
@@ -171,7 +172,6 @@ public class CameraActivity extends AppCompatActivity {
                                             ((PaletteAdapter) parent.getAdapter()).setColor(color);
                                         }
 
-                                        /// TODO : Should apply transform to bitmap still needed ??
                                         // If there is a picture to modify and the palette is not in edit mode
                                         if (!mPicture.isFileNull() && currentMenuMode != EDIT_MENU) {
                                             // We transform the grid
@@ -179,7 +179,7 @@ public class CameraActivity extends AppCompatActivity {
 
                                             // And finally we can also transform the image
                                             rsProcessing.transImage(mPicture.getScaled());
-                                            mPicture.setBitmap(mView);
+                                            mPicture.displayScaledImage(mView);
                                         }
                                         // Deselect the modified color box
                                         pA.setSelectedBox(-1);
@@ -201,6 +201,7 @@ public class CameraActivity extends AppCompatActivity {
                     // first deselect any selected color box
                     pA.setSelectedBox(-1);
 
+                    // Display an alert window to assert the addind of a color
                     if (pA.isColorManuallyChanged()) {
                         new AlertDialog.Builder(CameraActivity.this)
                                 .setCancelable(true)
@@ -232,7 +233,7 @@ public class CameraActivity extends AppCompatActivity {
                         launchAsyncPaletteExtract();
                     }
                 }
-                //else do nothing
+                // otherwise do nothing because we are not on a clickable element
             }
         });
 
@@ -275,9 +276,8 @@ public class CameraActivity extends AppCompatActivity {
                         case MotionEvent.ACTION_UP:
                             if (event.getX() - historicX > DELTA) {
                                 final int position = ourPalette.pointToPosition((int) historicX, (int) historicY);
-                                // TODO : Uncomment to use last remove color without extracting palette again
-//                                ((PaletteAdapter) ourPalette.getAdapter()).removeColor(position);
 
+                                // Display an alert window to assert the delete of a color
                                 if (pA.isColorManuallyChanged()) {
                                     new AlertDialog.Builder(CameraActivity.this)
                                             .setTitle("Remove this color ?")
@@ -320,7 +320,6 @@ public class CameraActivity extends AppCompatActivity {
 
                 if(!mPicture.isFileNull() && pA.isEditing() && pA.isBoxSelected()) {
                     int[] viewCorrs = new int[2];
-                    //x = 0; y = 213
                     mView.getLocationOnScreen(viewCorrs);
 
                     int touchX = (int) event.getX();
@@ -350,7 +349,7 @@ public class CameraActivity extends AppCompatActivity {
         });
 
 
-// 3. Get the AlertDialog from create()
+        // Get the AlertDialog from create()
         helpDialog = builder.create();
 
 
@@ -382,9 +381,8 @@ public class CameraActivity extends AppCompatActivity {
      */
     private void launchAsyncPaletteExtract() {
 
-        /// TODO : Use loading bar or not ?
-
         if (!mPicture.isEmpty()) {
+            // TODO: Uncomment the commented section of this function to have a progress bar on palette extraction
 //            final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
 //            paletteProgressBar.setVisibility(View.VISIBLE);
             ourPalette.setVisibility(View.GONE);
@@ -393,7 +391,7 @@ public class CameraActivity extends AppCompatActivity {
                 @Override
                 protected List<LabColor> doInBackground(Integer... size) {
                     int paletteSize = size[0];
-                    Bitmap smallImage = mPicture.getKmean(); // Bitmap.createScaledBitmap(mPicture.getScaled(), (int)(mPicture.getScaled().getWidth()/scaleFactor), (int)(mPicture.getScaled().getHeight()/scaleFactor), false);
+                    Bitmap smallImage = mPicture.getKmean();
                     Log.d("resolution", Integer.toString(smallImage.getWidth()) + " " + Integer.toString(smallImage.getHeight()));
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
                     List<LabColor> paletteColors = kmeans.run(rsProcessing);
@@ -468,10 +466,9 @@ public class CameraActivity extends AppCompatActivity {
      * @return if the menu has been set or not
      */
     private boolean setMenuMode(int mode){
+//        Log.e( "CYCLE", "SET MENU" );
 
-        Log.e( "CYCLE", "SET MENU" );
-
-        menu.clear(); //Clear view of previous menu
+        menu.clear(); // Clear view of previous menu
         MenuInflater inflater = getMenuInflater();
         if(mode == EDIT_MENU) {
             inflater.inflate(R.menu.menu_edit, menu);
@@ -497,7 +494,7 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-        Log.e( "CYCLE", "ON OPTION ITEM SELECTED" );
+//        Log.e( "CYCLE", "ON OPTION ITEM SELECTED" );
         PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
         switch (item.getItemId()) {
@@ -534,7 +531,6 @@ public class CameraActivity extends AppCompatActivity {
                 a.disableEditing(true);
 
                 // The initial palette will be updated
-                // TODO ! Change input image
                 if (!mPicture.isFileNull()) {
                     // We create the new palette
                     rsProcessing.initTransPalette(ourPalette);
@@ -553,7 +549,6 @@ public class CameraActivity extends AppCompatActivity {
                 return true;
 
             case R.id.export_image_item:
-
                 if(mPicture != null && !mPicture.isFileNull()) {
                     mPicture.exportImage();
                     Toast.makeText(this, "Image exported", Toast.LENGTH_SHORT).show();
@@ -571,7 +566,7 @@ public class CameraActivity extends AppCompatActivity {
 
 
     public void onDestroy() {
-        Log.e( "CYCLE", "ON DESTROY" );
+//        Log.e( "CYCLE", "ON DESTROY" );
         super.onDestroy();
         mPicture.recycle();
     }
@@ -584,9 +579,8 @@ public class CameraActivity extends AppCompatActivity {
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-
         super.onActivityResult(requestCode, resultCode, data);
-        Log.e( "CYCLE", "ON RESULT" );
+//        Log.e( "CYCLE", "ON RESULT" );
 
         // if results comes from the camera activity and is valid
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
@@ -659,7 +653,6 @@ public class CameraActivity extends AppCompatActivity {
      * Prepare and Use the Gallery Intent to select an existing picture
      */
     private void selectPicture(){
-
         try {
             if (Build.VERSION.SDK_INT < 19) {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);

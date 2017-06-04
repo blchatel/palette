@@ -5,12 +5,9 @@ import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
 
 /**
- * Created by bastien on 14.03.17.
+ * This class is the view representing our image, inheriting from AppCompatImageView class
  */
-
 public class Miniature extends AppCompatImageView {
-
-
 
     public Miniature(Context context) {
         super(context);

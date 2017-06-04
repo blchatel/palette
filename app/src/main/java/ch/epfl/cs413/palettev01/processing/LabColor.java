@@ -2,13 +2,19 @@ package ch.epfl.cs413.palettev01.processing;
 
 import android.util.Pair;
 
-
+/**
+ * Class describing a Lab triplet color with Luminance and a and b channels
+ */
 public class LabColor {
+    double L;   /// Luminance channel
+    double a;   /// a channel
+    double b;   /// b channel
 
-    double L;
-    double a;
-    double b;
-
+    /**
+     * Constructor from an array
+     *
+     * @param Lab
+     */
     public LabColor(double[] Lab) {
         if (Lab.length != 3) {
             throw new IllegalArgumentException("Lab color must have 3 float values");
@@ -18,6 +24,13 @@ public class LabColor {
         b = Lab[2];
     }
 
+    /**
+     * Constructor from the 3 values
+     *
+     * @param L
+     * @param a
+     * @param b
+     */
     LabColor (double L, double a, double b) {
         this.L = L;
         this.a = a;
@@ -39,6 +52,11 @@ public class LabColor {
     /// ---------  Getters and Setters functions  ---------- ///
     /// ---------------------------------------------------- ///
 
+    /**
+     * Get the Lab color as an array
+     *
+     * @return lab color
+     */
     public double[] getLab() {
         double[] lab = new double[3];
         lab[0] = L;
@@ -47,46 +65,60 @@ public class LabColor {
         return lab;
     }
 
+    /**
+     * Get the luminance only
+     *
+     * @return luminance
+     */
     public double getL() {
         return L;
     }
 
+    /**
+     * Set the luminance channel
+     *
+     * @param l new luminance value
+     */
     public void setL(double l) {
         L = l;
     }
 
+    /**
+     * Get the a channel only
+     *
+     * @return luminance
+     */
     public double getA() {
         return a;
     }
 
+    /**
+     * Set the a channel
+     *
+     * @param a new a value
+     */
     public void setA(double a) {
         this.a = a;
     }
 
+    /**
+     * Get the b channel only
+     *
+     * @return luminance
+     */
     public double getB() {
         return b;
     }
 
+    /**
+     * Set the b channel
+     *
+     * @param b new b value
+     */
     public void setB(double b) {
         this.b = b;
     }
 
-
-    /// --------------------------------------------------- ///
-    /// ---             Static functions                --- ///
-    /// --------------------------------------------------- ///
-
-    public LabColor addColor(LabColor c) {
-        return new LabColor(L+c.L, a+c.a, b+c.b);
-    }
-
-    public LabColor addColor(Pair<LabColor, Integer> pair) {
-        return new LabColor(L+pair.first.L * pair.second, a+pair.first.a * pair.second, b+pair.first.b * pair.second);
-    }
-
-    public LabColor divide(int div) {
-        return new LabColor(L/div, a/div, b/div);
-    }
 
     @Override
     public boolean equals(Object o) {

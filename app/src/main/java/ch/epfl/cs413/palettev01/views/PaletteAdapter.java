@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -20,29 +19,24 @@ import ch.epfl.cs413.palettev01.processing.LabColor;
 
 import static java.lang.Math.exp;
 import static java.lang.Math.log;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 /**
- *
- *
+ *  This is an adapter for the palette list of colors used to change the palette
  */
 public class PaletteAdapter extends BaseAdapter{
 
     /**
      * Maximum amount of color in a palette
-     * paper talk 6 or 7 is a maximum to deal with correctly
      */
     public static final int PALETTE_MAX_SIZE = 6;
 
     /**
      * Minimum amount of color in a palette
-     * paper talk 3 is a minimum to get something interesting
      */
     public static final int PALETTE_MIN_SIZE = 3;
 
     /**
-     * Default number of colors in a palette when init
+     * Default number of colors in a palette at start
      */
     public static final int PALETTE_SIZE = 4;
 
@@ -58,8 +52,8 @@ public class PaletteAdapter extends BaseAdapter{
     private int[] colors;
 
     /**
-     * Array of the palette temporary colors as integer
-     * These colors are used in edit mode
+     * Array of the temporary palette colors as integer
+     * Theses colors are used in edit mode
      */
     private int[] tempColors;
 
@@ -80,6 +74,10 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private int tempsize = 0;
 
+    /**
+     * Boolean flag indicating if a color has been changed to pop the magic tool for extracting
+     * the palette with kmeans
+     */
     private boolean colorManuallyChanged;
 
     /**
@@ -89,10 +87,18 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private boolean isEditingMode = false;
 
+    /**
+     * Setter for @colorManuallyChanged
+     * @param colorManuallyChanged
+     */
     public void setColorManuallyChanged(boolean colorManuallyChanged) {
         this.colorManuallyChanged = colorManuallyChanged;
     }
 
+    /**
+     * Getter
+     * @return @colorManuallyChanged
+     */
     public boolean isColorManuallyChanged () {
         return colorManuallyChanged;
     }
@@ -103,7 +109,6 @@ public class PaletteAdapter extends BaseAdapter{
      * @param size
      */
     public PaletteAdapter(Context c, int size) {
-
         mContext = c;
         colorManuallyChanged = false;
 
@@ -116,11 +121,11 @@ public class PaletteAdapter extends BaseAdapter{
         this.size = size;
         this.tempsize = size;
 
-        // Init array with maximum color size. It does not take too much place...only a few integers.
+        // Init array with maximum color size. It does not take too much place...only a few integers
         colors = new int[PALETTE_MAX_SIZE];
         tempColors = new int[PALETTE_MAX_SIZE];
 
-        // initialization of the palette color . For now simply grayscale value : waiting for image
+        // Initialization of the palette color to gray scale colors while waiting for image
         for (int i = 0; i<size; i++) {
             colors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
             tempColors[i] = Color.argb( 255, 255/(size-i), 255/(size-i), 255/(size-i));
@@ -129,7 +134,7 @@ public class PaletteAdapter extends BaseAdapter{
 
     /**
      * Get the palette size
-     * @return the size of the palette of the current mode
+     * @return palette size of the current mode
      */
     public int getSize() {
         return isEditingMode ? tempsize : size;
@@ -290,20 +295,6 @@ public class PaletteAdapter extends BaseAdapter{
         return isEditingMode;
     }
 
-
-    /**
-     * Add a new palette color if the current size allows it
-     * You must be in edit mode to perform this action
-     * @param color the color to add
-     */
-    public void addColor(int color){
-        if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
-            tempColors[tempsize] = color;
-            tempsize++;
-            this.notifyDataSetChanged();
-        }
-    }
-
     public void addColorContainer(){
         colorManuallyChanged = false;
         if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
@@ -312,21 +303,10 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
     /**
-     * Remove the palette color at position if the current size allow it
-     * You must be in edit mode to perform this action
-     * @param position
+     * Remove the palette color at given position
+     *
+     * @param position  index to remove
      */
-    public void removeColor(int position){
-
-        if(isEditingMode && tempsize > PALETTE_MIN_SIZE) {
-            for (int i = position; i < tempsize-1; i++){
-                tempColors[i] = tempColors[i+1];
-            }
-            tempsize--;
-            this.notifyDataSetChanged();
-        }
-    }
-
     public void removeColorContainer(int position){
         colorManuallyChanged = false;
         if (position < tempsize) {
@@ -337,15 +317,18 @@ public class PaletteAdapter extends BaseAdapter{
     }
 
 
-
+    /**
+     * Get the number of elements in the adapter
+     *
+     * @return adapter size != paletteSize
+     */
     @Override
     public int getCount() {
 
         if(isEditingMode){
             // Add 2 because of the two tools (add color button and magic extraction button)
-            // TODO: Change if you want the magic button
             if (colorManuallyChanged) {
-                return tempsize+2;
+                return tempsize + 2;
             } else {
                 return tempsize + 1;
             }
@@ -354,6 +337,12 @@ public class PaletteAdapter extends BaseAdapter{
         return size;
     }
 
+    /**
+     * Get the color at given position
+     *
+     * @param position of the color to return
+     * @return Color of the given position
+     */
     @Override
     public Object getItem(int position) {
 
@@ -366,26 +355,40 @@ public class PaletteAdapter extends BaseAdapter{
             return 0;
     }
 
+    /**
+     * @Unused
+     * @param position
+     * @return
+     */
     @Override
     public long getItemId(int position) {
         return 0;
     }
 
+    /**
+     * Get the view of the given position of the palette
+     *
+     * @param position
+     * @param convertView
+     * @param parent
+     * @return
+     */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        View grid = new View(mContext);
+        View listElem = new View(mContext);
         LayoutInflater inflater = (LayoutInflater) mContext
                 .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
 
         int size = isEditingMode ? this.tempsize : this.size;
 
-        if(position < size) {
+        // We check if we really are in the good range
+        if(position < size && position >= 0) {
 
-            grid = inflater.inflate(R.layout.color_box, null);
+            listElem = inflater.inflate(R.layout.color_box, null);
 
-            ColorBox button = (ColorBox) grid.findViewById(R.id.grid_color_box);
+            ColorBox button = (ColorBox) listElem.findViewById(R.id.grid_color_box);
 
             if (position == selectedBox) {
                 button.setSelected();
@@ -401,26 +404,31 @@ public class PaletteAdapter extends BaseAdapter{
             }
         }
         else if (position == size && isEditingMode && size < PALETTE_MAX_SIZE){
-            grid = inflater.inflate(R.layout.plus_box, null);
+            listElem = inflater.inflate(R.layout.plus_box, null);
         }
-        // TODO: Change if you want magic button
         else if (position == size+1 && isEditingMode && colorManuallyChanged){
-            grid = inflater.inflate(R.layout.magic_box, null);
+            listElem = inflater.inflate(R.layout.magic_box, null);
         }
 
-        return grid;
+        return listElem;
     }
 
 
+    /**
+     * A function to get a smooth luminance value for palette updating
+     *
+     * @param x
+     * @param d
+     * @return smooth extrapolated value
+     */
     private double smoothL (double x, double d) {
         double lambda = 0.2 * log(2.0);
         double toRet = (log(exp(lambda*x) + exp(lambda*d) - 1.0) / lambda);
-        Log.d("SMOOTH_VAL", "is " + toRet);
         return toRet - x;
     }
 
     /**
-     * Luminance update on a color change
+     * Update all luminance values of the palette colors
      *
      * @param position
      * @param color
@@ -432,26 +440,24 @@ public class PaletteAdapter extends BaseAdapter{
         ColorUtils.colorToLAB(getColor(position), old_lab_pos);
         double delta = old_lab_pos[0] - new_lab[0];
 
+        // The colors are sorted by luminance so i < pos => luminance is lower and vice-versa
         for (int i = 0; i < size; i++) {
             double[] old_lab = new double[3];
-            int newColor = color;
+            int newColor;
             if (i < position) { // Palette colors with smaller luminance - DARKER
                 ColorUtils.colorToLAB(getColor(i), old_lab);
                 old_lab[0] = ((int)((new_lab[0] - smoothL(delta, old_lab_pos[0]-old_lab[0]))*10))/10.0;
-//                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
-                Log.d("PaletteColor", "Dark Palette " + i + " luminance is : " + old_lab[0]);
+//                Log.d("PaletteColor", "Dark Palette " + i + " luminance is : " + old_lab[0]);
             } else if (i > position) {
                 ColorUtils.colorToLAB(getColor(i), old_lab);
                 old_lab[0] = ((int)((new_lab[0] + smoothL(-delta, old_lab[0]-old_lab_pos[0]))*10))/10.0;
-//                newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
-                Log.d("PaletteColor", "Light Palette " + i + " luminance is : " + old_lab[0]);
+//                Log.d("PaletteColor", "Light Palette " + i + " luminance is : " + old_lab[0]);
             }
             else {
                 old_lab[0] = ((int)(new_lab[0]*10)) / 10.0;
                 old_lab[1] = new_lab[1];
                 old_lab[2] = new_lab[2];
-
-                Log.d("PaletteColor", "Same Palette " + i + " luminance is : " + old_lab[0]);
+//                Log.d("PaletteColor", "Same Palette " + i + " luminance is : " + old_lab[0]);
             }
 
 
@@ -462,8 +468,7 @@ public class PaletteAdapter extends BaseAdapter{
             }
 
             /// TODO : We don't check if palette color goes out of bounds !
-
-            // If i==position we just want to return the color
+            // We update the displayed color
             setColor(i, newColor);
         }
 
