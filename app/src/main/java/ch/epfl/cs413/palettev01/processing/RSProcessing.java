@@ -17,24 +17,53 @@ import ch.epfl.cs413.palettev01.ScriptC_color;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 
-// TODO: Comment this file
+// TODO: Check this file
 
 public class RSProcessing {
     public RSProcessing() {
 
     }
 
+    /**
+     * RenderScript object for the whole application
+     */
     private RenderScript rs;
+    /**
+     * RenderScript Script object for the whole application
+     * all rs functions are stored in the same file
+     */
     private ScriptC_color colorScript;
+    /*
+     * 'original' input image in this step
+     */
     private Bitmap input_pic;
-    private Bitmap output_bitmap;
+    /*
+     * 'original' color grid in this step
+     */
     private float[] grid;
+    /*
+     * color grid after color transfer
+     */
     private float[] temp_grid;
+    /*
+     * size of grid is (grid_g + 1） * （grid_g + 1) * (grid_g + 1)
+     */
     private int grid_g;
+    /*
+     * 'original' palette colors in this step
+     */
     private float[] old_palette;
+    /*
+     * weight matrix for RBF-based weight
+     * (i * k + j)th element in this array is \lambda_(ij) in weight function
+     * (k * k)th element in this array is average distance between palette colors
+     */
     private float[] palette_weights;
 
-
+    /**
+     * This method will simply init renderscript object and object for 'color.rs'
+     * @param context context which will be bound with renderscript object
+     */
     public void rsInit(Context context) {
         //Create renderscript
         rs = RenderScript.create(context);
@@ -43,6 +72,10 @@ public class RSProcessing {
         colorScript = new ScriptC_color(rs);
     }
 
+    /**
+     * This method will init color grid and original bitmap
+     * @param input_bitmap input bitmap of color transfer
+     */
     public void initGrid(Bitmap input_bitmap) {
         grid_g = 12;
         int g1 = grid_g + 1;
@@ -58,10 +91,13 @@ public class RSProcessing {
         allocationGrid.destroy();
         System.arraycopy(grid, 0, temp_grid, 0, 3 * g1 * g1 * g1);
         input_pic = Bitmap.createBitmap(input_bitmap);
-        output_bitmap = Bitmap.createBitmap(input_pic);
     }
 
-    public void transImage(Bitmap scaled) {
+    /**
+     * This method will use results in color grids to apply color transfer to the whole image
+     * @param bitmap output bitmap of color transfer
+     */
+    public void transImage(Bitmap bitmap) {
         int g1 = grid_g + 1;
         Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
         allocationGrid.setAutoPadding(true);
@@ -73,7 +109,7 @@ public class RSProcessing {
         colorScript.set_grid_g(grid_g);
         colorScript.forEach_image_transfer(allocationA, allocationB);
 
-        allocationB.copyTo(scaled);
+        allocationB.copyTo(bitmap);
         allocationA.destroy();
         allocationB.destroy();
         allocationGrid.destroy();
@@ -81,9 +117,9 @@ public class RSProcessing {
 
 
     /**
-     * Create old_palette with the given palette
+     * Create old_palette with the given palette and generate weight matrix
      *
-     * @param ourPalette
+     * @param ourPalette original color palette
      */
     public void initTransPalette(OurPalette ourPalette) {
         int paletteSize = ((PaletteAdapter) ourPalette.getAdapter()).getSize();
@@ -131,6 +167,10 @@ public class RSProcessing {
                 palette_distance_2D[i][j] = palette_distance[i * paletteSize + j];
     }
 
+    /**
+     * This method will apply color transfer to color grid
+     * @param ourPalette target palette colors of color transfer
+     */
     public void transGrid(OurPalette ourPalette) {
         PaletteAdapter paletteAdapter = ((PaletteAdapter) ourPalette.getAdapter());
         int paletteSize = paletteAdapter.getSize();
@@ -188,8 +228,17 @@ public class RSProcessing {
         allocation_weights.destroy();
     }
 
+    /*
+     * there are b * b * b bins
+     */
     private static final int b = 16;
-    public Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> generateBins(int k, Bitmap img) {
+    /**
+     * Get pixel colors in input image and assign them into bins
+     * @param img input image bitmap
+     * @return map from bin index to bin results, which include average color of this bin and
+     * number of pixels in this bin
+     */
+    public Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> generateBins(Bitmap img) {
         Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> res = new HashMap<Kmeans.BinsTriplet, Pair<LabColor, Integer>>();
         int img_size = img.getWidth() * img.getHeight();
         int[] pixels = new int[img_size];
@@ -238,6 +287,13 @@ public class RSProcessing {
         return res;
     }
 
+    /**
+     * Apply k-mean cluster to get cluster centers
+     * @param paletteClusters initial cluster centers
+     * @param bins bins of input pixel colors
+     * @param K number of cluster centers
+     * @return k-mean cluster result
+     */
     public List<LabColor> KMean_cluster(List<LabColor> paletteClusters,
                                 Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> bins,
                                 int K) {
@@ -291,6 +347,9 @@ public class RSProcessing {
         return null;
     }
 
+    /*
+     * Destroy objects related to RS
+     */
     public void rsClose() {
         colorScript.destroy();
         rs.destroy();

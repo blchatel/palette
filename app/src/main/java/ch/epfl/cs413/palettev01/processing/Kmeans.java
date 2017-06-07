@@ -58,7 +58,7 @@ public class Kmeans {
         mPaletteClusters.add(new LabColor(0,0,0));
 
         // Create the bins with their mean values
-        Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> binsData = rsProcessing.generateBins(k, img);
+        Map<Kmeans.BinsTriplet, Pair<LabColor, Integer>> binsData = rsProcessing.generateBins(img);
         bins = new Bins();
         bins.bins = binsData;
 
