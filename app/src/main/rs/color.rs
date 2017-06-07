@@ -10,10 +10,12 @@ static float bound (float val) {
     return fmin(1.0f, m);
 }
 
+//PivotRGB method in RGB2LAB
 static float PivotRgb(float n) {
 	return (n > 0.04045f)? 100.0f*powr((n + 0.055f)/1.055f, 2.4f) : 100.0f*n/12.92f;
 }
 
+//PivotXYZ method in RGB2LAB
 static float PivotXYZ(float n) {
 	return (n > XYZEpsilon)? powr(n, 1.0f/3.0f) : (XYZKappa*n + 16.0f)/116.0f;
 }
@@ -155,7 +157,8 @@ static float lab_dis(float3 c0, float3 c1) {
     return dis;
 }
 
-static float lab_dis2(float3 c0, float3 c1) {
+/// Compute the L2 distance between 2 colors
+static float l2_dis(float3 c0, float3 c1) {
     float res;
     float3 cd;
     cd = c1 - c0;
@@ -175,6 +178,7 @@ rs_allocation palette_distance;
 rs_allocation palette_weights;
 int RBF_param_coff;
 
+//calculate average distance and generate distance matrix
 void calculate_distance(int palette_size) {
     int i, j;
     float3 c0, c1;
@@ -198,6 +202,7 @@ void calculate_distance(int palette_size) {
         }
 }
 
+// trilinear interpolation for applying color transfer to the whole image
 uchar4 __attribute__((kernel)) image_transfer(uchar4 in, uint32_t x, uint32_t y) {
     float4 f4 = rsUnpackColor8888(in);
     float3 rgb;
@@ -237,6 +242,7 @@ uchar4 __attribute__((kernel)) image_transfer(uchar4 in, uint32_t x, uint32_t y)
     return rsPackColorTo8888(res.r, res.g, res.b, f4.a);
 }
 
+//transfer color transfer to grid positions
 float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
     float3 in_lab, res, res_rgb;
     float3 c_l, c_r, c_boundary, c_out, c_res, c_diff, c_new, c_c;
@@ -264,7 +270,6 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
             weight_sum += weight;
     }
 
-    // TODO: take all colors into account
     for (i = 0; i < paletteSize; i++) {
         weight = 0.0f;
         for (j = 0; j < paletteSize; j++) {
@@ -289,7 +294,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
         c_l = out? c_new : in;
         c_boundary = find_boundary(c_l, c_r);
 
-        tmp0 = lab_dis2(in_lab, c_boundary);
+        tmp0 = l2_dis(in_lab, c_boundary);
 
         d_target = tmp0;
         d_target = c_c_l < 0.00001f? d_target: d_target / c_cb_l;
@@ -311,6 +316,7 @@ float3 __attribute__((kernel)) grid_transfer(float3 in, uint32_t x) {
     return res_rgb;
 }
 
+//calculate Cb and ||C C'|| / ||C Cb|| for every palette colors
 void cal_palette_rate() {
     int i;
     float3 c_old, c_new, c_diff, c_boundary, c_out;
@@ -321,25 +327,13 @@ void cal_palette_rate() {
         c_diff = c_new - c_old;
         c_out = find_out(c_old, c_diff);
         c_boundary = find_boundary(c_old, c_out);
-        d0 = lab_dis2(c_old, c_new);
-        d1 = lab_dis2(c_old, c_boundary);
+        d0 = l2_dis(c_old, c_new);
+        d1 = l2_dis(c_old, c_boundary);
         d0 = (d0 < 0.000001f) ? 0.0f : d0;
 
         rsSetElementAt_float3(diff, c_diff, i);
         rsSetElementAt_float(ccb_l, rate, i);
         rsSetElementAt_float(cc_l, d0, i);
-    }
-}
-
-/// RGB grid init
-void initGrid2() {
-    int i;
-    float3 res;
-    for (i = 0; i < 10; i++) {
-        res.r = 0.1f * i;
-        res.g = 0.1f * i;
-        res.b = 0.1f * i;
-        rsSetElementAt_float3(grid, res, i);
     }
 }
 
@@ -361,28 +355,7 @@ void initGrid() {
             }
 }
 
-uchar4 __attribute__((kernel)) test(uchar4 in, uint32_t x, uint32_t y) {
-    float4 f4 = rsUnpackColor8888(in);
-    float3 rgb;
-    rgb.r = f4.r;
-    rgb.g = f4.g;
-    rgb.b = f4.b;
-    float3 res;
-    res = RGB2LAB(rgb);
-    res /= 100.f;
-    // res = LAB2RGB(res);
-    return rsPackColorTo8888(res.r, res.g, res.b, f4.a);
-}
-
-uchar4 __attribute__((kernel)) blackWhite(uchar4 in, uint32_t x, uint32_t y) {
-    float4 f4 = rsUnpackColor8888(in);
-    //if (pown(f4.r, 2.0f) + pown(f4.g, 2.0f) + pown(f4.b, 2.0f) > 1.8f)
-    if (f4.r > 0.13f)
-        return rsPackColorTo8888(1.0f, 1.0f, 1.0f, f4.a);
-    else
-        return rsPackColorTo8888(0.0f, 0.0f, 0.0f, f4.a);
-}
-
+// set parameter for color space conversion and other operation
 void init() {
 	white_x = 95.047f;
 	white_y = 100.000f;
@@ -392,6 +365,7 @@ void init() {
 	RBF_param_coff = 5.0f;
 }
 
+//convert color to CIELAB space; used in k-mean
 float3 __attribute__((kernel)) image_to_lab(int in) {
     float3 res;
     float3 rgb;
@@ -404,6 +378,7 @@ float3 __attribute__((kernel)) image_to_lab(int in) {
 }
 
 int bin_b;
+//assign pixel colors to bins to improce speed of k-mean (only label bin)
 int3 __attribute__((kernel)) image_to_binIndex(int in) {
     int3 res;
     int r,g,b;
@@ -419,6 +394,7 @@ int3 __attribute__((kernel)) image_to_binIndex(int in) {
 }
 
 int image_size;
+// gather colors in bins and get average color and pixel number of bins
 void image_to_bins(rs_allocation image_lab, rs_allocation image_binIndex,
                     rs_allocation bin_lab, rs_allocation bin_num) {
     int b3, i, index;
@@ -454,6 +430,7 @@ void image_to_bins(rs_allocation image_lab, rs_allocation image_binIndex,
     }
 }
 
+//k-mean cluster with 50 iterations
 void kmean_cluster(rs_allocation bin_lab, rs_allocation bin_num,
                     rs_allocation palette, rs_allocation color_sum,
                     rs_allocation color_num, int k, int bin_size) {
@@ -476,11 +453,11 @@ void kmean_cluster(rs_allocation bin_lab, rs_allocation bin_num,
             lab_c = rsGetElementAt_float3(bin_lab, i);
             num_c = rsGetElementAt_int(bin_num, i);
             lab_p = rsGetElementAt_float3(palette, 0);
-            best_dis = lab_dis2(lab_c, lab_p);
+            best_dis = l2_dis(lab_c, lab_p);
             best_index = 0;
             for (j = 1; j < k1; j++) {
                 lab_p = rsGetElementAt_float3(palette, j);
-                now_dis = lab_dis2(lab_c, lab_p);
+                now_dis = l2_dis(lab_c, lab_p);
                 best_index = (now_dis < best_dis)? j : best_index;
                 best_dis = fmin(now_dis, best_dis);
             }
