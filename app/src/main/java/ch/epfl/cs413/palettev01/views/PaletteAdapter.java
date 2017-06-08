@@ -25,25 +25,31 @@ import static java.lang.Math.log;
  */
 public class PaletteAdapter extends BaseAdapter{
 
+    private static final boolean DEBUG_LOG = false;
+
     /**
      * Maximum amount of color in a palette
      */
-    public static final int PALETTE_MAX_SIZE = 6;
+    private static final int PALETTE_MAX_SIZE = 6;
+
 
     /**
      * Minimum amount of color in a palette
      */
     public static final int PALETTE_MIN_SIZE = 3;
 
+
     /**
      * Default number of colors in a palette at start
      */
     public static final int PALETTE_SIZE = 4;
 
+
     /**
      * Context of the palette
      */
     private Context mContext;
+
 
     /**
      * Array of the palette colors as integer.
@@ -51,11 +57,13 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private int[] colors;
 
+
     /**
      * Array of the temporary palette colors as integer
      * Theses colors are used in edit mode
      */
     private int[] tempColors;
+
 
     /**
      * Index of the selected color box for different drawing
@@ -64,21 +72,25 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private int selectedBox = -1;
 
+
     /**
      * Size of the main palette. Should by between PALETTE_MIN_SIZE and PALETTE_MAX_SIZE
      */
     private int size = 0;
+
 
     /**
      * Size of the temporary palette. Should by between PALETTE_MIN_SIZE and PALETTE_MAX_SIZE
      */
     private int tempsize = 0;
 
+
     /**
      * Boolean flag indicating if a color has been changed to pop the magic tool for extracting
      * the palette with kmeans
      */
     private boolean colorManuallyChanged;
+
 
     /**
      * Boolean flag indicating if the editing palette mode is enable or not
@@ -87,13 +99,15 @@ public class PaletteAdapter extends BaseAdapter{
      */
     private boolean isEditingMode = false;
 
+
     /**
      * Setter for @colorManuallyChanged
-     * @param colorManuallyChanged
+     * @param colorManuallyChanged a boolean
      */
     public void setColorManuallyChanged(boolean colorManuallyChanged) {
         this.colorManuallyChanged = colorManuallyChanged;
     }
+
 
     /**
      * Getter
@@ -103,10 +117,11 @@ public class PaletteAdapter extends BaseAdapter{
         return colorManuallyChanged;
     }
 
+
     /**
      * Palette adapter constructor
-     * @param c
-     * @param size
+     * @param c the context
+     * @param size the palette size
      */
     public PaletteAdapter(Context c, int size) {
         mContext = c;
@@ -132,6 +147,7 @@ public class PaletteAdapter extends BaseAdapter{
         }
     }
 
+
     /**
      * Get the palette size
      * @return palette size of the current mode
@@ -140,12 +156,13 @@ public class PaletteAdapter extends BaseAdapter{
         return isEditingMode ? tempsize : size;
     }
 
+
     /**
      * Set the palette element on position with newColor
      * And notify the modification for display
      * The modified element is the temporary one if the edit mode is enable
-     * @param position
-     * @param newColor
+     * @param position the position to set
+     * @param newColor the new color for the item at position
      */
     public void setColor(int position, int newColor){
         if(isEditingMode){
@@ -162,11 +179,12 @@ public class PaletteAdapter extends BaseAdapter{
         this.notifyDataSetChanged();
     }
 
+
     /**
      * Set color of the selected item of the palette with newColor
      * if one item is indeed selected. Do nothing otherwise
      * And notify the modification for display
-     * @param newColor
+     * @param newColor the new color for the selected item
      */
     public void setColor(int newColor){
         colorManuallyChanged = true;
@@ -179,7 +197,7 @@ public class PaletteAdapter extends BaseAdapter{
     /**
      * Get the palette element Color on position
      * The returned element is the temporary one if editing mode is enable
-     * @param position
+     * @param position to get
      * @return one integer representing the color of the position element of the palette
      */
     public int getColor(int position) {
@@ -201,16 +219,17 @@ public class PaletteAdapter extends BaseAdapter{
      * Set the selected box
      * Because you cannot select twice the same box. if the current selected box and the
      * new one are the same, it simply deselect it.
-     * @param position
+     * @param position of the box to select
      */
     public void setSelectedBox(int position){
         selectedBox = selectedBox == position ? -1 : position;
         this.notifyDataSetChanged();
     }
 
+
     /**
      * Test if one box is selected
-     * @return boolean
+     * @return if any box is selected
      */
     public boolean isBoxSelected() {
         return selectedBox > -1;
@@ -235,7 +254,8 @@ public class PaletteAdapter extends BaseAdapter{
      * And update the current color with temporary one if the user validate the temporary colors
      * changes.
      * notify the modification for display
-     * @param isValidated
+     * @param isValidated a boolean that indicate if the user leaves the config mode by validation
+     *                    or cancel
      */
     public void disableEditing(boolean isValidated){
         isEditingMode = false;
@@ -295,12 +315,17 @@ public class PaletteAdapter extends BaseAdapter{
         return isEditingMode;
     }
 
+
+    /**
+     * Add a new ColorContainer
+     */
     public void addColorContainer(){
         colorManuallyChanged = false;
         if(isEditingMode && tempsize < PALETTE_MAX_SIZE) {
             tempsize++;
         }
     }
+
 
     /**
      * Remove the palette color at given position
@@ -337,6 +362,7 @@ public class PaletteAdapter extends BaseAdapter{
         return size;
     }
 
+
     /**
      * Get the color at given position
      *
@@ -355,23 +381,25 @@ public class PaletteAdapter extends BaseAdapter{
             return 0;
     }
 
+
     /**
-     * @Unused
-     * @param position
-     * @return
+     * Unused :  This function is unused in this program
+     * @param position a unused parameter
+     * @return and so return 0 by definition
      */
     @Override
     public long getItemId(int position) {
         return 0;
     }
 
+
     /**
      * Get the view of the given position of the palette
      *
-     * @param position
-     * @param convertView
-     * @param parent
-     * @return
+     * @param position we want get the view
+     * @param convertView NOT USED
+     * @param parent NOT USED
+     * @return a view as a list of elements
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
@@ -427,11 +455,12 @@ public class PaletteAdapter extends BaseAdapter{
         return toRet - x;
     }
 
+
     /**
      * Update all luminance values of the palette colors
      *
-     * @param position
-     * @param color
+     * @param position pivot position
+     * @param color to update with
      */
     public boolean updateAll(int position, int color) {
         double[] new_lab = new double[3];
@@ -447,19 +476,27 @@ public class PaletteAdapter extends BaseAdapter{
             if (i < position) { // Palette colors with smaller luminance - DARKER
                 ColorUtils.colorToLAB(getColor(i), old_lab);
                 old_lab[0] = ((int)((new_lab[0] - smoothL(delta, old_lab_pos[0]-old_lab[0]))*10))/10.0;
-//                Log.d("PaletteColor", "Dark Palette " + i + " luminance is : " + old_lab[0]);
+
+                if(DEBUG_LOG) {
+                    Log.d("PaletteColor", "Dark Palette " + i + " luminance is : " + old_lab[0]);
+                }
+
             } else if (i > position) {
                 ColorUtils.colorToLAB(getColor(i), old_lab);
                 old_lab[0] = ((int)((new_lab[0] + smoothL(-delta, old_lab[0]-old_lab_pos[0]))*10))/10.0;
-//                Log.d("PaletteColor", "Light Palette " + i + " luminance is : " + old_lab[0]);
+
+                if(DEBUG_LOG) {
+                    Log.d("PaletteColor", "Light Palette " + i + " luminance is : " + old_lab[0]);
+                }
             }
             else {
                 old_lab[0] = ((int)(new_lab[0]*10)) / 10.0;
                 old_lab[1] = new_lab[1];
                 old_lab[2] = new_lab[2];
-//                Log.d("PaletteColor", "Same Palette " + i + " luminance is : " + old_lab[0]);
+                if(DEBUG_LOG){
+                    Log.d("PaletteColor", "Same Palette " + i + " luminance is : " + old_lab[0]);
+                }
             }
-
 
             newColor = ColorUtils.LABToColor(old_lab[0], old_lab[1], old_lab[2]);
 
@@ -467,7 +504,6 @@ public class PaletteAdapter extends BaseAdapter{
                 return false;
             }
 
-            /// TODO : We don't check if palette color goes out of bounds !
             // We update the displayed color
             setColor(i, newColor);
         }

@@ -1,19 +1,31 @@
 package ch.epfl.cs413.palettev01.processing;
 
-import android.util.Pair;
 
 /**
  * Class describing a Lab triplet color with Luminance and a and b channels
  */
 public class LabColor {
-    double L;   /// Luminance channel
-    double a;   /// a channel
-    double b;   /// b channel
+
+    /**
+     * Luminance channel
+     */
+    private double L;
+
+    /**
+     * a channel
+     */
+    private double a;
+
+    /**
+     * b channel
+     */
+    private double b;
+
 
     /**
      * Constructor from an array
      *
-     * @param Lab
+     * @param Lab array of size 3 containing L, a and b value
      */
     public LabColor(double[] Lab) {
         if (Lab.length != 3) {
@@ -24,18 +36,20 @@ public class LabColor {
         b = Lab[2];
     }
 
+
     /**
      * Constructor from the 3 values
      *
-     * @param L
-     * @param a
-     * @param b
+     * @param L the luminance channel
+     * @param a channel
+     * @param b channel
      */
     LabColor (double L, double a, double b) {
         this.L = L;
         this.a = a;
         this.b = b;
     }
+
 
     /**
      * Compute the square lab distance -> More efficient than doing the sqrt

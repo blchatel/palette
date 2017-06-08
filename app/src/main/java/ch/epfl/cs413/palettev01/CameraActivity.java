@@ -47,11 +47,12 @@ import yuku.ambilwarna.AmbilWarnaDialog;
  *
  * This activity can be into two modes : Main mode and Edit mode
  * This activity support indent of camera and gallery
- *
  */
 public class CameraActivity extends AppCompatActivity {
 
     // Definition of Static constant for tests
+    private static final boolean DEBUG_LOG = false;
+
     private static final int CAMERA_RESULT = 9;
     private static final int GALLERY_RESULT = 8;
     private static final int MAIN_MENU = 0;
@@ -63,11 +64,13 @@ public class CameraActivity extends AppCompatActivity {
      */
     private PaletteBitmap mPicture;
 
+
     /**
      * Miniature is an ImageView containing the display of the picture we working on
      * @see Miniature
      */
     private Miniature mView;
+
 
     /**
      * RSProcessing is a wrapper for renderscript parts.
@@ -75,11 +78,13 @@ public class CameraActivity extends AppCompatActivity {
      */
     private RSProcessing rsProcessing;
 
+
     /**
      * Our palette is a grid view containing the palette elements and in edit mode some tools
      * @see OurPalette
      */
     private OurPalette ourPalette;
+
 
     // Used for the touching interaction with the color boxes
     private float historicX = Float.NaN;
@@ -91,15 +96,18 @@ public class CameraActivity extends AppCompatActivity {
      */
     private Menu menu;
 
+
     /**
      * Contains either MAIN_MENU or EDIT_MENU value
      */
     private int currentMenuMode;
 
+
     /**
      * Dialog containing the Help information
      */
     private AlertDialog helpDialog;
+
 
     /**
      * The path of the image to which we want to reset
@@ -110,8 +118,10 @@ public class CameraActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        Log.e( "CYCLE", "ON CREATE" );
 
+        if(DEBUG_LOG) {
+            Log.e("CYCLE", "ON CREATE");
+        }
         setContentView(R.layout.activity_camera);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
@@ -382,9 +392,11 @@ public class CameraActivity extends AppCompatActivity {
     private void launchAsyncPaletteExtract() {
 
         if (!mPicture.isEmpty()) {
-            // TODO: Uncomment the commented section of this function to have a progress bar on palette extraction
-//            final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
-//            paletteProgressBar.setVisibility(View.VISIBLE);
+            // Uncomment the commented section of this function to have a progress bar on palette extraction
+            /*
+            final ProgressBar paletteProgressBar = (ProgressBar)(findViewById(R.id.palette_progressbar));
+            paletteProgressBar.setVisibility(View.VISIBLE);
+            */
             ourPalette.setVisibility(View.GONE);
             AsyncTask<Integer, Object, List<LabColor>> extractPalette = new AsyncTask<Integer, Object, List<LabColor>>(){
 
@@ -392,7 +404,11 @@ public class CameraActivity extends AppCompatActivity {
                 protected List<LabColor> doInBackground(Integer... size) {
                     int paletteSize = size[0];
                     Bitmap smallImage = mPicture.getKmean();
-                    Log.d("resolution", Integer.toString(smallImage.getWidth()) + " " + Integer.toString(smallImage.getHeight()));
+
+                    if(DEBUG_LOG) {
+                        Log.d("resolution", Integer.toString(smallImage.getWidth()) + " " + Integer.toString(smallImage.getHeight()));
+                    }
+
                     Kmeans kmeans = new Kmeans(paletteSize, smallImage, rsProcessing);
                     List<LabColor> paletteColors = kmeans.run(rsProcessing);
                     Collections.sort(paletteColors, new Comparator<LabColor>() {
@@ -415,7 +431,11 @@ public class CameraActivity extends AppCompatActivity {
                     // Init the palette
                     rsProcessing.initTransPalette(ourPalette);
                     ourPalette.setVisibility(View.VISIBLE);
-//                    paletteProgressBar.setVisibility(View.GONE);
+
+                    // Uncomment the commented section of this function to have a progress bar on palette extraction
+                    /*
+                    paletteProgressBar.setVisibility(View.GONE);
+                    */
                 }
             };
 
@@ -424,14 +444,17 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * invoked when the activity may be temporarily destroyed, save the instance state here
-     * @param outState
+     * @param outState a Bundle
      */
     @Override
     public void onSaveInstanceState(Bundle outState) {
 
-        Log.e( "CYCLE", "ON SAVE" );
+        if(DEBUG_LOG) {
+            Log.e("CYCLE", "ON SAVE");
+        }
 
         if(! mPicture.isFileNull())
             outState.putString("FILE_KEY", mPicture.fileAbsolutePath());
@@ -445,14 +468,17 @@ public class CameraActivity extends AppCompatActivity {
 
 
     /**
-     *
-     * @param menu
-     * @return
+     *  Create the menu of the activity
+     * @param menu the menu to display
+     * @return if the menu has been created with success
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
 
-        Log.e( "CYCLE", "ON CREATE OPTION MENU" );
+        if(DEBUG_LOG) {
+            Log.e("CYCLE", "ON CREATE OPTION MENU");
+        }
+
         this.menu = menu;
         // Inflate the menu; this adds items to the action bar if it is present.
         return setMenuMode(MAIN_MENU);
@@ -462,13 +488,16 @@ public class CameraActivity extends AppCompatActivity {
     /**
      * Set the menu given a mode parameter
      * Allow to switch between edit menu mode and main menu mode
-     * @param mode
+     * @param mode the menu mode as an integer
      * @return if the menu has been set or not
      */
     private boolean setMenuMode(int mode){
-//        Log.e( "CYCLE", "SET MENU" );
+        if(DEBUG_LOG) {
+            Log.e( "CYCLE", "SET MENU" );
+        }
 
-        menu.clear(); // Clear view of previous menu
+        // Clear view of previous menu
+        menu.clear();
         MenuInflater inflater = getMenuInflater();
         if(mode == EDIT_MENU) {
             inflater.inflate(R.menu.menu_edit, menu);
@@ -488,13 +517,16 @@ public class CameraActivity extends AppCompatActivity {
 
     /**
      * Perform action when an menu item is selected
-     * @param item
-     * @return
+     * @param item the selected menu item
+     * @return if selection operation is a success
      */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
 
-//        Log.e( "CYCLE", "ON OPTION ITEM SELECTED" );
+        if(DEBUG_LOG) {
+            Log.e("CYCLE", "ON OPTION ITEM SELECTED");
+        }
+
         PaletteAdapter a = ((PaletteAdapter) ourPalette.getAdapter());
 
         switch (item.getItemId()) {
@@ -553,11 +585,7 @@ public class CameraActivity extends AppCompatActivity {
                     mPicture.exportImage();
                     Toast.makeText(this, "Image exported", Toast.LENGTH_SHORT).show();
                 }
-
                 return true;
-
-
-
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -565,22 +593,31 @@ public class CameraActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Recycle element on activity destroy
+     */
     public void onDestroy() {
-//        Log.e( "CYCLE", "ON DESTROY" );
+        if(DEBUG_LOG) {
+            Log.e("CYCLE", "ON DESTROY");
+        }
         super.onDestroy();
         mPicture.recycle();
     }
 
+
     /**
      * Perform action when returning from another activity (i.e camera gallery)
-     * @param requestCode
-     * @param resultCode
-     * @param data
+     * @param requestCode the code of the indent call to another activity
+     * @param resultCode the code returned by the other activity
+     * @param data if any, the data returned by the other activity
      */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        Log.e( "CYCLE", "ON RESULT" );
+
+        if(DEBUG_LOG) {
+            Log.e( "CYCLE", "ON RESULT" );
+        }
 
         // if results comes from the camera activity and is valid
         if (resultCode == RESULT_OK && requestCode == CAMERA_RESULT) {
@@ -593,7 +630,6 @@ public class CameraActivity extends AppCompatActivity {
             // We launch the extraction of the palette here in async
             launchAsyncPaletteExtract();
         }
-
         // if result comes from the gallery and is valid
         else if (resultCode == RESULT_OK && requestCode == GALLERY_RESULT) {
             Uri selectedImage = data == null ? null : data.getData();
@@ -604,7 +640,6 @@ public class CameraActivity extends AppCompatActivity {
             // We launch the extraction of the palette here in async
             launchAsyncPaletteExtract();
         }
-
 
         if (resultCode == RESULT_OK && !mPicture.isFileNull()) {
             try {
@@ -649,11 +684,14 @@ public class CameraActivity extends AppCompatActivity {
         }
     }
 
+
     /**
      * Prepare and Use the Gallery Intent to select an existing picture
      */
     private void selectPicture(){
         try {
+
+            // Should be unnecessary because sdk should never be under 21
             if (Build.VERSION.SDK_INT < 19) {
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
@@ -695,6 +733,7 @@ public class CameraActivity extends AppCompatActivity {
      */
     public static String getPath(final Context context, final Uri uri) {
 
+        // Should be unnecessary because sdk should never be under 21
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
 
         // DocumentProvider
@@ -758,6 +797,7 @@ public class CameraActivity extends AppCompatActivity {
         return null;
     }
 
+
     /**
      * Get the value of the data column for this Uri. This is useful for
      * MediaStore Uris, and other file-based ContentProviders.
@@ -800,6 +840,7 @@ public class CameraActivity extends AppCompatActivity {
         return "com.android.externalstorage.documents".equals(uri.getAuthority());
     }
 
+
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is DownloadsProvider.
@@ -808,6 +849,7 @@ public class CameraActivity extends AppCompatActivity {
         return "com.android.providers.downloads.documents".equals(uri.getAuthority());
     }
 
+
     /**
      * @param uri The Uri to check.
      * @return Whether the Uri authority is MediaProvider.
@@ -815,6 +857,7 @@ public class CameraActivity extends AppCompatActivity {
     public static boolean isMediaDocument(Uri uri) {
         return "com.android.providers.media.documents".equals(uri.getAuthority());
     }
+
 
     /**
      * @param uri The Uri to check.

@@ -9,22 +9,32 @@ import android.util.AttributeSet;
  */
 public class Miniature extends AppCompatImageView {
 
+    /**
+     * Constructor
+     * @param context for the miniature
+     */
     public Miniature(Context context) {
         super(context);
     }
 
+
+    /**
+     * Constructor
+     * @param context for the miniature
+     * @param attrs for the miniature
+     */
     public Miniature(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
+
+    /**
+     * Constructor
+     * @param context for the miniature
+     * @param attrs for the miniature
+     * @param defStyle for the miniature
+     */
     public Miniature(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-
     }
-
-
 }
-
-
-
-

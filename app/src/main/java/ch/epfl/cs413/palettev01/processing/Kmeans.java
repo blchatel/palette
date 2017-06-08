@@ -1,7 +1,6 @@
 package ch.epfl.cs413.palettev01.processing;
 
 import android.graphics.Bitmap;
-import android.util.Log;
 import android.util.Pair;
 
 import java.util.ArrayList;
@@ -31,17 +30,21 @@ public class Kmeans {
 
     /**
      * The wanted palette size, number of clusters
-     * @param k
+     * @param k number of cluster
      */
     public Kmeans (int k, Bitmap img, RSProcessing rsProcessing) {
         this.K = k;
 
         // Uncomment for time visualization
-//        long t1, t2;
-//        t1 = System.nanoTime();
+        /*
+        long t1, t2;
+        t1 = System.nanoTime();
+        */
         init(k, img, rsProcessing);
-//        t2 = System.nanoTime();
-//        Log.d("TIME_ACCESS", "RS bins takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        /*
+        t2 = System.nanoTime();
+        Log.d("TIME_ACCESS", "RS bins takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        */
     }
 
     /**
@@ -100,7 +103,7 @@ public class Kmeans {
                         }
                     });
                 } else {
-                    // We store thoses to be sure we have enough clusters center at the end
+                    // We store those to be sure we have enough clusters center at the end
                     // If it is not the case we will take these
                     stored.add(c);
                 }
@@ -122,15 +125,19 @@ public class Kmeans {
      * This method will execute the weighted kmeans algorithm
      *
      * @param rsProcessing the renderscript that will do the computations
-     * @return
+     * @return The list of the clusters -- for Automatic Palette
      */
     public List<LabColor> run (RSProcessing rsProcessing) {
         // Uncomment the commented code to have time information
-//        long t1, t2;
-//        t1 = System.nanoTime();
+        /*
+        long t1, t2;
+        t1 = System.nanoTime();
+        */
         rsProcessing.KMean_cluster(mPaletteClusters, bins.bins, K);
-//        t2 = System.nanoTime();
-//        Log.d("TIME_ACCESS", "RS Kmeans Process takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        /*
+        t2 = System.nanoTime();
+        Log.d("TIME_ACCESS", "RS Kmeans Process takes " + ( (t2 - t1) / 1000000 ) + " ms");
+        */
 
         return mPaletteClusters;
     }
@@ -150,8 +157,8 @@ public class Kmeans {
 
         /**
          * Redefined equals function for bins triplet
-         * @param o
-         * @return
+         * @param o object to compare with this
+         * @return return if this and o are equals
          */
         @Override
         public boolean equals(Object o) {
@@ -163,9 +170,12 @@ public class Kmeans {
             if (l != triplet.l) return false;
             if (m != triplet.m) return false;
             return n == triplet.n;
-
         }
 
+        /**
+         * Hashcode
+         * @return a hashcode for this
+         */
         @Override
         public int hashCode() {
             int result = l;

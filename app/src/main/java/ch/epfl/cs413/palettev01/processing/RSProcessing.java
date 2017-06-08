@@ -17,7 +17,6 @@ import ch.epfl.cs413.palettev01.ScriptC_color;
 import ch.epfl.cs413.palettev01.views.OurPalette;
 import ch.epfl.cs413.palettev01.views.PaletteAdapter;
 
-// TODO: Check this file
 
 public class RSProcessing {
     public RSProcessing() {
@@ -28,37 +27,51 @@ public class RSProcessing {
      * RenderScript object for the whole application
      */
     private RenderScript rs;
+
+
     /**
      * RenderScript Script object for the whole application
      * all rs functions are stored in the same file
      */
     private ScriptC_color colorScript;
-    /*
+
+
+    /**
      * 'original' input image in this step
      */
     private Bitmap input_pic;
-    /*
+
+
+    /**
      * 'original' color grid in this step
      */
     private float[] grid;
-    /*
+
+
+    /**
      * color grid after color transfer
      */
     private float[] temp_grid;
-    /*
+
+    /**
      * size of grid is (grid_g + 1） * （grid_g + 1) * (grid_g + 1)
      */
     private int grid_g;
-    /*
+
+
+    /**
      * 'original' palette colors in this step
      */
     private float[] old_palette;
-    /*
+
+
+    /**
      * weight matrix for RBF-based weight
      * (i * k + j)th element in this array is \lambda_(ij) in weight function
      * (k * k)th element in this array is average distance between palette colors
      */
     private float[] palette_weights;
+
 
     /**
      * This method will simply init renderscript object and object for 'color.rs'
@@ -71,6 +84,7 @@ public class RSProcessing {
         //Create script from rs file.
         colorScript = new ScriptC_color(rs);
     }
+
 
     /**
      * This method will init color grid and original bitmap
@@ -92,6 +106,7 @@ public class RSProcessing {
         System.arraycopy(grid, 0, temp_grid, 0, 3 * g1 * g1 * g1);
         input_pic = Bitmap.createBitmap(input_bitmap);
     }
+
 
     /**
      * This method will use results in color grids to apply color transfer to the whole image
@@ -167,6 +182,7 @@ public class RSProcessing {
                 palette_distance_2D[i][j] = palette_distance[i * paletteSize + j];
     }
 
+
     /**
      * This method will apply color transfer to color grid
      * @param ourPalette target palette colors of color transfer
@@ -184,7 +200,6 @@ public class RSProcessing {
             for (int j = 0; j < 3; j++)
                 new_palette[3 * i + j] = (float) lab_color[j];
         }
-
 
         Allocation allocationOld = Allocation.createSized(rs, Element.F32_3(rs), paletteSize, Allocation.USAGE_SCRIPT);
         allocationOld.setAutoPadding(true);
@@ -205,7 +220,6 @@ public class RSProcessing {
         colorScript.set_ccb_l(allocation_ccbl);
         colorScript.set_cc_l(allocation_ccl);
         colorScript.set_palette_weights(allocation_weights);
-
 
         int g1 = grid_g + 1;
         Allocation allocationGrid = Allocation.createSized(rs, Element.F32_3(rs), g1 * g1 * g1, Allocation.USAGE_SCRIPT);
@@ -228,10 +242,13 @@ public class RSProcessing {
         allocation_weights.destroy();
     }
 
-    /*
+
+    /**
      * there are b * b * b bins
      */
     private static final int b = 16;
+
+
     /**
      * Get pixel colors in input image and assign them into bins
      * @param img input image bitmap
@@ -286,6 +303,7 @@ public class RSProcessing {
         allocationBinNum.destroy();
         return res;
     }
+
 
     /**
      * Apply k-mean cluster to get cluster centers
@@ -347,12 +365,11 @@ public class RSProcessing {
         return null;
     }
 
-    /*
+    /**
      * Destroy objects related to RS
      */
     public void rsClose() {
         colorScript.destroy();
         rs.destroy();
     }
-
 }

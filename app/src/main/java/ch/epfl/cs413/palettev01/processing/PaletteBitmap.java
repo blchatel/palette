@@ -21,12 +21,12 @@ import ch.epfl.cs413.palettev01.views.Miniature;
  */
 public class PaletteBitmap {
 
-
     /**
      * Private bitmap attribute we can set modify and transform inside this class
      * This is the original image bitmap
      */
     private Bitmap bitmap ;
+
 
     /**
      * Scaled bitmap to reduce complexity
@@ -34,28 +34,30 @@ public class PaletteBitmap {
      */
     private Bitmap scaled ;
 
+
     /**
      * Bitmap scaled to a constant size of 1024px on the bigger side
      * Used for the kmeans computation - To have the same palette extraction on every phones
      */
     private Bitmap kmean;
 
+
     /**
      * The file connected with the bitmap. Useful for loading
      */
     private File file;
+
 
     /**
      * Height of the destination Miniature View for the bitmap
      */
     private int height;
 
+
     /**
      * Width of the destination Miniature View for the bitmap
      */
     private int width;
-
-
 
 
 
@@ -66,30 +68,32 @@ public class PaletteBitmap {
 
     }
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     ///  SETTERS
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * Setter for the file. This function is more meaningful with restore name
-     * @param file
+     * @param file a string path
      */
     public void restoreFile(String file){
-        Log.d("PaletteBitmap <<<<", file + " and null ? " + isFileNull());
         this.file = new File(file);
     }
 
+
     /**
      * Setter for the height
-     * @param height
+     * @param height of the bitmap integer
      */
     public void setHeight(int height) {
         this.height = height;
     }
 
+
     /**
      * Setter for the width
-     * @param width
+     * @param width of the bitmap as integer
      */
     public void setWidth(int width) {
         this.width = width;
@@ -102,11 +106,12 @@ public class PaletteBitmap {
 
     /**
      * Check if the bitmap has been initialized yet
-     * @return
+     * @return if the bitmap has been initialized or not
      */
     public boolean isEmpty () {
         return bitmap==null;
     }
+
 
     /**
      * Check if the file attribute is null
@@ -116,6 +121,7 @@ public class PaletteBitmap {
         return file == null;
     }
 
+
     /**
      * Get the absolute path of the file
      * @return the absolute path
@@ -123,6 +129,7 @@ public class PaletteBitmap {
     public String fileAbsolutePath(){
         return file.getAbsolutePath();
     }
+
 
     /**
      * Get the Uri of the file
@@ -132,6 +139,7 @@ public class PaletteBitmap {
         return Uri.fromFile(file);
     }
 
+
     /**
      * Get the height
      * @return the height
@@ -139,6 +147,7 @@ public class PaletteBitmap {
     public int getHeight() {
         return height;
     }
+
 
     /**
      * Get the width
@@ -148,12 +157,14 @@ public class PaletteBitmap {
         return width;
     }
 
+
     /**
      * Getter for the scaled bitmap
      */
     public Bitmap getScaled() {
         return scaled;
     }
+
 
     /**
      * Getter for the kmean bitmap used for palette extraction
@@ -181,12 +192,12 @@ public class PaletteBitmap {
         if(kmean != null){
             kmean.recycle();
         }
-
     }
+
 
     /**
      * Set the picture and scale it if needed
-     * @param view
+     * @param view a miniature to set in the picture display
      */
     public void setPicture(Miniature view) {
 
@@ -226,7 +237,7 @@ public class PaletteBitmap {
 
     /**
      * Prepare a file (.jpg) where to save a new image file (i.e. a camera file)
-     * @throws IOException
+     * @throws IOException if the file creation is not working
      */
     public Uri prepareImageFile() throws IOException {
         // Create an image file name
@@ -264,7 +275,7 @@ public class PaletteBitmap {
             FileOutputStream out = null;
             try {
 
-                // TODO : If we want to export the full the higher resolution image should transform it here
+                // If we want to export the full the higher resolution image should transform it here
                 //Bitmap bmp = bitmap.copy(bitmap.getConfig(), true);
 
                 // For now we export the scaled image
@@ -273,6 +284,7 @@ public class PaletteBitmap {
 
                 // Export to a jpeg image
                 bmp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -288,14 +300,11 @@ public class PaletteBitmap {
     }
 
 
-
-
-
     /**
      * Rotate a source bitmap to angle degree
-     * @param source
-     * @param angle
-     * @return
+     * @param source a bitmap
+     * @param angle in degree
+     * @return a new bitmap which has been rotated
      */
     private Bitmap rotateImage(Bitmap source, float angle) {
         Matrix matrix = new Matrix();
@@ -303,10 +312,11 @@ public class PaletteBitmap {
         return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(), matrix, true);
     }
 
+
     /**
      * Get the color of the (x, y) pixel
-     * @param miniatureX
-     * @param miniatureY
+     * @param miniatureX : x coordinate on the miniature display
+     * @param miniatureY : y coordinate on the miniature display
      * @return the color integer
      */
     public int getColor(int miniatureX, int miniatureY){
@@ -326,12 +336,12 @@ public class PaletteBitmap {
         }
     }
 
+
     /**
      * Display the scaled image in the given miniature view
-     * @param v
+     * @param v the miniature to display
      */
     public void displayScaledImage(Miniature v) {
         v.setImageBitmap(scaled);
     }
 }
-
