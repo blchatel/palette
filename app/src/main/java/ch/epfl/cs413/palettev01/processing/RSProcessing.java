@@ -171,7 +171,6 @@ public class RSProcessing {
         Jama.Matrix A = new Jama.Matrix(palette_distance_2D);
         Jama.Matrix B = Jama.Matrix.identity(paletteSize, paletteSize);
         Jama.Matrix C = A.solve(B);
-        Jama.Matrix D = A.times(C);
         palette_distance_2D = C.getArray();
         for (int i=0; i<paletteSize; i++)
             for (int j=0; j<paletteSize; j++)
