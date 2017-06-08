@@ -211,12 +211,12 @@ public class CameraActivity extends AppCompatActivity {
                     // first deselect any selected color box
                     pA.setSelectedBox(-1);
 
-                    // Display an alert window to assert the addind of a color
+                    // Display an alert window to assert the adding of a color
                     if (pA.isColorManuallyChanged()) {
                         new AlertDialog.Builder(CameraActivity.this)
                                 .setCancelable(true)
-                                .setTitle("Add new color ?")
-                                .setMessage("Doing so will reset the colors you manually changed !")
+                                .setTitle(R.string.addAColor)
+                                .setMessage(R.string.resetWarning)
                                 .setIcon(android.R.drawable.ic_dialog_alert)
                                 .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int whichButton) {
@@ -290,8 +290,8 @@ public class CameraActivity extends AppCompatActivity {
                                 // Display an alert window to assert the delete of a color
                                 if (pA.isColorManuallyChanged()) {
                                     new AlertDialog.Builder(CameraActivity.this)
-                                            .setTitle("Remove this color ?")
-                                            .setMessage("Doing so will reset the others colors you manually changed !")
+                                            .setTitle(R.string.removeAColor)
+                                            .setMessage(R.string.resetWarning2)
                                             .setIcon(android.R.drawable.ic_dialog_alert)
                                             .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
@@ -370,7 +370,9 @@ public class CameraActivity extends AppCompatActivity {
         ////////////////////////////////////////////////////////////////////////////////////////////
 
         if (savedInstanceState != null) {
-            Log.e( "CYCLE", "ON RESTORE" );
+            if(DEBUG_LOG) {
+                Log.e("CYCLE", "ON RESTORE");
+            }
             mPicture.restoreFile(savedInstanceState.getString("FILE_KEY"));
 
             launchAsyncPaletteExtract();
@@ -583,7 +585,7 @@ public class CameraActivity extends AppCompatActivity {
             case R.id.export_image_item:
                 if(mPicture != null && !mPicture.isFileNull()) {
                     mPicture.exportImage();
-                    Toast.makeText(this, "Image exported", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, R.string.confirmExport, Toast.LENGTH_SHORT).show();
                 }
                 return true;
 
