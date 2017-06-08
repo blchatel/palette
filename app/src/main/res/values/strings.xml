@@ -29,5 +29,10 @@
     <string name="main_title">Image Palette</string>
     <string name="edit_title">Edit your palette !</string>
     <string name="switchtransform">Select / Transform</string>
+    <string name="addAColor">Add new color ?</string>
+    <string name="removeAColor">Remove this color ?</string>
+    <string name="resetWarning">Doing so will reset the colors you manually changed !</string>
+    <string name="resetWarning2">Doing so will reset the others colors you manually changed !</string>
+    <string name="confirmExport">Image exported</string>
 
 </resources>
